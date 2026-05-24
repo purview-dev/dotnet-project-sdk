@@ -1,4 +1,9 @@
+pre-commit:
+  jobs:
+    - name: csharpier check
+      run: dotnet csharpier check {repo-root}
+
 commit-msg:
   jobs:
     - name: conventional commits
-      run: pnpm dlx commitlint --edit {1}
+      run: npx commitlint --edit {1}
