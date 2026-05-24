@@ -1,0 +1,16 @@
+<Project>
+	<!--
+		The Purview.DotNetProjectSdk repo bootstraps from its own source so that
+		the package project can be built and tested without a published NuGet version.
+		Consuming repos should use the global.json + templates/Directory.Build.props
+		pattern instead (see README.md).
+	-->
+	<PropertyGroup>
+		<NamespacePrefix>Purview</NamespacePrefix>
+		<!-- Exclude telemetry packages from the packaging project itself -->
+		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
+		<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
+	</PropertyGroup>
+
+	<Import Project="$(MSBuildThisFileDirectory)src/Purview.DotNetProjectSdk/Sdk/Sdk.props" />
+</Project>

@@ -1,0 +1,9 @@
+<Project>
+	<PropertyGroup>
+		<CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- SourceLink is auto-added by the SDK to IsPackable projects -->
+		<PackageVersion Include="Microsoft.SourceLink.GitHub" Version="*" />
+	</ItemGroup>
+</Project>

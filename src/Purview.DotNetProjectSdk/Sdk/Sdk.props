@@ -1,0 +1,358 @@
+<Project>
+	<!-- =====================================================================
+	     SHARED TESTING PROJECT NAMES
+	     Single source of truth for shared testing project names.
+	     Defined as a property (semicolon-fenced) so IsSharedTestingProject
+	     detection can use $(...Contains(...)) directly in a static Condition.
+	     ===================================================================== -->
+	<PropertyGroup Label="Defining Shared Testing Project Names">
+		<_SharedTestingProjectNames>;SharedTestingFramework;SharedTestingInfrastructure;SharedTestingInfra;SharedTestingUtilities;SharedTestingLibrary;SharedTestingLib;SharedTestingHelpers;</_SharedTestingProjectNames>
+	</PropertyGroup>
+	<ItemGroup Label="Defining Shared Testing Project Names">
+		<SharedTestingProjectName Include="$(_SharedTestingProjectNames)" />
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     NAMESPACE SUFFIXES STRIPPED FROM RootNamespace
+	     ===================================================================== -->
+	<ItemGroup Label="Defining Namespace Suffixes to Remove from RootNamespace">
+		<NamespaceRemoveSuffix Include="@(SharedTestingProjectName)" />
+		<NamespaceRemoveSuffix Include="Core" />
+		<NamespaceRemoveSuffix Include="EF" />
+		<NamespaceRemoveSuffix Include="Shared" />
+		<NamespaceRemoveSuffix Include="ClientShared" />
+		<NamespaceRemoveSuffix Include="ServiceDefaults" />
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     TESTING TYPES
+	     Controls InternalsVisibleTo generation and TestingType detection.
+	     ===================================================================== -->
+	<ItemGroup Label="Defining Testing Types">
+		<TestType Include="Accessibility" />
+		<TestType Include="Acceptance" />
+		<TestType Include="BlackBox" />
+		<TestType Include="Chaos" />
+		<TestType Include="E2E" />
+		<TestType Include="EndToEnd" />
+		<TestType Include="Environment" />
+		<TestType Include="Functional" />
+		<TestType Include="Interactive" />
+		<TestType Include="Integration" />
+		<TestType Include="Load" />
+		<TestType Include="Performance" />
+		<TestType Include="Regression" />
+		<TestType Include="Security" />
+		<TestType Include="Scenario" />
+		<TestType Include="Smoke" />
+		<TestType Include="Stress" />
+		<TestType Include="System" />
+		<TestType Include="Threat" />
+		<TestType Include="Unit" />
+		<TestType Include="WhiteBox" />
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     PROJECT TYPE DETECTION
+	     Runs for all .csproj files to classify project types and detect the
+	     testing type from the project name suffix.
+	     ===================================================================== -->
+	<PropertyGroup Label="Define C# Properties" Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+		<!-- Set some defaults -->
+		<IsCSharpProject>true</IsCSharpProject>
+		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''">false</ExcludePurviewTelemetry>
+		<ExcludeMSTelemetryExtension Condition="'$(ExcludeMSTelemetryExtension)' == ''">false</ExcludeMSTelemetryExtension>
+		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''">false</DisableGenerateAssemblyInfoClass>
+		<!-- Test project types -->
+		<IsTestProject>false</IsTestProject>
+		<IsSharedTestingProject>false</IsSharedTestingProject>
+		<!-- Project types -->
+		<IsContainerProject>false</IsContainerProject>
+		<IsSdkProject>false</IsSdkProject>
+		<IsWebProject>false</IsWebProject>
+		<IsWebSdkProject>false</IsWebSdkProject>
+		<IsWorkerSdkProject>false</IsWorkerSdkProject>
+		<IsAspireHostProject>false</IsAspireHostProject>
+		<!-- SDK project type detection by parsing the Sdk attribute -->
+		<SdkProjectName>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText(`$(MSBuildProjectFullPath)`)), `(?s-i)(?:^|\s|&gt;)(?s-i)(?:^|\s|&gt;)&lt;\s*(?:Project|Import)\s(?:[^&gt;]*?)\s?Sdk\s*="(?&lt;sdkproj&gt;.*?)"`).Groups['sdkproj'].Value)</SdkProjectName>
+		<IsSdkProject Condition="'$(SdkProjectName)' != ''">true</IsSdkProject>
+		<IsWebSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Web'">true</IsWebSdkProject>
+		<IsWorkerSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Worker'">true</IsWorkerSdkProject>
+		<IsContainerProject Condition="Exists('$(MSBuildProjectDirectory)\Dockerfile') OR Exists('$(MSBuildProjectDirectory)\dockerfile') OR Exists('$(MSBuildProjectDirectory)\Dockerfile.dev')">true</IsContainerProject>
+		<IsAspireHostProject
+			Label="Detect Aspire.Sdk.Host SDK projects - only works when the SDK attribute is on the Project element"
+			Condition="$([System.String]::Copy('$(SdkProjectName)').StartsWith('Aspire.Sdk.Host'))"
+			>true</IsAspireHostProject>
+		<!-- Determine the testing type from the project name suffix -->
+		<TestingType
+			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Test')) OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Tests'))"
+			>$([System.Text.RegularExpressions.Regex]::Match($(MSBuildProjectName), `^.*\.([\w|_]\w*)Tests?$`).get_Groups().get_Item(1).ToString())</TestingType>
+		<IsTestProject Condition="'$(TestingType)' != ''">true</IsTestProject>
+		<IsSharedTestingProject Condition="$(_SharedTestingProjectNames.Contains(';$(MSBuildProjectName);'))">true</IsSharedTestingProject>
+	</PropertyGroup>
+
+	<!-- =====================================================================
+	     TEST FRAMEWORK SELECTION
+	     Default: TUnit. Override by setting ProjectSdkTestFramework=XUnit in
+	     your Directory.Build.props before importing this SDK.
+	     ===================================================================== -->
+	<PropertyGroup Label="Test Framework Selection">
+		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''">TUnit</ProjectSdkTestFramework>
+	</PropertyGroup>
+
+	<!-- =====================================================================
+	     C# PROJECT DEFAULTS
+	     ===================================================================== -->
+	<PropertyGroup Label="C# Project Property Groups" Condition="$(IsCSharpProject)">
+		<TargetFramework Condition="'$(TargetFramework)' == '' AND '$(TargetFrameworks)' == ''">net10.0</TargetFramework>
+		<LangVersion>preview</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<Deterministic>true</Deterministic>
+		<!-- Auto-detect CI environment from common env vars -->
+		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true' OR '$(GITHUB_ACTIONS)' == 'true' OR '$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+		<!-- EditorConfig from the NuGet package Sdk/ folder — used for build-time code-style enforcement -->
+		<EditorConfigFilePath>$(MSBuildThisFileDirectory).editorconfig</EditorConfigFilePath>
+		<!-- Sensible default for SourceLink (override by setting SourceLinkPackageName) -->
+		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''">Microsoft.SourceLink.GitHub</SourceLinkPackageName>
+		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+		<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+		<IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AnalysisLevel>Latest</AnalysisLevel>
+		<NoWarn>AD0001;$(NoWarn)</NoWarn>
+		<NoWarn>IDE2001;$(NoWarn)</NoWarn>
+		<NoWarn>CA1014;CA1848;CA2007;CA2201;CA2225;CA2254;$(NoWarn)</NoWarn>
+		<NoWarn>RCS1090;RCS1108;$(NoWarn)</NoWarn>
+		<CurrentYear>$([System.DateTime]::Now.Year)</CurrentYear>
+		<Version Condition="'$(Version)' == ''">0.0.1</Version>
+		<!-- Path for the auto-generated assembly info class -->
+		<AutoGeneratedAssemblyInfoFile>$(IntermediateOutputPath)/Properties/GeneratedAssemblyInfo.cs</AutoGeneratedAssemblyInfoFile>
+	</PropertyGroup>
+
+	<!-- Default namespace from NamespacePrefix + project name -->
+	<PropertyGroup>
+		<!--
+			Set the default namespace for all projects.
+			Only if NamespacePrefix is set — a target will error the build if it isn't.
+			Suffix-stripping happens in FixRootNamespaceTarget (Sdk.targets) because
+			@(NamespaceRemoveSuffix) only expands in targets, not in static PropertyGroups.
+		-->
+		<RootNamespace Condition="'$(NamespacePrefix)' != ''">$(NamespacePrefix).$(MSBuildProjectName)</RootNamespace>
+	</PropertyGroup>
+
+	<!-- Test project namespace cleanup -->
+	<PropertyGroup Label="C# Test Properties" Condition="$(IsTestProject)">
+		<RootNamespace>$(RootNamespace.Replace('.$(TestingType)Tests', ''))</RootNamespace>
+		<TargetProjectName>$([System.Text.RegularExpressions.Regex]::Replace($(MSBuildProjectName), `[.]$(TestingType)Tests?$$`, ``))</TargetProjectName>
+	</PropertyGroup>
+
+	<!-- =====================================================================
+	     C# PROJECT ITEM GROUPS
+	     ===================================================================== -->
+	<ItemGroup Label="C# Project Item Groups" Condition="$(IsCSharpProject)">
+		<!-- Implicit usings -->
+		<Using Condition="'$(NamespacePrefix)' != ''" Include="$(NamespacePrefix)" />
+		<Using Include="$(RootNamespace)" />
+		<!-- InternalsVisibleTo for Moq/NSubstitute dynamic proxies -->
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>"DynamicProxyGenAssembly2"</_Parameter1>
+		</AssemblyAttribute>
+		<!-- Exclusions -->
+		<None Remove="$(MSBuildProjectName).v3.ncrunchproject" />
+		<None Remove="$(AssemblyName).xml" />
+		<Compile Remove="TestResults/**" />
+		<Content Remove="TestResults/**" />
+		<EmbeddedResource Remove="TestResults/**" />
+		<None Remove="TestResults/**" />
+		<!-- Embedded resources -->
+		<None Remove="Resources/**/*" />
+		<EmbeddedResource Include="Resources/**/*" />
+		<EmbeddedResource Include="FileSystemResources\**\*">
+			<LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     FILE CONTENT OPTIONS
+	     ===================================================================== -->
+	<ItemGroup Label="C# File Content Options" Condition="$(IsCSharpProject)">
+		<None Remove="$(AssemblyName).xml" />
+		<Compile Remove="TestResults/**" />
+		<Content Remove="TestResults/**" />
+		<EmbeddedResource Remove="TestResults/**" />
+		<None Remove="TestResults/**" />
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     CONTAINER PROJECTS
+	     ===================================================================== -->
+	<PropertyGroup Label="Container Project" Condition="$(IsContainerProject) AND !$(IsTestProject)">
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<PublishAot>true</PublishAot>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerfileContext>..\..\</DockerfileContext>
+	</PropertyGroup>
+	<ItemGroup Label="Container Project" Condition="$(IsContainerProject) AND !$(IsTestProject)">
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     WEB PROJECTS (non-API web apps that need OpenAPI interceptors)
+	     ===================================================================== -->
+	<PropertyGroup Label="Web Project" Condition="$(IsWebSdkProject) AND !$(IsWebProject)">
+		<InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
+	</PropertyGroup>
+
+	<!-- =====================================================================
+	     LIBRARY PROJECTS
+	     ===================================================================== -->
+	<PropertyGroup Label="Library Project Properties" Condition="$(IsCSharpProject) AND !$(IsTestProject) AND !$(IsSharedTestingProject)">
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.xml</AllowedOutputExtensionsInPackageBuildOutputFolder>
+	</PropertyGroup>
+
+	<!-- =====================================================================
+	     NUGET PACKAGE PROJECTS
+	     ===================================================================== -->
+	<PropertyGroup Label="NuGet Package Project Properties" Condition="$(IsPackable)">
+		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+		<PackageTags>$(PackageTags);</PackageTags>
+		<IncludeSource>true</IncludeSource>
+		<IncludeSymbols>true</IncludeSymbols>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
+
+	<!-- =====================================================================
+	     PURVIEW TELEMETRY — OPT-OUT (set ExcludePurviewTelemetry=true to skip)
+	     ===================================================================== -->
+	<ItemGroup
+		Label="C# Telemetry Packages"
+		Condition="$(IsCSharpProject) AND !$(IsTestProject) AND !$(ExcludePurviewTelemetry)"
+	>
+		<PackageReference Include="Purview.Telemetry.SourceGenerator">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>analyzers</IncludeAssets>
+		</PackageReference>
+		<PackageReference
+			Condition="!$(ExcludeMSTelemetryExtension)"
+			Include="Microsoft.Extensions.Telemetry.Abstractions"
+		/>
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     SOURCELINK — auto-added to all non-test projects
+	     ===================================================================== -->
+	<ItemGroup Label="NuGet Package References" Condition="!$(IsTestProject) AND '$(SourceLinkPackageName)' != ''">
+		<PackageReference Include="$(SourceLinkPackageName)">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     SHARED TEST PROJECT PROPERTIES
+	     ===================================================================== -->
+	<PropertyGroup Condition="$(IsTestProject) OR $(IsSharedTestingProject)" Label="C# Shared Testing Project Properties">
+		<NoWarn>$(NoWarn);CA1062;CA1515;CA1707;CA1822;</NoWarn>
+		<NoWarn>$(NoWarn);CS1591;</NoWarn>
+		<Packable>false</Packable>
+		<IsPackable>false</IsPackable>
+		<IsPublishable>false</IsPublishable>
+	</PropertyGroup>
+	<PropertyGroup Label="Testing Project Properties" Condition="$(IsTestProject)">
+		<OutputType>Exe</OutputType>
+		<MaxCpuCount>0</MaxCpuCount>
+		<CollectCoverage>true</CollectCoverage>
+		<Exclude>[NSubstitute*]*,[TUnit.*]*,[xunit.*]*,[Microsoft.Testing.*]*,[Microsoft.NET.Test*]*,[Bogus*]*</Exclude>
+		<ExcludeByAttribute>System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+		<IsPackable>false</IsPackable>
+		<IsPublishable>false</IsPublishable>
+		<!-- Disable native instrumentation unless C++ is involved -->
+		<EnableStaticNativeInstrumentation>false</EnableStaticNativeInstrumentation>
+		<EnableDynamicNativeInstrumentation>false</EnableDynamicNativeInstrumentation>
+	</PropertyGroup>
+	<PropertyGroup Label="Testing NuGet Packages" Condition="$(IsTestProject) OR $(IsSharedTestingProject)">
+		<DisableGenerateAssemblyInfoClass>true</DisableGenerateAssemblyInfoClass>
+	</PropertyGroup>
+	<ItemGroup Label="Testing NuGet Packages" Condition="$(IsTestProject) OR $(IsSharedTestingProject)">
+		<AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
+		<Using Include="NSubstitute" />
+		<PackageReference Include="Bogus" />
+		<PackageReference Include="NSubstitute" />
+		<PackageReference Include="NSubstitute.Analyzers.CSharp">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     TUNIT TEST PACKAGES (default)
+	     ===================================================================== -->
+	<PropertyGroup
+		Label="TUnit Testing Platform Properties"
+		Condition="$(IsTestProject) AND '$(ProjectSdkTestFramework)' == 'TUnit'"
+	>
+		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+		<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+		<EnableMicrosoftTestingPlatform>true</EnableMicrosoftTestingPlatform>
+	</PropertyGroup>
+	<ItemGroup
+		Label="TUnit NuGet Packages"
+		Condition="($(IsTestProject) OR $(IsSharedTestingProject)) AND '$(ProjectSdkTestFramework)' == 'TUnit'"
+	>
+		<AssemblyAttribute Include="TUnit.Core.Category" Condition="!$(IsSharedTestingProject)">
+			<_Parameter1>$(TestingType)</_Parameter1>
+		</AssemblyAttribute>
+		<PackageReference Include="TUnit" Condition="!$(IsSharedTestingProject)" />
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     XUNIT TEST PACKAGES (opt-in: set ProjectSdkTestFramework=XUnit)
+	     ===================================================================== -->
+	<ItemGroup
+		Label="XUnit NuGet Packages"
+		Condition="($(IsTestProject) OR $(IsSharedTestingProject)) AND '$(ProjectSdkTestFramework)' == 'XUnit'"
+	>
+		<PackageReference Include="xunit.v3" Condition="!$(IsSharedTestingProject)" />
+		<PackageReference Include="xunit.runner.visualstudio" Condition="!$(IsSharedTestingProject)">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     AUTOMATIC PROJECT REFERENCES FOR TEST PROJECTS
+	     Resolves the target project relative to the test project location.
+	     ===================================================================== -->
+	<ItemGroup
+		Label="Automatic ProjectReference for Test Projects"
+		Condition="$(IsTestProject) AND !$(IsSharedTestingProject)"
+	>
+		<ProjectReference
+			Include="../$(TargetProjectName)/$(TargetProjectName).csproj"
+			Condition="Exists('../$(TargetProjectName)/$(TargetProjectName).csproj')"
+		/>
+		<ProjectReference
+			Include="../../$(TargetProjectName)/$(TargetProjectName).csproj"
+			Condition="Exists('../../$(TargetProjectName)/$(TargetProjectName).csproj')"
+		/>
+		<ProjectReference
+			Include="../src/$(TargetProjectName)/$(TargetProjectName).csproj"
+			Condition="Exists('../src/$(TargetProjectName)/$(TargetProjectName).csproj')"
+		/>
+		<ProjectReference
+			Include="../../src/$(TargetProjectName)/$(TargetProjectName).csproj"
+			Condition="Exists('../../src/$(TargetProjectName)/$(TargetProjectName).csproj')"
+		/>
+		<!-- Shared testing project alongside this one (wildcards silently match 0 files) -->
+		<ProjectReference Include="../SharedTesting*/SharedTesting*.csproj" />
+		<ProjectReference Remove="../$(MSBuildProjectName)/$(MSBuildProjectName).csproj" />
+	</ItemGroup>
+</Project>

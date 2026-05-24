@@ -1,0 +1,53 @@
+<Project>
+	<!--
+		Central Package Management for Purview.DotNetProjectSdk consumers
+		==================================================================
+		All PackageVersion entries use Version="*" (floating to latest at restore).
+		Pin individual packages by replacing "*" with a specific version, e.g.:
+		  <PackageVersion Include="TUnit" Version="1.45.29" />
+
+		This file is automatically discovered by MSBuild when placed at the repo
+		root. ManagePackageVersionsCentrally is already set to true by the SDK —
+		this file only needs to define versions.
+
+		To add project-specific packages, append more PackageVersion entries below.
+	-->
+	<PropertyGroup>
+		<!-- Required to allow Version="*" floating versions in PackageVersion items -->
+		<CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- ── Aspire ────────────────────────────────────────────────────── -->
+		<PackageVersion Include="Aspire.Hosting" Version="*" />
+		<PackageVersion Include="Aspire.Hosting.Testing" Version="*" />
+		<PackageVersion Include="Aspire.Hosting.JavaScript" Version="*" />
+		<PackageVersion Include="Aspire.Hosting.Azure.PostgreSQL" Version="*" />
+		<PackageVersion Include="Aspire.Hosting.Azure.Redis" Version="*" />
+
+		<!-- ── Source Control / SourceLink ───────────────────────────────── -->
+		<PackageVersion Include="Microsoft.SourceLink.GitHub" Version="*" />
+		<PackageVersion Include="Microsoft.SourceLink.AzureDevOps.Git" Version="*" />
+		<PackageVersion Include="Microsoft.SourceLink.GitLab" Version="*" />
+
+		<!-- ── Purview Telemetry ─────────────────────────────────────────── -->
+		<PackageVersion Include="Purview.Telemetry.SourceGenerator" Version="*" />
+		<PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="*" />
+
+		<!-- ── Azure Container Tools ─────────────────────────────────────── -->
+		<PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="*" />
+
+		<!-- ── Testing (TUnit — default framework) ────────────────────────  -->
+		<PackageVersion Include="TUnit" Version="*" />
+		<PackageVersion Include="TUnit.Aspire" Version="*" />
+		<PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="*" />
+
+		<!-- ── Testing (XUnit — opt-in via ProjectSdkTestFramework=XUnit) ── -->
+		<PackageVersion Include="xunit.v3" Version="*" />
+		<PackageVersion Include="xunit.runner.visualstudio" Version="*" />
+
+		<!-- ── Testing (shared across frameworks) ────────────────────────── -->
+		<PackageVersion Include="Bogus" Version="*" />
+		<PackageVersion Include="NSubstitute" Version="*" />
+		<PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="*" />
+	</ItemGroup>
+</Project>

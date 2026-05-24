@@ -1,0 +1,27 @@
+<Project>
+	<!--
+		BOOTSTRAPPER for Purview.DotNetProjectSdk
+		==========================================
+		Place this file at the root of your repo (alongside your .sln file).
+		All projects beneath will automatically inherit the SDK's build defaults.
+
+		Prerequisites:
+		1. Add the SDK to global.json (see templates/global.json)
+		2. Copy this file to your repo root as Directory.Build.props
+		3. Copy templates/Directory.Build.targets to your repo root
+		4. Copy templates/Directory.Packages.props to your repo root
+
+		Override options (set before this Import):
+		  <ProjectSdkTestFramework>XUnit</ProjectSdkTestFramework>    ← default: TUnit
+		  <ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>     ← default: false
+		  <ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
+		  <DisableNamespacePrefixCheck>true</DisableNamespacePrefixCheck>
+		  <NamespacePrefix>YourCompany</NamespacePrefix>
+	-->
+	<PropertyGroup>
+		<!-- Set your default namespace prefix here (required by the SDK) -->
+		<NamespacePrefix>YourCompany</NamespacePrefix>
+	</PropertyGroup>
+
+	<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.props" />
+</Project>

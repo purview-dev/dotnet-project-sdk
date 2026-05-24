@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<PackageId>Purview.DotNetProjectSdk</PackageId>
+		<PackageType>MSBuildSdk</PackageType>
+		<Description>A reusable MSBuild SDK that provides standardised .NET project defaults, code style enforcement, test framework wiring (TUnit or XUnit), and Central Package Management integration. Drop in via Directory.Build.props to apply uniformly across every project in a repo.</Description>
+		<PackageTags>msbuild;sdk;build;tunit;xunit;csharp;dotnet;central-package-management</PackageTags>
+		<PackageProjectUrl>https://github.com/kjldev/purview-dotnet-project-sdk</PackageProjectUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryType>git</RepositoryType>
+
+		<!-- No compiled output — this is a pure MSBuild SDK package -->
+		<TargetFramework>net10.0</TargetFramework>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<IsPackable>true</IsPackable>
+
+		<!-- Suppress the NamespacePrefix requirement for this packaging project -->
+		<DisableNamespacePrefixCheck>true</DisableNamespacePrefixCheck>
+		<!-- No telemetry packages for this meta-project -->
+		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
+		<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
+		<!-- NU5128: expected for MSBuildSdk packages — no lib/ref assemblies by design -->
+		<NoWarn>$(NoWarn);NU5128</NoWarn>
+		<!-- Allow dotfiles (e.g., .editorconfig) to be packed -->
+		<NoDefaultExcludes>true</NoDefaultExcludes>
+	</PropertyGroup>
+
+	<!-- Pack the Sdk/ folder to the Sdk/ path in the NuGet package.
+	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
+	<ItemGroup>
+		<None Include="Sdk/Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
+		<None Include="Sdk/Sdk.targets" Pack="true" PackagePath="Sdk/Sdk.targets" />
+		<None Include="Sdk/.editorconfig" Pack="true" PackagePath="Sdk/.editorconfig" />
+	</ItemGroup>
+</Project>
