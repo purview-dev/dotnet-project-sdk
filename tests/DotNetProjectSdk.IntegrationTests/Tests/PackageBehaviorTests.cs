@@ -9,48 +9,60 @@ namespace Purview.DotNetProjectSdk.Tests;
 public sealed class PackageBehaviorTests
 {
 	[Test]
-	public async Task Library_IsPackable_False_ByDefault()
+	public async Task Library_IsPackable_False_ByDefault(CancellationToken cancellationToken)
 	{
 		// The SDK sets IsPackable=false by default; projects must opt in explicitly.
-		await using var h = ProjectHarness.Create("MyLibrary");
-		await Assert.That(await h.GetPropertyAsync("IsPackable")).IsEqualTo("false");
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("IsPackable", cancellationToken)).IsEqualTo("false");
 	}
 
 	[Test]
-	public async Task Library_IsPackable_True_WhenExplicitlySet()
+	public async Task Library_IsPackable_True_WhenExplicitlySet(CancellationToken cancellationToken)
 	{
-		await using var h = ProjectHarness.Create("MyLibrary",
-			extraProps: "<IsPackable>true</IsPackable>");
-		await Assert.That(await h.GetPropertyAsync("IsPackable")).IsEqualTo("true");
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraProps: "<IsPackable>true</IsPackable>",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("IsPackable", cancellationToken)).IsEqualTo("true");
 	}
 
 	[Test]
-	public async Task TestProject_IsPackable_False()
+	public async Task TestProject_IsPackable_False(CancellationToken cancellationToken)
 	{
-		await using var h = ProjectHarness.Create("MyApp.UnitTests");
-		await Assert.That(await h.GetPropertyAsync("IsPackable")).IsEqualTo("false");
+		await using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("IsPackable", cancellationToken)).IsEqualTo("false");
 	}
 
 	[Test]
-	public async Task SharedTestingProject_IsPackable_False()
+	public async Task SharedTestingProject_IsPackable_False(CancellationToken cancellationToken)
 	{
-		await using var h = ProjectHarness.Create("SharedTestingFramework");
-		await Assert.That(await h.GetPropertyAsync("IsPackable")).IsEqualTo("false");
+		await using var h = await ProjectHarness.CreateAsync(
+			"SharedTestingFramework",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("IsPackable", cancellationToken)).IsEqualTo("false");
 	}
 
 	[Test]
-	public async Task ExcludePurviewTelemetry_CanBeSetTrue()
+	public async Task ExcludePurviewTelemetry_CanBeSetTrue(CancellationToken cancellationToken)
 	{
-		await using var h = ProjectHarness.Create("MyLibrary",
-			extraProps: "<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>");
-		await Assert.That(await h.GetPropertyAsync("ExcludePurviewTelemetry")).IsEqualTo("true");
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraProps: "<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("ExcludePurviewTelemetry", cancellationToken)).IsEqualTo("true");
 	}
 
 	[Test]
-	public async Task ExcludeMSTelemetryExtension_CanBeSetTrue()
+	public async Task ExcludeMSTelemetryExtension_CanBeSetTrue(CancellationToken cancellationToken)
 	{
-		await using var h = ProjectHarness.Create("MyLibrary",
-			extraProps: "<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>");
-		await Assert.That(await h.GetPropertyAsync("ExcludeMSTelemetryExtension")).IsEqualTo("true");
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraProps: "<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("ExcludeMSTelemetryExtension", cancellationToken)).IsEqualTo("true");
 	}
 }

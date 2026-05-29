@@ -14,31 +14,30 @@ namespace Purview.DotNetProjectSdk.Analyzers.Tests;
 public sealed class EditorBrowsableSuppressorTests
 {
 	static readonly string[] TrustedAssemblies = (
-		(string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? "")
-		.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+		(string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? ""
+	).Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
 	static ImmutableArray<MetadataReference> BuildBclReferences() =>
 		[.. TrustedAssemblies.Select(p => MetadataReference.CreateFromFile(p))];
 
-	static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
+	static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source, CancellationToken cancellationToken)
 	{
-		var parseOptions = CSharpParseOptions.Default
-			.WithDocumentationMode(DocumentationMode.Diagnose);
+		var parseOptions = CSharpParseOptions.Default.WithDocumentationMode(DocumentationMode.Diagnose);
 
-		var syntaxTree = CSharpSyntaxTree.ParseText(source, parseOptions);
+		var syntaxTree = CSharpSyntaxTree.ParseText(source, parseOptions, cancellationToken: cancellationToken);
 
 		var compilation = CSharpCompilation.Create(
 			"TestAssembly",
 			[syntaxTree],
 			BuildBclReferences(),
-			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+		);
 
-		var suppressors = ImmutableArray.Create<DiagnosticAnalyzer>(
-			new EditorBrowsableSuppressor());
+		var suppressors = ImmutableArray.Create<DiagnosticAnalyzer>(new EditorBrowsableSuppressor());
 
 		var compilationWithAnalyzers = compilation.WithAnalyzers(suppressors);
 
-		return await compilationWithAnalyzers.GetAllDiagnosticsAsync();
+		return await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
 	}
 
 	/// <summary>
@@ -46,7 +45,7 @@ public sealed class EditorBrowsableSuppressorTests
 	/// (missing XML documentation) suppressed.
 	/// </summary>
 	[Test]
-	public async Task Suppresses_CS1591_For_EditorBrowsableNever_Member()
+	public async Task Suppresses_CS1591_For_EditorBrowsableNever_Member(CancellationToken cancellationToken)
 	{
 		const string source = """
 			using System.ComponentModel;
@@ -60,12 +59,11 @@ public sealed class EditorBrowsableSuppressorTests
 			}
 			""";
 
-		var diagnostics = await AnalyzeAsync(source);
+		var diagnostics = await AnalyzeAsync(source, cancellationToken);
 		var cs1591 = diagnostics.Where(d => d.Id == "CS1591").ToArray();
 
 		// CS1591 may appear for the class itself; we care only about HiddenMethod.
-		var hiddenMethodDiag = cs1591.FirstOrDefault(
-			d => d.Location.GetLineSpan().StartLinePosition.Line == 7);  // "public void HiddenMethod"
+		var hiddenMethodDiag = cs1591.FirstOrDefault(d => d.Location.GetLineSpan().StartLinePosition.Line == 7); // "public void HiddenMethod"
 
 		// If no CS1591 at all, the compiler either didn't warn or the suppressor worked perfectly.
 		// If CS1591 is present for HiddenMethod it must be suppressed.
@@ -77,7 +75,7 @@ public sealed class EditorBrowsableSuppressorTests
 	/// A regular public method without [EditorBrowsable(Never)] must not have CS1591 suppressed.
 	/// </summary>
 	[Test]
-	public async Task DoesNot_Suppress_CS1591_For_Regular_PublicMember()
+	public async Task DoesNot_Suppress_CS1591_For_Regular_PublicMember(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace MyLib;
@@ -88,7 +86,7 @@ public sealed class EditorBrowsableSuppressorTests
 			}
 			""";
 
-		var diagnostics = await AnalyzeAsync(source);
+		var diagnostics = await AnalyzeAsync(source, cancellationToken);
 		var cs1591 = diagnostics.Where(d => d.Id == "CS1591").ToArray();
 
 		foreach (var d in cs1591)
@@ -100,7 +98,7 @@ public sealed class EditorBrowsableSuppressorTests
 	/// CS1591 must remain unsuppressed.
 	/// </summary>
 	[Test]
-	public async Task DoesNot_Suppress_CS1591_For_EditorBrowsableAlways_Member()
+	public async Task DoesNot_Suppress_CS1591_For_EditorBrowsableAlways_Member(CancellationToken cancellationToken)
 	{
 		const string source = """
 			using System.ComponentModel;
@@ -114,7 +112,7 @@ public sealed class EditorBrowsableSuppressorTests
 			}
 			""";
 
-		var diagnostics = await AnalyzeAsync(source);
+		var diagnostics = await AnalyzeAsync(source, cancellationToken);
 		var cs1591 = diagnostics.Where(d => d.Id == "CS1591").ToArray();
 
 		foreach (var d in cs1591)

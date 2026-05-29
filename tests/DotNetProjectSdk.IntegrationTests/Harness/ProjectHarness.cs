@@ -10,14 +10,16 @@ namespace Purview.DotNetProjectSdk.Harness;
 /// </summary>
 sealed class ProjectHarness : IAsyncDisposable
 {
-	static readonly string TempBase =
-		Path.Combine(Path.GetTempPath(), "PurviewSdkTests");
+	static readonly string TempBase = Path.Combine(Path.GetTempPath(), "PurviewSdkTests");
 
 	readonly string _workDir;
+
 	IDictionary<string, string>? _extraEnv;
 
 	public string ProjectName { get; }
+
 	public string ProjectDirectory { get; }
+
 	public string ProjectFilePath { get; }
 
 	ProjectHarness(string workDir, string projectName)
@@ -31,7 +33,7 @@ sealed class ProjectHarness : IAsyncDisposable
 	/// <summary>
 	/// Creates a standard SDK-style consumer project.
 	/// </summary>
-	public static ProjectHarness Create(
+	public static async Task<ProjectHarness> CreateAsync(
 		string projectName,
 		string sdk = "Microsoft.NET.Sdk",
 		string targetFramework = "net10.0",
@@ -39,30 +41,37 @@ sealed class ProjectHarness : IAsyncDisposable
 		bool withDockerfile = false,
 		string? extraProps = null,
 		string? extraItems = null,
-		IDictionary<string, string>? extraEnv = null)
+		IDictionary<string, string>? extraEnv = null,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var workDir = Path.Combine(TempBase, Guid.NewGuid().ToString("N"));
-		var harness = new ProjectHarness(workDir, projectName);
-		harness.WriteBoilerplate(namespacePrefix);
+		ProjectHarness harness = new(workDir, projectName);
+		await harness.WriteBoilerplateAsync(namespacePrefix, cancellationToken);
 
-		var propBlock = extraProps is null ? "" :
-			$"\n\t<PropertyGroup>\n\t\t{extraProps}\n\t</PropertyGroup>";
-		var itemBlock = extraItems is null ? "" :
-			$"\n\t<ItemGroup>\n\t\t{extraItems}\n\t</ItemGroup>";
+		var propBlock = extraProps is null ? "" : $"\n\t<PropertyGroup>\n\t\t{extraProps}\n\t</PropertyGroup>";
+		var itemBlock = extraItems is null ? "" : $"\n\t<ItemGroup>\n\t\t{extraItems}\n\t</ItemGroup>";
 
-		File.WriteAllText(harness.ProjectFilePath,
+		await File.WriteAllTextAsync(
+			harness.ProjectFilePath,
 			$"""
 			<Project Sdk="{sdk}">
 				<PropertyGroup>
 					<TargetFramework>{targetFramework}</TargetFramework>
 				</PropertyGroup>{propBlock}{itemBlock}
 			</Project>
-			""");
+			""",
+			cancellationToken
+		);
 
 		if (withDockerfile)
-			File.WriteAllText(
+		{
+			await File.WriteAllTextAsync(
 				Path.Combine(harness.ProjectDirectory, "Dockerfile"),
-				"FROM mcr.microsoft.com/dotnet/runtime:10.0");
+				"FROM mcr.microsoft.com/dotnet/runtime:10.0",
+				cancellationToken
+			);
+		}
 
 		harness._extraEnv = extraEnv;
 		return harness;
@@ -72,23 +81,26 @@ sealed class ProjectHarness : IAsyncDisposable
 	/// Creates a consumer project with fully custom file content.
 	/// The directory still gets the standard Directory.Build.props/targets bootstrapping.
 	/// </summary>
-	public static ProjectHarness CreateWithContent(
+	public static async Task<ProjectHarness> CreateWithContentAsync(
 		string projectName,
 		string projectFileContent,
-		string namespacePrefix = "Test")
+		string namespacePrefix = "Test",
+		CancellationToken cancellationToken = default
+	)
 	{
 		var workDir = Path.Combine(TempBase, Guid.NewGuid().ToString("N"));
-		var harness = new ProjectHarness(workDir, projectName);
-		harness.WriteBoilerplate(namespacePrefix);
-		File.WriteAllText(harness.ProjectFilePath, projectFileContent);
+		ProjectHarness harness = new(workDir, projectName);
+		await harness.WriteBoilerplateAsync(namespacePrefix, cancellationToken);
+		await File.WriteAllTextAsync(harness.ProjectFilePath, projectFileContent, cancellationToken);
+
 		return harness;
 	}
 
-	void WriteBoilerplate(string namespacePrefix)
+	async Task WriteBoilerplateAsync(string namespacePrefix, CancellationToken cancellationToken)
 	{
 		Directory.CreateDirectory(ProjectDirectory);
 
-		File.WriteAllText(
+		await File.WriteAllTextAsync(
 			Path.Combine(ProjectDirectory, "Directory.Build.props"),
 			$"""
 			<Project>
@@ -97,17 +109,21 @@ sealed class ProjectHarness : IAsyncDisposable
 				</PropertyGroup>
 				<Import Project="{SdkPaths.SdkDirectory}/Sdk.props" />
 			</Project>
-			""");
+			""",
+			cancellationToken
+		);
 
-		File.WriteAllText(
+		await File.WriteAllTextAsync(
 			Path.Combine(ProjectDirectory, "Directory.Build.targets"),
 			$"""
 			<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 				<Import Project="{SdkPaths.SdkDirectory}/Sdk.targets" />
 			</Project>
-			""");
+			""",
+			cancellationToken
+		);
 
-		File.WriteAllText(
+		await File.WriteAllTextAsync(
 			Path.Combine(ProjectDirectory, "Directory.Packages.props"),
 			"""
 			<Project>
@@ -115,7 +131,9 @@ sealed class ProjectHarness : IAsyncDisposable
 					<CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
 				</PropertyGroup>
 			</Project>
-			""");
+			""",
+			cancellationToken
+		);
 	}
 
 	/// <summary>
@@ -123,7 +141,9 @@ sealed class ProjectHarness : IAsyncDisposable
 	/// without triggering a build or package restore.
 	/// </summary>
 	public async Task<IReadOnlyDictionary<string, string>> GetPropertiesAsync(
-		params string[] propertyNames)
+		CancellationToken cancellationToken,
+		params string[] propertyNames
+	)
 	{
 		if (propertyNames.Length == 0)
 			return ImmutableDictionary<string, string>.Empty;
@@ -131,7 +151,7 @@ sealed class ProjectHarness : IAsyncDisposable
 		var propList = string.Join(",", propertyNames);
 		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getProperty:{propList}";
 
-		var (_, stdout, _) = await RunAsync("dotnet", args);
+		var (_, stdout, _) = await RunAsync("dotnet", args, cancellationToken);
 
 		stdout = stdout.Trim();
 
@@ -141,10 +161,8 @@ sealed class ProjectHarness : IAsyncDisposable
 		{
 			// Single property — plain text value.
 			return propertyNames.Length == 1
-				? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-				{ [propertyNames[0]] = stdout }
-				: propertyNames.ToDictionary(
-					p => p, _ => (string)"", StringComparer.OrdinalIgnoreCase);
+				? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [propertyNames[0]] = stdout }
+				: propertyNames.ToDictionary(p => p, _ => "", StringComparer.OrdinalIgnoreCase);
 		}
 
 		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -155,15 +173,17 @@ sealed class ProjectHarness : IAsyncDisposable
 				foreach (var prop in propsEl.EnumerateObject())
 					result[prop.Name] = prop.Value.GetString() ?? string.Empty;
 		}
-		catch (JsonException) { /* return what we have */ }
+		catch (JsonException)
+		{ /* return what we have */
+		}
 
 		return result;
 	}
 
 	/// <summary>Evaluates a single MSBuild property without building.</summary>
-	public async Task<string> GetPropertyAsync(string propertyName)
+	public async Task<string> GetPropertyAsync(string propertyName, CancellationToken cancellationToken)
 	{
-		var props = await GetPropertiesAsync(propertyName);
+		var props = await GetPropertiesAsync(cancellationToken, propertyName);
 		return props.TryGetValue(propertyName, out var v) ? v : string.Empty;
 	}
 
@@ -171,10 +191,13 @@ sealed class ProjectHarness : IAsyncDisposable
 	/// Evaluates one or more MSBuild items via <c>dotnet msbuild -getItem</c>
 	/// without triggering a build or package restore.
 	/// </summary>
-	public async Task<IReadOnlyList<string>> GetItemIdentitiesAsync(string itemType)
+	public async Task<IReadOnlyList<string>> GetItemIdentitiesAsync(
+		string itemType,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getItem:{itemType}";
-		var (_, stdout, _) = await RunAsync("dotnet", args);
+		var (_, stdout, _) = await RunAsync("dotnet", args, cancellationToken);
 
 		var jsonStart = stdout.Trim().IndexOf('{', StringComparison.Ordinal);
 		if (jsonStart < 0)
@@ -183,8 +206,10 @@ sealed class ProjectHarness : IAsyncDisposable
 		try
 		{
 			using var doc = JsonDocument.Parse(stdout[jsonStart..]);
-			if (doc.RootElement.TryGetProperty("Items", out var itemsEl) &&
-				itemsEl.TryGetProperty(itemType, out var typeEl))
+			if (
+				doc.RootElement.TryGetProperty("Items", out var itemsEl)
+				&& itemsEl.TryGetProperty(itemType, out var typeEl)
+			)
 			{
 				var ids = new List<string>();
 				foreach (var item in typeEl.EnumerateArray())
@@ -196,7 +221,9 @@ sealed class ProjectHarness : IAsyncDisposable
 				return ids;
 			}
 		}
-		catch (JsonException) { /* fall through */ }
+		catch (JsonException)
+		{ /* fall through */
+		}
 
 		return [];
 	}
@@ -206,16 +233,21 @@ sealed class ProjectHarness : IAsyncDisposable
 	/// Pass <paramref name="restore"/>=<c>true</c> when the project references NuGet packages.
 	/// </summary>
 	public async Task<(bool Success, string Output, string Errors)> BuildAsync(
-		bool restore = false)
+		bool restore = false,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var restoreFlag = restore ? "" : "--no-restore ";
 		var args = $"build \"{ProjectFilePath}\" {restoreFlag}-nologo -v:quiet";
-		var (code, stdout, stderr) = await RunAsync("dotnet", args);
+		var (code, stdout, stderr) = await RunAsync("dotnet", args, cancellationToken);
 		return (code == 0, stdout, stderr);
 	}
 
 	async Task<(int Code, string StdOut, string StdErr)> RunAsync(
-		string fileName, string arguments)
+		string fileName,
+		string arguments,
+		CancellationToken cancellationToken
+	)
 	{
 		using var process = new Process
 		{
@@ -228,17 +260,20 @@ sealed class ProjectHarness : IAsyncDisposable
 				RedirectStandardError = true,
 				UseShellExecute = false,
 				CreateNoWindow = true,
-			}
+			},
 		};
 
 		if (_extraEnv is not null)
+		{
 			foreach (var (key, value) in _extraEnv)
 				process.StartInfo.Environment[key] = value;
+		}
 
 		process.Start();
-		var stdoutTask = process.StandardOutput.ReadToEndAsync();
-		var stderrTask = process.StandardError.ReadToEndAsync();
-		await process.WaitForExitAsync();
+		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+
+		await process.WaitForExitAsync(cancellationToken);
 
 		return (process.ExitCode, await stdoutTask, await stderrTask);
 	}

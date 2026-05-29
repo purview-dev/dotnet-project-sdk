@@ -8,11 +8,13 @@ namespace Purview.DotNetProjectSdk.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 {
-	static readonly SuppressionDescriptor SuppressMissingXmlDocs =
-		new("PDS0001", "CS1591", "EditorBrowsable(Never) members do not require XML docs.");
+	static readonly SuppressionDescriptor SuppressMissingXmlDocs = new(
+		"PDS0001",
+		"CS1591",
+		"EditorBrowsable(Never) members do not require XML docs."
+	);
 
-	public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions
-		=> [SuppressMissingXmlDocs];
+	public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions => [SuppressMissingXmlDocs];
 
 	public override void ReportSuppressions(SuppressionAnalysisContext context)
 	{
@@ -45,9 +47,11 @@ sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 				continue;
 			}
 
-			if (attribute.ConstructorArguments.Length == 1 &&
-				attribute.ConstructorArguments[0].Value is int editorBrowsableState &&
-				editorBrowsableState == (int)EditorBrowsableState.Never)
+			if (
+				attribute.ConstructorArguments.Length == 1
+				&& attribute.ConstructorArguments[0].Value is int editorBrowsableState
+				&& editorBrowsableState == (int)EditorBrowsableState.Never
+			)
 			{
 				return true;
 			}
