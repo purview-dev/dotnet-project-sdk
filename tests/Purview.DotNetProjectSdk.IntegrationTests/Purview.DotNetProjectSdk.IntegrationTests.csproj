@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!--
+			Sdk.props computes: Purview.Purview.DotNetProjectSdk.IntegrationTests (NamespacePrefix + ProjectName)
+			then the test-project rule strips ".IntegrationTests" → Purview.Purview.DotNetProjectSdk.
+			Override to the correct namespace before FixRootNamespaceTarget runs.
+		-->
+		<RootNamespace>Purview.DotNetProjectSdk.Tests</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Remove the double-prefix using that Sdk.props adds before our RootNamespace override takes effect. -->
+		<Using Remove="Purview.Purview.DotNetProjectSdk" />
+		<Using Include="Purview.DotNetProjectSdk.Tests" />
+
+		<!--
+			Sdk.props auto-wires a ProjectReference to ../../src/Purview.DotNetProjectSdk/Purview.DotNetProjectSdk.csproj
+			because TargetProjectName resolves to "Purview.DotNetProjectSdk" and that path exists.
+			That packaging project produces no assembly; remove the erroneous reference.
+		-->
+		<ProjectReference Remove="../../src/Purview.DotNetProjectSdk/Purview.DotNetProjectSdk.csproj" />
+	</ItemGroup>
+
+	<!--
+		Emit the absolute path to the SDK source directory as a compile-time constant so the
+		ProjectHarness can construct consumer projects that import the SDK from local source.
+	-->
+	<Target Name="WriteSdkSourcePaths" BeforeTargets="BeforeCompile">
+		<PropertyGroup>
+			<_SdkDir>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)../../src/Purview.DotNetProjectSdk/Sdk))</_SdkDir>
+			<_SdkDirFwd>$(_SdkDir.Replace('\', '/'))</_SdkDirFwd>
+		</PropertyGroup>
+		<MakeDir Directories="$(IntermediateOutputPath)Generated" />
+		<WriteLinesToFile
+			File="$(IntermediateOutputPath)Generated/SdkPaths.cs"
+			Lines="namespace Purview.DotNetProjectSdk.Tests%3B;// &lt;auto-generated /&gt;;static class SdkPaths;{;    public const string SdkDirectory = &quot;$(_SdkDirFwd)&quot;%3B;    public const string Configuration = &quot;$(Configuration)&quot;%3B;}"
+			Overwrite="true"
+		/>
+		<ItemGroup>
+			<Compile Include="$(IntermediateOutputPath)Generated/SdkPaths.cs" />
+		</ItemGroup>
+	</Target>
+
+</Project>

@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Purview.DotNetProjectSdk.Analyzers/Purview.DotNetProjectSdk.Analyzers.csproj" />
+    <Project Path="src/Purview.DotNetProjectSdk/Purview.DotNetProjectSdk.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Purview.DotNetProjectSdk.Analyzers.UnitTests/Purview.DotNetProjectSdk.Analyzers.UnitTests.csproj" />
+    <Project Path="tests/Purview.DotNetProjectSdk.IntegrationTests/Purview.DotNetProjectSdk.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

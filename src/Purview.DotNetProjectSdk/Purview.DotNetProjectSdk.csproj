@@ -10,8 +10,10 @@
 
 		<!-- No compiled output — this is a pure MSBuild SDK package -->
 		<TargetFramework>net10.0</TargetFramework>
+		<RootNamespace>Purview.DotNetProjectSdk</RootNamespace>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<DisableGenerateAssemblyInfoClass>true</DisableGenerateAssemblyInfoClass>
 		<IsPackable>true</IsPackable>
 
 		<!-- Suppress the NamespacePrefix requirement for this packaging project -->
@@ -25,9 +27,26 @@
 		<NoDefaultExcludes>true</NoDefaultExcludes>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<Using Remove="Purview" />
+		<Using Remove="Purview.DotNetProjectSdk" />
+	</ItemGroup>
+
 	<!-- Pack the Sdk/ folder to the Sdk/ path in the NuGet package.
 	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
 	<ItemGroup>
+		<ProjectReference
+			Include="..\Purview.DotNetProjectSdk.Analyzers\Purview.DotNetProjectSdk.Analyzers.csproj"
+			PrivateAssets="all"
+			ReferenceOutputAssembly="false"
+			OutputItemType="Analyzer"
+		/>
+		<None
+			Include="..\Purview.DotNetProjectSdk.Analyzers\bin\$(Configuration)\netstandard2.0\Purview.DotNetProjectSdk.Analyzers.dll"
+			Condition="Exists('..\Purview.DotNetProjectSdk.Analyzers\bin\$(Configuration)\netstandard2.0\Purview.DotNetProjectSdk.Analyzers.dll')"
+			Pack="true"
+			PackagePath="analyzers/dotnet/cs"
+		/>
 		<None Include="Sdk/Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
 		<None Include="Sdk/Sdk.targets" Pack="true" PackagePath="Sdk/Sdk.targets" />
 		<None Include="Sdk/.editorconfig" Pack="true" PackagePath="Sdk/.editorconfig" />

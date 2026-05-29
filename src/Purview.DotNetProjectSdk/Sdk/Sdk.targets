@@ -78,7 +78,6 @@
 
 [global::System.CodeDom.Compiler.GeneratedCode(&quot;Purview.DotNetProjectSdk&quot;, &quot;$(PackageVersion)&quot;)]
 [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-[global::Microsoft.CodeAnalysis.Embedded]
 static class AssemblyInfo
 {
     public const string RootNamespace = &quot;$(RootNamespace)&quot;%3B
