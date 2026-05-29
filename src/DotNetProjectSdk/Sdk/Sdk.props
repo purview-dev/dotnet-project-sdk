@@ -60,9 +60,15 @@
 	<PropertyGroup Label="Define C# Properties" Condition="'$(MSBuildProjectExtension)' == '.csproj'">
 		<!-- Set some defaults -->
 		<IsCSharpProject>true</IsCSharpProject>
-		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''">false</ExcludePurviewTelemetry>
-		<ExcludeMSTelemetryExtension Condition="'$(ExcludeMSTelemetryExtension)' == ''">false</ExcludeMSTelemetryExtension>
-		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''">false</DisableGenerateAssemblyInfoClass>
+		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''"
+			>false</ExcludePurviewTelemetry
+		>
+		<ExcludeMSTelemetryExtension Condition="'$(ExcludeMSTelemetryExtension)' == ''"
+			>false</ExcludeMSTelemetryExtension
+		>
+		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''"
+			>false</DisableGenerateAssemblyInfoClass
+		>
 		<AutoIncludeUsings Condition="'$(AutoIncludeUsings)' == ''">true</AutoIncludeUsings>
 		<!-- Test project types -->
 		<IsTestProject>false</IsTestProject>
@@ -77,19 +83,31 @@
 		<!-- SDK project type detection by parsing the Sdk attribute -->
 		<SdkProjectName>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText(`$(MSBuildProjectFullPath)`)), `(?s-i)(?:^|\s|&gt;)(?s-i)(?:^|\s|&gt;)&lt;\s*(?:Project|Import)\s(?:[^&gt;]*?)\s?Sdk\s*="(?&lt;sdkproj&gt;.*?)"`).Groups['sdkproj'].Value)</SdkProjectName>
 		<IsSdkProject Condition="'$(SdkProjectName)' != ''">true</IsSdkProject>
-		<IsWebSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Web'">true</IsWebSdkProject>
-		<IsWorkerSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Worker'">true</IsWorkerSdkProject>
-		<IsContainerProject Condition="Exists('$(MSBuildProjectDirectory)\Dockerfile') OR Exists('$(MSBuildProjectDirectory)\dockerfile') OR Exists('$(MSBuildProjectDirectory)\Dockerfile.dev')">true</IsContainerProject>
+		<IsWebSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Web'"
+			>true</IsWebSdkProject
+		>
+		<IsWorkerSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Worker'"
+			>true</IsWorkerSdkProject
+		>
+		<IsContainerProject
+			Condition="Exists('$(MSBuildProjectDirectory)\Dockerfile') OR Exists('$(MSBuildProjectDirectory)\dockerfile') OR Exists('$(MSBuildProjectDirectory)\Dockerfile.dev')"
+			>true</IsContainerProject
+		>
 		<IsAspireHostProject
 			Label="Detect Aspire.Sdk.Host SDK projects - only works when the SDK attribute is on the Project element"
 			Condition="$([System.String]::Copy('$(SdkProjectName)').StartsWith('Aspire.Sdk.Host'))"
-			>true</IsAspireHostProject>
+			>true</IsAspireHostProject
+		>
 		<!-- Determine the testing type from the project name suffix -->
 		<TestingType
 			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Test')) OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Tests'))"
-			>$([System.Text.RegularExpressions.Regex]::Match($(MSBuildProjectName), `^.*\.([\w|_]\w*)Tests?$`).get_Groups().get_Item(1).ToString())</TestingType>
+			>$([System.Text.RegularExpressions.Regex]::Match($(MSBuildProjectName), `^.*\.([\w|_]\w*)Tests?$`).get_Groups().get_Item(1).ToString())</TestingType
+		>
 		<IsTestProject Condition="'$(TestingType)' != ''">true</IsTestProject>
-		<IsSharedTestingProject Condition="$(_SharedTestingProjectNames.Contains(';$(MSBuildProjectName);'))">true</IsSharedTestingProject>
+		<IsSharedTestingProject
+			Condition="$(_SharedTestingProjectNames.Contains(';$(MSBuildProjectName);'))"
+			>true</IsSharedTestingProject
+		>
 	</PropertyGroup>
 
 	<!-- =====================================================================
@@ -98,27 +116,36 @@
 	     your Directory.Build.props before importing this SDK.
 	     ===================================================================== -->
 	<PropertyGroup Label="Test Framework Selection">
-		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''">TUnit</ProjectSdkTestFramework>
+		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''"
+			>TUnit</ProjectSdkTestFramework
+		>
 	</PropertyGroup>
 
 	<!-- =====================================================================
 	     C# PROJECT DEFAULTS
 	     ===================================================================== -->
 	<PropertyGroup Label="C# Project Property Groups" Condition="$(IsCSharpProject)">
-		<TargetFramework Condition="'$(TargetFramework)' == '' AND '$(TargetFrameworks)' == ''">net10.0</TargetFramework>
+		<TargetFramework Condition="'$(TargetFramework)' == '' AND '$(TargetFrameworks)' == ''"
+			>net10.0</TargetFramework
+		>
 		<LangVersion>preview</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
 		<Deterministic>true</Deterministic>
 		<!-- Auto-detect CI environment from common env vars -->
-		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true' OR '$(GITHUB_ACTIONS)' == 'true' OR '$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
+		<ContinuousIntegrationBuild
+			Condition="'$(CI)' == 'true' OR '$(GITHUB_ACTIONS)' == 'true' OR '$(TF_BUILD)' == 'true'"
+			>true</ContinuousIntegrationBuild
+		>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
 		<!-- EditorConfig from the NuGet package Sdk/ folder — used for build-time code-style enforcement -->
 		<EditorConfigFilePath>$(MSBuildThisFileDirectory).editorconfig</EditorConfigFilePath>
 		<!-- Sensible default for SourceLink (override by setting SourceLinkPackageName) -->
-		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''">Microsoft.SourceLink.GitHub</SourceLinkPackageName>
+		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''"
+			>Microsoft.SourceLink.GitHub</SourceLinkPackageName
+		>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
 		<IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
@@ -144,7 +171,9 @@
 			Suffix-stripping happens in FixRootNamespaceTarget (Sdk.targets) because
 			@(NamespaceRemoveSuffix) only expands in targets, not in static PropertyGroups.
 		-->
-		<RootNamespace Condition="'$(NamespacePrefix)' != ''">$(NamespacePrefix).$(MSBuildProjectName)</RootNamespace>
+		<RootNamespace Condition="'$(NamespacePrefix)' != ''"
+			>$(NamespacePrefix).$(MSBuildProjectName)</RootNamespace
+		>
 	</PropertyGroup>
 
 	<!-- Test project namespace cleanup -->
@@ -158,7 +187,10 @@
 	     ===================================================================== -->
 	<ItemGroup Label="C# Project Item Groups" Condition="$(IsCSharpProject)">
 		<!-- Implicit usings -->
-		<Using Condition="'$(AutoIncludeUsings)' AND '$(NamespacePrefix)' != ''" Include="$(NamespacePrefix)" />
+		<Using
+			Condition="'$(AutoIncludeUsings)' AND '$(NamespacePrefix)' != ''"
+			Include="$(NamespacePrefix)"
+		/>
 		<Using Condition="'$(AutoIncludeUsings)'" Include="$(RootNamespace)" />
 		<!-- InternalsVisibleTo for Moq/NSubstitute dynamic proxies -->
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
@@ -213,7 +245,10 @@
 	<!-- =====================================================================
 	     LIBRARY PROJECTS
 	     ===================================================================== -->
-	<PropertyGroup Label="Library Project Properties" Condition="$(IsCSharpProject) AND !$(IsTestProject) AND !$(IsSharedTestingProject)">
+	<PropertyGroup
+		Label="Library Project Properties"
+		Condition="$(IsCSharpProject) AND !$(IsTestProject) AND !$(IsSharedTestingProject)"
+	>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.xml</AllowedOutputExtensionsInPackageBuildOutputFolder>
 	</PropertyGroup>
@@ -250,7 +285,10 @@
 	<!-- =====================================================================
 	     SOURCELINK — auto-added to all non-test projects
 	     ===================================================================== -->
-	<ItemGroup Label="NuGet Package References" Condition="!$(IsTestProject) AND '$(SourceLinkPackageName)' != ''">
+	<ItemGroup
+		Label="NuGet Package References"
+		Condition="!($(IsTestProject) OR $(IsSharedTestingProject)) AND '$(SourceLinkPackageName)' != ''"
+	>
 		<PackageReference Include="$(SourceLinkPackageName)">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -260,7 +298,10 @@
 	<!-- =====================================================================
 	     SHARED TEST PROJECT PROPERTIES
 	     ===================================================================== -->
-	<PropertyGroup Condition="$(IsTestProject) OR $(IsSharedTestingProject)" Label="C# Shared Testing Project Properties">
+	<PropertyGroup
+		Condition="$(IsTestProject) OR $(IsSharedTestingProject)"
+		Label="C# Shared Testing Project Properties"
+	>
 		<NoWarn>$(NoWarn);CA1062;CA1515;CA1707;CA1822;</NoWarn>
 		<NoWarn>$(NoWarn);CS1591;</NoWarn>
 		<Packable>false</Packable>
@@ -279,10 +320,16 @@
 		<EnableStaticNativeInstrumentation>false</EnableStaticNativeInstrumentation>
 		<EnableDynamicNativeInstrumentation>false</EnableDynamicNativeInstrumentation>
 	</PropertyGroup>
-	<PropertyGroup Label="Testing NuGet Packages" Condition="$(IsTestProject) OR $(IsSharedTestingProject)">
+	<PropertyGroup
+		Label="Testing NuGet Packages"
+		Condition="$(IsTestProject) OR $(IsSharedTestingProject)"
+	>
 		<DisableGenerateAssemblyInfoClass>true</DisableGenerateAssemblyInfoClass>
 	</PropertyGroup>
-	<ItemGroup Label="Testing NuGet Packages" Condition="$(IsTestProject) OR $(IsSharedTestingProject)">
+	<ItemGroup
+		Label="Testing NuGet Packages"
+		Condition="$(IsTestProject) OR $(IsSharedTestingProject)"
+	>
 		<AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
 		<Using Include="NSubstitute" />
 		<PackageReference Include="Bogus" />
@@ -321,6 +368,10 @@
 		Label="XUnit NuGet Packages"
 		Condition="($(IsTestProject) OR $(IsSharedTestingProject)) AND '$(ProjectSdkTestFramework)' == 'XUnit'"
 	>
+		<AssemblyAttribute Include="Xunit.Trait" Condition="!$(IsSharedTestingProject)">
+			<_Parameter1>Category</_Parameter1>
+			<_Parameter2>$(TestingType)</_Parameter2>
+		</AssemblyAttribute>
 		<PackageReference Include="xunit.v3" Condition="!$(IsSharedTestingProject)" />
 		<PackageReference Include="xunit.runner.visualstudio" Condition="!$(IsSharedTestingProject)">
 			<PrivateAssets>all</PrivateAssets>
