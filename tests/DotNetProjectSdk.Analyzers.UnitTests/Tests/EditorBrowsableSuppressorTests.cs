@@ -1,9 +1,7 @@
 using System.Collections.Immutable;
-using System.ComponentModel;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Purview.DotNetProjectSdk.Analyzers;
 
 namespace Purview.DotNetProjectSdk.Analyzers.Tests;
 
@@ -15,12 +13,12 @@ namespace Purview.DotNetProjectSdk.Analyzers.Tests;
 /// </summary>
 public sealed class EditorBrowsableSuppressorTests
 {
-	static readonly string[] s_trustedAssemblies = (
+	static readonly string[] TrustedAssemblies = (
 		(string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? "")
 		.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
 
 	static ImmutableArray<MetadataReference> BuildBclReferences() =>
-		[.. s_trustedAssemblies.Select(p => MetadataReference.CreateFromFile(p))];
+		[.. TrustedAssemblies.Select(p => MetadataReference.CreateFromFile(p))];
 
 	static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
 	{

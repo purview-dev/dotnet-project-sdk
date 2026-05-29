@@ -1,3 +1,5 @@
+using Purview.DotNetProjectSdk.Harness;
+
 namespace Purview.DotNetProjectSdk.Tests;
 
 /// <summary>

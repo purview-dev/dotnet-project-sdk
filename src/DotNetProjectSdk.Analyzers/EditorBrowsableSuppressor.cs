@@ -6,13 +6,13 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Purview.DotNetProjectSdk.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-internal sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
+sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 {
-	private static readonly SuppressionDescriptor SuppressMissingXmlDocs =
+	static readonly SuppressionDescriptor SuppressMissingXmlDocs =
 		new("PDS0001", "CS1591", "EditorBrowsable(Never) members do not require XML docs.");
 
 	public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions
-		=> ImmutableArray.Create(SuppressMissingXmlDocs);
+		=> [SuppressMissingXmlDocs];
 
 	public override void ReportSuppressions(SuppressionAnalysisContext context)
 	{

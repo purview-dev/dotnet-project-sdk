@@ -63,6 +63,7 @@
 		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''">false</ExcludePurviewTelemetry>
 		<ExcludeMSTelemetryExtension Condition="'$(ExcludeMSTelemetryExtension)' == ''">false</ExcludeMSTelemetryExtension>
 		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''">false</DisableGenerateAssemblyInfoClass>
+		<AutoIncludeUsings Condition="'$(AutoIncludeUsings)' == ''">true</AutoIncludeUsings>
 		<!-- Test project types -->
 		<IsTestProject>false</IsTestProject>
 		<IsSharedTestingProject>false</IsSharedTestingProject>
@@ -157,8 +158,8 @@
 	     ===================================================================== -->
 	<ItemGroup Label="C# Project Item Groups" Condition="$(IsCSharpProject)">
 		<!-- Implicit usings -->
-		<Using Condition="'$(NamespacePrefix)' != ''" Include="$(NamespacePrefix)" />
-		<Using Include="$(RootNamespace)" />
+		<Using Condition="'$(AutoIncludeUsings)' AND '$(NamespacePrefix)' != ''" Include="$(NamespacePrefix)" />
+		<Using Condition="'$(AutoIncludeUsings)'" Include="$(RootNamespace)" />
 		<!-- InternalsVisibleTo for Moq/NSubstitute dynamic proxies -->
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 			<_Parameter1>"DynamicProxyGenAssembly2"</_Parameter1>

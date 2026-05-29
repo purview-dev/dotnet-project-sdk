@@ -5,13 +5,10 @@
 		<DisableGenerateAssemblyInfoClass>true</DisableGenerateAssemblyInfoClass>
 		<EmbedUntrackedSources>false</EmbedUntrackedSources>
 		<GenerateDocumentationFile>false</GenerateDocumentationFile>
-		<RootNamespace>Purview.DotNetProjectSdk.Analyzers</RootNamespace>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<IsRoslynComponent>true</IsRoslynComponent>
+		<AssemblyName>Purview.DotNetProjectSdk.Analyzers</AssemblyName>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<Using Remove="Purview.Purview.DotNetProjectSdk.Analyzers" />
-		<Using Include="Purview.DotNetProjectSdk.Analyzers" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp">

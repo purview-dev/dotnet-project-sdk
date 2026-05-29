@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk.Harness;
 
 /// <summary>
 /// Creates throwaway consumer projects on disk that import the SDK from source,
@@ -10,7 +10,7 @@ namespace Purview.DotNetProjectSdk.Tests;
 /// </summary>
 sealed class ProjectHarness : IAsyncDisposable
 {
-	static readonly string s_tempBase =
+	static readonly string TempBase =
 		Path.Combine(Path.GetTempPath(), "PurviewSdkTests");
 
 	readonly string _workDir;
@@ -41,7 +41,7 @@ sealed class ProjectHarness : IAsyncDisposable
 		string? extraItems = null,
 		IDictionary<string, string>? extraEnv = null)
 	{
-		var workDir = Path.Combine(s_tempBase, Guid.NewGuid().ToString("N"));
+		var workDir = Path.Combine(TempBase, Guid.NewGuid().ToString("N"));
 		var harness = new ProjectHarness(workDir, projectName);
 		harness.WriteBoilerplate(namespacePrefix);
 
@@ -77,7 +77,7 @@ sealed class ProjectHarness : IAsyncDisposable
 		string projectFileContent,
 		string namespacePrefix = "Test")
 	{
-		var workDir = Path.Combine(s_tempBase, Guid.NewGuid().ToString("N"));
+		var workDir = Path.Combine(TempBase, Guid.NewGuid().ToString("N"));
 		var harness = new ProjectHarness(workDir, projectName);
 		harness.WriteBoilerplate(namespacePrefix);
 		File.WriteAllText(harness.ProjectFilePath, projectFileContent);
@@ -142,7 +142,7 @@ sealed class ProjectHarness : IAsyncDisposable
 			// Single property — plain text value.
 			return propertyNames.Length == 1
 				? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-					{ [propertyNames[0]] = stdout }
+				{ [propertyNames[0]] = stdout }
 				: propertyNames.ToDictionary(
 					p => p, _ => (string)"", StringComparer.OrdinalIgnoreCase);
 		}
