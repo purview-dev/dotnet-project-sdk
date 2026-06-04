@@ -171,8 +171,8 @@ To add project-specific packages, just append `PackageVersion` entries to your `
 ## Building the SDK
 
 ```sh
-dotnet build src/Purview.DotNetProjectSdk/Purview.DotNetProjectSdk.csproj
-dotnet pack src/Purview.DotNetProjectSdk/Purview.DotNetProjectSdk.csproj -o ./artifacts
+dotnet build src/DotNetProjectSdk/DotNetProjectSdk.csproj
+dotnet pack src/DotNetProjectSdk/DotNetProjectSdk.csproj -o ./artifacts
 ```
 
 ## License
