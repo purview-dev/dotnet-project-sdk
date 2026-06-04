@@ -159,6 +159,7 @@ Stripped suffixes: `Core`, `EF`, `Shared`, `ClientShared`, `ServiceDefaults`, an
 The SDK sets `ManagePackageVersionsCentrally=true`. The `templates/Directory.Packages.props` file contains `PackageVersion` entries for all packages the SDK auto-adds — all set to `Version="*"` (floating to latest).
 
 To pin a package:
+
 ```xml
 <PackageVersion Include="TUnit" Version="1.45.29" />
 ```

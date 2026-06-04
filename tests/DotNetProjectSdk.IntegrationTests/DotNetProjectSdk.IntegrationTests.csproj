@@ -18,5 +18,4 @@
 			<Compile Include="$(IntermediateOutputPath)Generated/SdkPaths.cs" />
 		</ItemGroup>
 	</Target>
-
 </Project>
