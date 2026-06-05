@@ -48,16 +48,22 @@
 	     INTERNALS VISIBLE TO
 	     Generates InternalsVisibleToAttribute for Non-Test Projects based on
 	     the defined TestType items so test projects can access internals.
+	     Can be disabled by setting DisableAutoInternalsVisibleTo=true.
 	     ===================================================================== -->
 	<Target
 		Name="InternalsVisibleToTarget"
 		BeforeTargets="BeforeCompile"
-		Condition="$(IsCSharpProject) AND !$(IsTestProject)"
-		Label="Generates InternalsVisibleToAttribute entries for all TestType variants."
+		Condition="$(IsCSharpProject) AND !$(IsTestProject) AND !$(DisableAutoInternalsVisibleTo)"
+		Label="Generates InternalsVisibleToAttribute entries for all TestType variants and SharedTesting projects."
 	>
 		<ItemGroup>
+			<!-- InternalsVisibleTo for each TestType -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 				<_Parameter1>$(MSBuildProjectName).%(TestType.Identity)Tests</_Parameter1>
+			</AssemblyAttribute>
+			<!-- InternalsVisibleTo for all SharedTesting projects -->
+			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+				<_Parameter1>%(SharedTestingProjectName.Identity)</_Parameter1>
 			</AssemblyAttribute>
 		</ItemGroup>
 	</Target>

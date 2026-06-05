@@ -69,6 +69,9 @@
 		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''"
 			>false</DisableGenerateAssemblyInfoClass
 		>
+		<DisableAutoInternalsVisibleTo Condition="'$(DisableAutoInternalsVisibleTo)' == ''"
+			>false</DisableAutoInternalsVisibleTo
+		>
 		<AutoIncludeUsings Condition="'$(AutoIncludeUsings)' == ''">true</AutoIncludeUsings>
 		<!-- Test project types -->
 		<IsTestProject>false</IsTestProject>
