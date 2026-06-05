@@ -106,6 +106,7 @@ Set any of these properties **before** the `<Import>` in your `Directory.Build.p
 | Property | Default | Description |
 |---|---|---|
 | `ProjectSdkTestFramework` | `TUnit` | Testing framework. Set to `XUnit` to switch to xunit v3. |
+| `DisableAutoInternalsVisibleTo` | `false` | Set to `true` to disable automatic `InternalsVisibleTo` generation for test types and shared testing projects. |
 
 #### Example: switch a repo to XUnit
 
@@ -142,7 +143,19 @@ Projects named `SharedTestingFramework`, `SharedTestingInfrastructure`, `SharedT
 
 ## InternalsVisibleTo
 
-The SDK automatically generates `[assembly: InternalsVisibleTo("MyProject.UnitTests")]` (and all other TestType variants) for every non-test project. No manual attributes required.
+The SDK automatically generates `[assembly: InternalsVisibleTo("MyProject.UnitTests")]` (and all other TestType variants) for every non-test project. This allows test projects to access internal members. No manual attributes required.
+
+Additionally, all SharedTesting projects (like `SharedTestingFramework`, `SharedTestingInfrastructure`, etc.) are also granted access to internals, so shared testing infrastructure has full visibility into the projects being tested.
+
+### Disabling automatic InternalsVisibleTo
+
+To disable automatic InternalsVisibleTo generation, set `DisableAutoInternalsVisibleTo=true` in your project or `Directory.Build.props`:
+
+```xml
+<PropertyGroup>
+  <DisableAutoInternalsVisibleTo>true</DisableAutoInternalsVisibleTo>
+</PropertyGroup>
+```
 
 ---
 
