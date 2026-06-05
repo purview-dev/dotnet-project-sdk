@@ -6,6 +6,7 @@
 		<PackageTags>msbuild;sdk;build;tunit;xunit;csharp;dotnet;central-package-management</PackageTags>
 		<PackageProjectUrl>https://github.com/kjldev/purview-dotnet-project-sdk</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
 
 		<!-- No compiled output — this is a pure MSBuild SDK package -->
@@ -44,5 +45,6 @@
 		<None Include="Sdk/Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
 		<None Include="Sdk/Sdk.targets" Pack="true" PackagePath="Sdk/Sdk.targets" />
 		<None Include="Sdk/.editorconfig" Pack="true" PackagePath="Sdk/.editorconfig" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 </Project>
