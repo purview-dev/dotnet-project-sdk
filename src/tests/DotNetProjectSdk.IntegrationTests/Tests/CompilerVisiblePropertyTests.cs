@@ -19,6 +19,11 @@ public sealed class CompilerVisiblePropertyTests
 
 		var expected = new[]
 		{
+			"UsePackageJsonVersion",
+			"RootPackageJson",
+			"RepoRoot",
+			"Version",
+			"PackageVersion",
 			"NamespacePrefix",
 			"DisableNamespacePrefixCheck",
 			"ProjectSdkTestFramework",

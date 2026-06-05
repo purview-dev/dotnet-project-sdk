@@ -1,4 +1,6 @@
 <Project>
+	<Import Project="$(MSBuildThisFileDirectory)Props/VersionDetection.props "/>
+	
 	<!-- =====================================================================
 	     SHARED TESTING PROJECT NAMES
 	     Single source of truth for shared testing project names.

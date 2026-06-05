@@ -3,7 +3,7 @@
 		<PackageId>Purview.DotNetProjectSdk</PackageId>
 		<PackageType>MSBuildSdk</PackageType>
 		<Description>A reusable MSBuild SDK that provides standardised .NET project defaults, code style enforcement, test framework wiring (TUnit or XUnit), and Central Package Management integration. Drop in via Directory.Build.props to apply uniformly across every project in a repo.</Description>
-		<PackageTags>msbuild;sdk;build;tunit;xunit;csharp;dotnet;central-package-management</PackageTags>
+		<PackageTags>msbuild;sdk;build;tunit;xunit;csharp;dotnet</PackageTags>
 		<PackageProjectUrl>https://github.com/kjldev/purview-dotnet-project-sdk</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -36,15 +36,22 @@
 			ReferenceOutputAssembly="false"
 			OutputItemType="Analyzer"
 		/>
+
 		<None
 			Include="..\DotNetProjectSdk.Analyzers\bin\$(Configuration)\netstandard2.0\Purview.DotNetProjectSdk.Analyzers.dll"
 			Condition="Exists('..\DotNetProjectSdk.Analyzers\bin\$(Configuration)\netstandard2.0\Purview.DotNetProjectSdk.Analyzers.dll')"
 			Pack="true"
 			PackagePath="analyzers/dotnet/cs"
 		/>
-		<None Include="Sdk/Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
-		<None Include="Sdk/Sdk.targets" Pack="true" PackagePath="Sdk/Sdk.targets" />
-		<None Include="Sdk/.editorconfig" Pack="true" PackagePath="Sdk/.editorconfig" />
-		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+
+		<None Include="Sdk\**\*" Pack="true" PackagePath="Sdk\%(RecursiveDir)" />
+
+		<None Include="$(MSBuildThisFileDirectory)..\..\..\README.md" Pack="true" PackagePath="/" />
+		<None Include="$(MSBuildThisFileDirectory)..\..\..\LICENSE.md" Pack="true" PackagePath="/" />
+		<None
+			Include="$(MSBuildThisFileDirectory)../../../assets/images/kjldev-logo.png"
+			Pack="true"
+			PackagePath="/"
+		/>
 	</ItemGroup>
 </Project>

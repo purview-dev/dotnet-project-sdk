@@ -17,8 +17,8 @@ A reusable MSBuild SDK NuGet package that delivers standardised .NET project def
 | **Namespace management** | `NamespacePrefix.ProjectName` pattern with suffix stripping (`.Core`, `.Shared`, `.EF`, …) |
 | **Test framework** | **TUnit** by default; switch to **XUnit v3** with one property |
 | **Testing extras** | NSubstitute, Bogus, `Microsoft.Testing.Platform.MSBuild`, Aspire.Hosting — all wired up |
+| **Version detection** | Reads `version` from `package.json` and applies it to `Version` and `PackageVersion` automatically; falls back to `0.0.1` |
 | **CPM** | `ManagePackageVersionsCentrally=true` — versions live in your `Directory.Packages.props` |
-| **Container projects** | AOT, Linux Docker defaults when a `Dockerfile` is present |
 
 ---
 
@@ -85,6 +85,34 @@ The `templates/` folder contains ready-to-copy starter files for new repos:
 
 Set any of these properties **before** the `<Import>` in your `Directory.Build.props`:
 
+### Version detection
+
+| Property | Default | Description |
+|---|---|---|
+| `UsePackageJsonVersion` | `true` | Set to `false` to disable reading `Version`/`PackageVersion` from `package.json`. |
+| `RootPackageJson` | *(auto-discovered)* | Explicit path to a `package.json`. Relative paths are resolved from the project directory. |
+
+When `UsePackageJsonVersion=true` (the default) the SDK:
+
+1. **Explicit path** — if `RootPackageJson` is set, reads that file directly.
+2. **Auto-discovery** — otherwise, walks up from the project directory looking for a `.git` marker to locate the repo root, then reads `package.json` from there.
+
+The extracted `version` field is applied to both `Version` and `PackageVersion`. A build error is raised if the file can't be found or contains no `version` field.
+
+> **Important — set before the import:** Both `UsePackageJsonVersion` and `RootPackageJson` must be set **before** the `<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.props" />` line in your `Directory.Build.props`. The version logic runs during that import and cannot see properties set afterwards (e.g. in individual `.csproj` files).
+>
+> ```xml
+> <Project>
+>   <PropertyGroup>
+>     <NamespacePrefix>Acme</NamespacePrefix>
+>     <!-- Set here, before the import -->
+>     <RootPackageJson>$(MSBuildThisFileDirectory)package.json</RootPackageJson>
+>   </PropertyGroup>
+>
+>   <Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.props" />
+> </Project>
+> ```
+
 ### General
 
 | Property | Default | Description |
@@ -114,6 +142,11 @@ The SDK now exports its properties via `CompilerVisibleProperty`, so analyzers a
 
 | Property | Description |
 |---|---|
+| `UsePackageJsonVersion` | Whether version detection from `package.json` is active. |
+| `RootPackageJson` | Resolved path to the `package.json` used for version detection. |
+| `RepoRoot` | Repo root directory found via `.git` auto-discovery. |
+| `Version` | Package/assembly version, sourced from `package.json` when detection is enabled. |
+| `PackageVersion` | NuGet package version, sourced from `package.json` when detection is enabled. |
 | `NamespacePrefix` | Required namespace prefix used to derive `RootNamespace`. |
 | `DisableNamespacePrefixCheck` | Disables the build error for missing `NamespacePrefix`. |
 | `ProjectSdkTestFramework` | Selected test framework (`TUnit` by default, `XUnit` opt-in). |

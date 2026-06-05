@@ -42,12 +42,13 @@ sealed class ProjectHarness : IAsyncDisposable
 		string? extraProps = null,
 		string? extraItems = null,
 		IDictionary<string, string>? extraEnv = null,
+		string? preImportProps = null,
 		CancellationToken cancellationToken = default
 	)
 	{
 		var workDir = Path.Combine(TempBase, Guid.NewGuid().ToString("N"));
 		ProjectHarness harness = new(workDir, projectName);
-		await harness.WriteBoilerplateAsync(namespacePrefix, cancellationToken);
+		await harness.WriteBoilerplateAsync(namespacePrefix, preImportProps, cancellationToken);
 
 		var propBlock = extraProps is null ? "" : $"\n\t<PropertyGroup>\n\t\t{extraProps}\n\t</PropertyGroup>";
 		var itemBlock = extraItems is null ? "" : $"\n\t<ItemGroup>\n\t\t{extraItems}\n\t</ItemGroup>";
@@ -90,15 +91,19 @@ sealed class ProjectHarness : IAsyncDisposable
 	{
 		var workDir = Path.Combine(TempBase, Guid.NewGuid().ToString("N"));
 		ProjectHarness harness = new(workDir, projectName);
-		await harness.WriteBoilerplateAsync(namespacePrefix, cancellationToken);
+		await harness.WriteBoilerplateAsync(namespacePrefix, preImportProps: null, cancellationToken);
 		await File.WriteAllTextAsync(harness.ProjectFilePath, projectFileContent, cancellationToken);
 
 		return harness;
 	}
 
-	async Task WriteBoilerplateAsync(string namespacePrefix, CancellationToken cancellationToken)
+	async Task WriteBoilerplateAsync(string namespacePrefix, string? preImportProps, CancellationToken cancellationToken)
 	{
 		Directory.CreateDirectory(ProjectDirectory);
+
+		var preImportBlock = preImportProps is null
+			? ""
+			: $"\n\t<PropertyGroup>\n\t\t{preImportProps}\n\t</PropertyGroup>";
 
 		await File.WriteAllTextAsync(
 			Path.Combine(ProjectDirectory, "Directory.Build.props"),
@@ -106,7 +111,7 @@ sealed class ProjectHarness : IAsyncDisposable
 			<Project>
 				<PropertyGroup>
 					<NamespacePrefix>{namespacePrefix}</NamespacePrefix>
-				</PropertyGroup>
+				</PropertyGroup>{preImportBlock}
 				<Import Project="{SdkPaths.SdkDirectory}/Sdk.props" />
 			</Project>
 			""",

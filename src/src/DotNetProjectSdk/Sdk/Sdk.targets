@@ -1,4 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Import Project="$(MSBuildThisFileDirectory)Targets/VersionDetection.targets "/>
+
 	<!-- =====================================================================
 	     FIX ROOT NAMESPACE
 	     Strips known suffixes from RootNamespace. @(NamespaceRemoveSuffix) only
