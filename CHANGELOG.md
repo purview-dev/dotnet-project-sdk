@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.2
+
+### Patch Changes
+
+- fixed issues with sdk file location when packged
+
 ## 1.0.0-reprelease.1
 
 ### Patch Changes
