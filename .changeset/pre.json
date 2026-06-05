@@ -1,6 +1,6 @@
 {
   "mode": "pre",
-  "tag": "reprelease",
+  "tag": "prerelease",
   "initialVersions": {
     "changeops": "0.0.0"
   },
