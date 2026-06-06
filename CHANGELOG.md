@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.4
+
+### Patch Changes
+
+- added embedded attribute gen"
+
 ## 1.0.0-prerelease.3
 
 ### Patch Changes
