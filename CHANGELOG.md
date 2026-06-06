@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.3
+
+### Patch Changes
+
+- fixed editorconfig props not exposed to VS correctly
+
 ## 1.0.0-prerelease.2
 
 ### Patch Changes
