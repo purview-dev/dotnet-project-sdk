@@ -31,23 +31,23 @@
 	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
 	<ItemGroup>
 		<ProjectReference
-			Include="..\DotNetProjectSdk.Analyzers\DotNetProjectSdk.Analyzers.csproj"
+			Include="../DotNetProjectSdk.Analyzers/DotNetProjectSdk.Analyzers.csproj"
 			PrivateAssets="all"
 			ReferenceOutputAssembly="false"
 			OutputItemType="Analyzer"
 		/>
 
 		<None
-			Include="..\DotNetProjectSdk.Analyzers\bin\$(Configuration)\netstandard2.0\Purview.DotNetProjectSdk.Analyzers.dll"
-			Condition="Exists('..\DotNetProjectSdk.Analyzers\bin\$(Configuration)\netstandard2.0\Purview.DotNetProjectSdk.Analyzers.dll')"
+			Include="../DotNetProjectSdk.Analyzers/bin/$(Configuration)/netstandard2.0/Purview.DotNetProjectSdk.Analyzers.dll"
+			Condition="Exists('../DotNetProjectSdk.Analyzers/bin/$(Configuration)/netstandard2.0/Purview.DotNetProjectSdk.Analyzers.dll')"
 			Pack="true"
 			PackagePath="analyzers/dotnet/cs"
 		/>
 
-		<None Include="Sdk\**\*" Pack="true" PackagePath="Sdk\" />
+		<None Include="Sdk/**/*" Pack="true" PackagePath="Sdk\" />
 
-		<None Include="$(MSBuildThisFileDirectory)..\..\..\README.md" Pack="true" PackagePath="/" />
-		<None Include="$(MSBuildThisFileDirectory)..\..\..\LICENSE.md" Pack="true" PackagePath="/" />
+		<None Include="$(MSBuildThisFileDirectory)../../../README.md" Pack="true" PackagePath="/" />
+		<None Include="$(MSBuildThisFileDirectory)../../../LICENSE.md" Pack="true" PackagePath="/" />
 		<None
 			Include="$(MSBuildThisFileDirectory)../../../assets/images/kjldev-logo.png"
 			Pack="true"

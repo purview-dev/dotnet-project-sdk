@@ -109,6 +109,31 @@ public sealed class CoreDefaultsTests
 	}
 
 	[Test]
+	public async Task EditorConfigFilePath_PointsToExistingSdkEditorConfig(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		var editorConfigPath = await h.GetPropertyAsync("EditorConfigFilePath", cancellationToken);
+
+		await Assert.That(string.IsNullOrWhiteSpace(editorConfigPath)).IsFalse();
+		await Assert.That(File.Exists(editorConfigPath)).IsTrue();
+	}
+
+	[Test]
+	public async Task EditorConfigFiles_Contains_SdkEditorConfig(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		var editorConfigPath = await h.GetPropertyAsync("EditorConfigFilePath", cancellationToken);
+		var editorConfigFiles = await h.GetItemIdentitiesAsync("EditorConfigFiles", cancellationToken);
+
+		var normalizedEditorConfigPath = Path.GetFullPath(editorConfigPath).TrimEnd('\\', '/');
+		var hasSdkEditorConfig = editorConfigFiles.Any(path =>
+			Path.GetFullPath(path).TrimEnd('\\', '/') == normalizedEditorConfigPath
+		);
+
+		await Assert.That(hasSdkEditorConfig).IsTrue();
+	}
+
+	[Test]
 	[Arguments("net9.0", "net9.0")]
 	[Arguments("net10.0", "net10.0")]
 	public async Task TargetFramework_Honoured_WhenExplicitlySet(

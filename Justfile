@@ -22,7 +22,7 @@ test configuration=build_configuration:
 pack publish_folder=artifacts_folder version=current_version:
     dotnet pack {{project}} -o {{publish_folder}} -p:PackageVersion={{version}} -p:Version={{version}}
 
-# Display the current version from package.json
+# Displays the current version from package.json
 current_version:
     @echo {{current_version}}
 
