@@ -11,7 +11,7 @@
 		<PackageIcon>kjldev-logo.png</PackageIcon>
 
 		<!-- No compiled output — this is a pure MSBuild SDK package -->
-		<TargetFramework>net10.0</TargetFramework>
+		<TargetFramework>netstandard2.0</TargetFramework>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 		<GenerateDocumentationFile>false</GenerateDocumentationFile>
 		<DisableGenerateAssemblyInfoClass>true</DisableGenerateAssemblyInfoClass>

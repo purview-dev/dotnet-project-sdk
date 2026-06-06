@@ -12,7 +12,7 @@ A reusable MSBuild SDK NuGet package that delivers standardised .NET project def
 | **CI detection** | `ContinuousIntegrationBuild` set automatically when `CI`, `GITHUB_ACTIONS`, or `TF_BUILD` env vars are present |
 | **SourceLink** | `Microsoft.SourceLink.GitHub` added to all packable projects (configurable via `SourceLinkPackageName`) |
 | **Purview Telemetry** | `Purview.Telemetry.SourceGenerator` + `Microsoft.Extensions.Telemetry.Abstractions` added by default (opt-out) |
-| **Assembly info** | Auto-generated `static class AssemblyInfo` with `RootNamespace`, `Version`, `Company`, etc. |
+| **Assembly info** | Auto-generated `static class AssemblyInfo` with `RootNamespace`, `Version`, `Company`, etc., plus an embedded `Microsoft.CodeAnalysis.EmbeddedAttribute` (can be excluded via `PURVIEW_SDK_EXCLUDE_EMBEDDED`). |
 | **InternalsVisibleTo** | Generated for all defined `TestType` variants automatically |
 | **Namespace management** | `NamespacePrefix.ProjectName` pattern with suffix stripping (`.Core`, `.Shared`, `.EF`, …) |
 | **Test framework** | **TUnit** by default; switch to **XUnit v3** with one property |
@@ -221,6 +221,29 @@ To disable automatic InternalsVisibleTo generation, set `DisableAutoInternalsVis
   <DisableAutoInternalsVisibleTo>true</DisableAutoInternalsVisibleTo>
 </PropertyGroup>
 ```
+
+---
+
+## EmbeddedAttribute generation
+
+When `GenerateAssemblyInfoClassTarget` writes the SDK-generated `AssemblyInfo` source, it also emits:
+
+```csharp
+namespace Microsoft.CodeAnalysis
+{
+    sealed partial class EmbeddedAttribute : System.Attribute { }
+}
+```
+
+This block is guarded by:
+
+```csharp
+#if !PURVIEW_SDK_EXCLUDE_EMBEDDED
+```
+
+`AssemblyInfo` is emitted with `[Microsoft.CodeAnalysis.Embedded]`, so the project must have a matching `Microsoft.CodeAnalysis.EmbeddedAttribute` type available at compile time. The SDK emits that attribute to satisfy the reference and to keep generated metadata/source-generator-facing symbols marked as embedded.
+
+Define `PURVIEW_SDK_EXCLUDE_EMBEDDED` only when your build already provides `Microsoft.CodeAnalysis.EmbeddedAttribute` from another source; otherwise compilation will fail because the attribute used by generated `AssemblyInfo` cannot be resolved.
 
 ---
 
