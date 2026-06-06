@@ -8,6 +8,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryType>git</RepositoryType>
+		<PackageIcon>kjldev-logo.png</PackageIcon>
 
 		<!-- No compiled output — this is a pure MSBuild SDK package -->
 		<TargetFramework>net10.0</TargetFramework>
@@ -44,7 +45,7 @@
 			PackagePath="analyzers/dotnet/cs"
 		/>
 
-		<None Include="Sdk/**/*" Pack="true" PackagePath="Sdk\" />
+		<None Include="Sdk/**/*" Pack="true" PackagePath="Sdk/" />
 
 		<None Include="$(MSBuildThisFileDirectory)../../../README.md" Pack="true" PackagePath="/" />
 		<None Include="$(MSBuildThisFileDirectory)../../../LICENSE.md" Pack="true" PackagePath="/" />
