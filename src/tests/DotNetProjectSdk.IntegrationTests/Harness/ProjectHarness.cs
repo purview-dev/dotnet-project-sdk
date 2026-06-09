@@ -97,7 +97,11 @@ sealed class ProjectHarness : IAsyncDisposable
 		return harness;
 	}
 
-	async Task WriteBoilerplateAsync(string namespacePrefix, string? preImportProps, CancellationToken cancellationToken)
+	async Task WriteBoilerplateAsync(
+		string namespacePrefix,
+		string? preImportProps,
+		CancellationToken cancellationToken
+	)
 	{
 		Directory.CreateDirectory(ProjectDirectory);
 

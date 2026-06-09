@@ -1,23 +1,26 @@
 <Project>
-  <Target Name="ValidatePackageJsonVersion"
-          BeforeTargets="BeforeBuild;GenerateNuspec;Pack"
-          Condition="'$(UsePackageJsonVersion)' == 'true'">
+	<Target
+		Name="ValidatePackageJsonVersion"
+		BeforeTargets="BeforeBuild;GenerateNuspec;Pack"
+		Condition="'$(UsePackageJsonVersion)' == 'true'"
+	>
+		<Error
+			Condition="'$(_RootPackageJsonWasSpecified)' == 'true' and !Exists('$(RootPackageJson)')"
+			Text="RootPackageJson was explicitly set to '$(RootPackageJson)', but that file does not exist."
+		/>
 
-    <Error
-      Condition="'$(_RootPackageJsonWasSpecified)' == 'true' and !Exists('$(RootPackageJson)')"
-      Text="RootPackageJson was explicitly set to '$(RootPackageJson)', but that file does not exist." />
-
-    <Error
-      Condition="'$(_RootPackageJsonWasSpecified)' != 'true'
+		<Error
+			Condition="'$(_RootPackageJsonWasSpecified)' != 'true'
               and '$(RepoRoot)' != ''
               and !Exists('$(RootPackageJson)')"
-      Text="Repository root was found at '$(RepoRoot)', but no package.json exists at '$(RootPackageJson)'." />
+			Text="Repository root was found at '$(RepoRoot)', but no package.json exists at '$(RootPackageJson)'."
+		/>
 
-    <Error
-      Condition="'$(RootPackageJson)' != ''
+		<Error
+			Condition="'$(RootPackageJson)' != ''
               and Exists('$(RootPackageJson)')
               and '$(_PackageJsonVersion)' == ''"
-      Text="package.json was found at '$(RootPackageJson)', but no version property could be read." />
-
-  </Target>
+			Text="package.json was found at '$(RootPackageJson)', but no version property could be read."
+		/>
+	</Target>
 </Project>

@@ -5,6 +5,7 @@
     "changeops": "0.0.0"
   },
   "changesets": [
+    "eager-doodles-strive",
     "funky-rats-hug",
     "large-buses-poke",
     "olive-poets-live",

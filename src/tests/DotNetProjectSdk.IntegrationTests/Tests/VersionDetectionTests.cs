@@ -128,9 +128,7 @@ public sealed class VersionDetectionTests
 	// ---------- opt-out disables version detection ----------
 
 	[Test]
-	public async Task Version_NotSetFromPackageJson_WhenUsePackageJsonVersionFalse(
-		CancellationToken cancellationToken
-	)
+	public async Task Version_NotSetFromPackageJson_WhenUsePackageJsonVersionFalse(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
@@ -167,9 +165,7 @@ public sealed class VersionDetectionTests
 	}
 
 	[Test]
-	public async Task Build_Errors_WhenAutoDiscoveredRepoRootHasNoPackageJson(
-		CancellationToken cancellationToken
-	)
+	public async Task Build_Errors_WhenAutoDiscoveredRepoRootHasNoPackageJson(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
 

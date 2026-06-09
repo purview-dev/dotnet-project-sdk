@@ -25,7 +25,8 @@ public sealed class SdkPackageConsumptionTests
 		try
 		{
 			var sdkProjectPath = Path.GetFullPath(Path.Combine(SdkPaths.SdkDirectory, "..", "DotNetProjectSdk.csproj"));
-			var sdkProjectDirectory = Path.GetDirectoryName(sdkProjectPath)
+			var sdkProjectDirectory =
+				Path.GetDirectoryName(sdkProjectPath)
 				?? throw new InvalidOperationException("Unable to determine SDK project directory.");
 			var packageVersion = $"1.0.0-test.{Guid.NewGuid():N}";
 
@@ -68,9 +69,8 @@ public sealed class SdkPackageConsumptionTests
 			);
 			await Assert.That(newProjectResult.Code).IsEqualTo(0);
 
-			var solutionPath = Directory
-				.GetFiles(consumerDirectory, "Proof.sln*", SearchOption.TopDirectoryOnly)
-				.FirstOrDefault()
+			var solutionPath =
+				Directory.GetFiles(consumerDirectory, "Proof.sln*", SearchOption.TopDirectoryOnly).FirstOrDefault()
 				?? throw new InvalidOperationException("Could not locate generated solution file.");
 
 			var addProjectResult = await RunProcessAsync(
@@ -150,8 +150,13 @@ public sealed class SdkPackageConsumptionTests
 				.ToArray();
 
 			var normalizedEditorConfigPath = Path.GetFullPath(editorConfigPath!).TrimEnd('\\', '/');
-			await Assert.That(itemPaths.Any(path =>
-				string.Equals(path, normalizedEditorConfigPath, StringComparison.OrdinalIgnoreCase))).IsTrue();
+			await Assert
+				.That(
+					itemPaths.Any(path =>
+						string.Equals(path, normalizedEditorConfigPath, StringComparison.OrdinalIgnoreCase)
+					)
+				)
+				.IsTrue();
 
 			var editorConfigContent = await File.ReadAllTextAsync(editorConfigPath!, cancellationToken);
 			await Assert.That(editorConfigContent).Contains("csharp_prefer_braces = when_possible:error");
@@ -171,7 +176,10 @@ public sealed class SdkPackageConsumptionTests
 
 			await Assert.That(File.Exists(repositoryEditorConfigPath)).IsTrue();
 
-			var repositoryEditorConfigContent = await File.ReadAllTextAsync(repositoryEditorConfigPath, cancellationToken);
+			var repositoryEditorConfigContent = await File.ReadAllTextAsync(
+				repositoryEditorConfigPath,
+				cancellationToken
+			);
 			await Assert.That(repositoryEditorConfigContent).Contains("csharp_prefer_braces = when_possible:error");
 
 			var globalJsonResult = await RunProcessAsync(

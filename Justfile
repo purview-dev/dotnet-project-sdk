@@ -26,6 +26,12 @@ pack publish_folder=artifacts_folder version=current_version:
 current_version:
     @echo {{current_version}}
 
+lint-check:
+    dotnet csharpier check .
+
+lint-fix:
+    dotnet csharpier format .
+
 # Open the solution in Visual Studio
 vs:
     open {{solution}}

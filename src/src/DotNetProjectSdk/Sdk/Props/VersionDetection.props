@@ -1,45 +1,53 @@
 <Project>
-  <PropertyGroup>
-    <UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''">true</UsePackageJsonVersion>
+	<PropertyGroup>
+		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''">true</UsePackageJsonVersion>
 
-    <_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' != ''">true</_RootPackageJsonWasSpecified>
-    <_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' == ''">false</_RootPackageJsonWasSpecified>
-  </PropertyGroup>
+		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' != ''"
+			>true</_RootPackageJsonWasSpecified
+		>
+		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' == ''"
+			>false</_RootPackageJsonWasSpecified
+		>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_RootPackageJsonWasSpecified)' == 'true'">
-    <RootPackageJson>$([MSBuild]::NormalizePath('$(RootPackageJson)'))</RootPackageJson>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_RootPackageJsonWasSpecified)' == 'true'">
+		<RootPackageJson>$([MSBuild]::NormalizePath('$(RootPackageJson)'))</RootPackageJson>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'">
-    <RepoRoot>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git'))</RepoRoot>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'">
+		<RepoRoot>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git'))</RepoRoot>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true'
+	<PropertyGroup
+		Condition="'$(UsePackageJsonVersion)' == 'true'
                             and '$(_RootPackageJsonWasSpecified)' != 'true'
-                            and '$(RepoRoot)' != ''">
-    <RootPackageJson>$([MSBuild]::NormalizePath('$(RepoRoot)', 'package.json'))</RootPackageJson>
-  </PropertyGroup>
+                            and '$(RepoRoot)' != ''"
+	>
+		<RootPackageJson>$([MSBuild]::NormalizePath('$(RepoRoot)', 'package.json'))</RootPackageJson>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true'
+	<PropertyGroup
+		Condition="'$(UsePackageJsonVersion)' == 'true'
                             and '$(RootPackageJson)' != ''
-                            and Exists('$(RootPackageJson)')">
-    <_RootPackageJsonText>$([System.IO.File]::ReadAllText('$(RootPackageJson)'))</_RootPackageJsonText>
-    <_PackageJsonVersion>$([System.Text.RegularExpressions.Regex]::Match(
+                            and Exists('$(RootPackageJson)')"
+	>
+		<_RootPackageJsonText>$([System.IO.File]::ReadAllText('$(RootPackageJson)'))</_RootPackageJsonText>
+		<_PackageJsonVersion>$([System.Text.RegularExpressions.Regex]::Match(
       '$(_RootPackageJsonText)',
       '&quot;version&quot;\s*:\s*&quot;([^&quot;]+)&quot;'
     ).Groups[1].Value)</_PackageJsonVersion>
-  </PropertyGroup>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_PackageJsonVersion)' != ''">
-    <Version>$(_PackageJsonVersion)</Version>
-    <PackageVersion>$(_PackageJsonVersion)</PackageVersion>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_PackageJsonVersion)' != ''">
+		<Version>$(_PackageJsonVersion)</Version>
+		<PackageVersion>$(_PackageJsonVersion)</PackageVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <CompilerVisibleProperty Include="UsePackageJsonVersion" />
-    <CompilerVisibleProperty Include="RootPackageJson" />
-    <CompilerVisibleProperty Include="RepoRoot" />
-    <CompilerVisibleProperty Include="Version" />
-    <CompilerVisibleProperty Include="PackageVersion" />
-  </ItemGroup>
+	<ItemGroup>
+		<CompilerVisibleProperty Include="UsePackageJsonVersion" />
+		<CompilerVisibleProperty Include="RootPackageJson" />
+		<CompilerVisibleProperty Include="RepoRoot" />
+		<CompilerVisibleProperty Include="Version" />
+		<CompilerVisibleProperty Include="PackageVersion" />
+	</ItemGroup>
 </Project>
