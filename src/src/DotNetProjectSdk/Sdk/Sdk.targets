@@ -32,6 +32,133 @@
 	     Disable with <DisableNamespacePrefixCheck>true</DisableNamespacePrefixCheck>.
 	     ===================================================================== -->
 	<Target
+		Name="EnsureRepositoryEditorConfigTarget"
+		BeforeTargets="PrepareForBuild"
+		Condition="$(IsCSharpProject) AND '$(DisableAutoCopySdkFiles)' != 'true' AND '$(BootstrapEditorConfigToRepoRoot)' == 'true' AND Exists('$(EditorConfigFilePath)')"
+		Label="Bootstraps a physical .editorconfig at the repo root for external tooling."
+	>
+		<PropertyGroup>
+			<_DirectoryBuildPropsDirectory>$([System.IO.Path]::GetDirectoryName('$(DirectoryBuildPropsPath)'))</_DirectoryBuildPropsDirectory>
+		</PropertyGroup>
+		<Exec
+			Command="git -C &quot;$(_DirectoryBuildPropsDirectory)&quot; rev-parse --show-toplevel"
+			ConsoleToMSBuild="true"
+			IgnoreExitCode="true"
+			Condition="'$(RepositoryEditorConfigFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
+		>
+			<Output TaskParameter="ConsoleOutput" PropertyName="_GitRepositoryRoot" />
+		</Exec>
+		<PropertyGroup>
+			<_GitRepositoryRoot>$([System.String]::Copy('$(_GitRepositoryRoot)').Trim())</_GitRepositoryRoot>
+			<_RepositoryProbe0>$(_DirectoryBuildPropsDirectory)</_RepositoryProbe0>
+			<_RepositoryProbe1>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe0)\..'))</_RepositoryProbe1>
+			<_RepositoryProbe2>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe1)\..'))</_RepositoryProbe2>
+			<_RepositoryProbe3>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe2)\..'))</_RepositoryProbe3>
+			<_RepositoryProbe4>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe3)\..'))</_RepositoryProbe4>
+			<_DetectedRepositoryRoot Condition="'$(_GitRepositoryRoot)' != ''">$(_GitRepositoryRoot)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)\.git\HEAD') OR Exists('$(_RepositoryProbe0)\.git'))">$(_RepositoryProbe0)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe1)\.git\HEAD') OR Exists('$(_RepositoryProbe1)\.git'))">$(_RepositoryProbe1)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe2)\.git\HEAD') OR Exists('$(_RepositoryProbe2)\.git'))">$(_RepositoryProbe2)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe3)\.git\HEAD') OR Exists('$(_RepositoryProbe3)\.git'))">$(_RepositoryProbe3)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe4)\.git\HEAD') OR Exists('$(_RepositoryProbe4)\.git'))">$(_RepositoryProbe4)</_DetectedRepositoryRoot>
+			<_EffectiveRepositoryEditorConfigFilePath>$(RepositoryEditorConfigFilePath)</_EffectiveRepositoryEditorConfigFilePath>
+			<_EffectiveRepositoryEditorConfigFilePath
+				Condition="'$(_EffectiveRepositoryEditorConfigFilePath)' == '' AND '$(_DetectedRepositoryRoot)' != ''"
+				>$([System.IO.Path]::Combine('$(_DetectedRepositoryRoot)', '.editorconfig'))</_EffectiveRepositoryEditorConfigFilePath
+			>
+			<_EffectiveRepositoryEditorConfigFilePath
+				Condition="'$(_EffectiveRepositoryEditorConfigFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
+				>$([System.IO.Path]::Combine('$(_DirectoryBuildPropsDirectory)', '.editorconfig'))</_EffectiveRepositoryEditorConfigFilePath
+			>
+			<_RepositoryEditorConfigDirectory>$([System.IO.Path]::GetDirectoryName('$(_EffectiveRepositoryEditorConfigFilePath)'))</_RepositoryEditorConfigDirectory>
+		</PropertyGroup>
+		<PropertyGroup>
+			<RepositoryEditorConfigFilePath
+				Condition="'$(RepositoryEditorConfigFilePath)' == '' AND '$(_EffectiveRepositoryEditorConfigFilePath)' != ''"
+				>$(_EffectiveRepositoryEditorConfigFilePath)</RepositoryEditorConfigFilePath
+			>
+		</PropertyGroup>
+		<MakeDir
+			Directories="$(_RepositoryEditorConfigDirectory)"
+			Condition="'$(_RepositoryEditorConfigDirectory)' != '' AND !Exists('$(_RepositoryEditorConfigDirectory)') AND !Exists('$(_EffectiveRepositoryEditorConfigFilePath)')"
+		/>
+		<Copy
+			SourceFiles="$(EditorConfigFilePath)"
+			DestinationFiles="$(_EffectiveRepositoryEditorConfigFilePath)"
+			Condition="'$(_EffectiveRepositoryEditorConfigFilePath)' != '' AND !Exists('$(_EffectiveRepositoryEditorConfigFilePath)')"
+		/>
+	</Target>
+
+	<Target
+		Name="EnsureRepositoryGlobalJsonTarget"
+		BeforeTargets="PrepareForBuild"
+		Condition="$(IsCSharpProject) AND '$(DisableAutoCopySdkFiles)' != 'true' AND '$(BootstrapGlobalJsonToRepoRoot)' == 'true'"
+		Label="Bootstraps a physical global.json at the repo root for SDK/tool resolution."
+	>
+		<PropertyGroup>
+			<_DirectoryBuildPropsDirectory>$([System.IO.Path]::GetDirectoryName('$(DirectoryBuildPropsPath)'))</_DirectoryBuildPropsDirectory>
+		</PropertyGroup>
+		<Exec
+			Command="git -C &quot;$(_DirectoryBuildPropsDirectory)&quot; rev-parse --show-toplevel"
+			ConsoleToMSBuild="true"
+			IgnoreExitCode="true"
+			Condition="'$(RepositoryGlobalJsonFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
+		>
+			<Output TaskParameter="ConsoleOutput" PropertyName="_GitRepositoryRoot" />
+		</Exec>
+		<PropertyGroup>
+			<_GitRepositoryRoot>$([System.String]::Copy('$(_GitRepositoryRoot)').Trim())</_GitRepositoryRoot>
+			<_RepositoryProbe0>$(_DirectoryBuildPropsDirectory)</_RepositoryProbe0>
+			<_RepositoryProbe1>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe0)\..'))</_RepositoryProbe1>
+			<_RepositoryProbe2>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe1)\..'))</_RepositoryProbe2>
+			<_RepositoryProbe3>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe2)\..'))</_RepositoryProbe3>
+			<_RepositoryProbe4>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe3)\..'))</_RepositoryProbe4>
+			<_DetectedRepositoryRoot Condition="'$(_GitRepositoryRoot)' != ''">$(_GitRepositoryRoot)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)\.git\HEAD') OR Exists('$(_RepositoryProbe0)\.git'))">$(_RepositoryProbe0)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe1)\.git\HEAD') OR Exists('$(_RepositoryProbe1)\.git'))">$(_RepositoryProbe1)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe2)\.git\HEAD') OR Exists('$(_RepositoryProbe2)\.git'))">$(_RepositoryProbe2)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe3)\.git\HEAD') OR Exists('$(_RepositoryProbe3)\.git'))">$(_RepositoryProbe3)</_DetectedRepositoryRoot>
+			<_DetectedRepositoryRoot Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe4)\.git\HEAD') OR Exists('$(_RepositoryProbe4)\.git'))">$(_RepositoryProbe4)</_DetectedRepositoryRoot>
+			<_EffectiveRepositoryGlobalJsonFilePath>$(RepositoryGlobalJsonFilePath)</_EffectiveRepositoryGlobalJsonFilePath>
+			<_EffectiveRepositoryGlobalJsonFilePath
+				Condition="'$(_EffectiveRepositoryGlobalJsonFilePath)' == '' AND '$(_DetectedRepositoryRoot)' != ''"
+				>$([System.IO.Path]::Combine('$(_DetectedRepositoryRoot)', 'global.json'))</_EffectiveRepositoryGlobalJsonFilePath
+			>
+			<_EffectiveRepositoryGlobalJsonFilePath
+				Condition="'$(_EffectiveRepositoryGlobalJsonFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
+				>$([System.IO.Path]::Combine('$(_DirectoryBuildPropsDirectory)', 'global.json'))</_EffectiveRepositoryGlobalJsonFilePath
+			>
+			<_RepositoryGlobalJsonDirectory>$([System.IO.Path]::GetDirectoryName('$(_EffectiveRepositoryGlobalJsonFilePath)'))</_RepositoryGlobalJsonDirectory>
+		</PropertyGroup>
+		<PropertyGroup>
+			<RepositoryGlobalJsonFilePath
+				Condition="'$(RepositoryGlobalJsonFilePath)' == '' AND '$(_EffectiveRepositoryGlobalJsonFilePath)' != ''"
+				>$(_EffectiveRepositoryGlobalJsonFilePath)</RepositoryGlobalJsonFilePath
+			>
+		</PropertyGroup>
+		<MakeDir
+			Directories="$(_RepositoryGlobalJsonDirectory)"
+			Condition="'$(_RepositoryGlobalJsonDirectory)' != '' AND !Exists('$(_RepositoryGlobalJsonDirectory)') AND !Exists('$(_EffectiveRepositoryGlobalJsonFilePath)')"
+		/>
+		<ItemGroup Condition="'$(_EffectiveRepositoryGlobalJsonFilePath)' != '' AND !Exists('$(_EffectiveRepositoryGlobalJsonFilePath)')">
+			<_RepositoryGlobalJsonLines Include="{" />
+			<_RepositoryGlobalJsonLines Include="  &quot;test&quot;: {" />
+			<_RepositoryGlobalJsonLines Include="    &quot;runner&quot;: &quot;Microsoft.Testing.Platform&quot;" />
+			<_RepositoryGlobalJsonLines Include="  }," />
+			<_RepositoryGlobalJsonLines Include="  &quot;msbuild-sdks&quot;: {" />
+			<_RepositoryGlobalJsonLines Include="    &quot;Purview.DotNetProjectSdk&quot;: &quot;$(PurviewDotNetProjectSdkVersionForGlobalJson)&quot;" />
+			<_RepositoryGlobalJsonLines Include="  }" />
+			<_RepositoryGlobalJsonLines Include="}" />
+		</ItemGroup>
+		<WriteLinesToFile
+			File="$(_EffectiveRepositoryGlobalJsonFilePath)"
+			Lines="@(_RepositoryGlobalJsonLines)"
+			Overwrite="true"
+			Condition="'$(_EffectiveRepositoryGlobalJsonFilePath)' != '' AND !Exists('$(_EffectiveRepositoryGlobalJsonFilePath)')"
+		/>
+	</Target>
+
+	<Target
 		Name="ValidateRootNamespacePrefixTarget"
 		BeforeTargets="Compile"
 		Label="Validates the NamespacePrefix property is set."

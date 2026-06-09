@@ -16,19 +16,22 @@ public sealed class SdkPackageConsumptionTests
 		var tempRoot = Path.Combine(Path.GetTempPath(), $"PurviewSdkPackageConsumption-{Guid.NewGuid():N}");
 		var feedDirectory = Path.Combine(tempRoot, "feed");
 		var consumerDirectory = Path.Combine(tempRoot, "consumer");
+		var consumerSrcDirectory = Path.Combine(consumerDirectory, "src");
 
 		Directory.CreateDirectory(feedDirectory);
 		Directory.CreateDirectory(consumerDirectory);
+		Directory.CreateDirectory(consumerSrcDirectory);
 
 		try
 		{
 			var sdkProjectPath = Path.GetFullPath(Path.Combine(SdkPaths.SdkDirectory, "..", "DotNetProjectSdk.csproj"));
 			var sdkProjectDirectory = Path.GetDirectoryName(sdkProjectPath)
 				?? throw new InvalidOperationException("Unable to determine SDK project directory.");
+			var packageVersion = $"1.0.0-test.{Guid.NewGuid():N}";
 
 			var packResult = await RunProcessAsync(
 				"dotnet",
-				$"pack \"{sdkProjectPath}\" -c Release -o \"{feedDirectory}\"",
+				$"pack \"{sdkProjectPath}\" -c Release -o \"{feedDirectory}\" -p:PackageVersion={packageVersion}",
 				sdkProjectDirectory,
 				cancellationToken
 			);
@@ -40,11 +43,6 @@ public sealed class SdkPackageConsumptionTests
 				.OrderByDescending(path => path)
 				.FirstOrDefault();
 			await Assert.That(packagePath).IsNotNull();
-
-			var packageVersion = Path
-				.GetFileNameWithoutExtension(packagePath!)
-				["Purview.DotNetProjectSdk.".Length..];
-			await Assert.That(string.IsNullOrWhiteSpace(packageVersion)).IsFalse();
 
 			using (var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken))
 			{
@@ -59,9 +57,12 @@ public sealed class SdkPackageConsumptionTests
 			);
 			await Assert.That(newSolutionResult.Code).IsEqualTo(0);
 
+			var gitInitResult = await RunProcessAsync("git", "init", consumerDirectory, cancellationToken);
+			await Assert.That(gitInitResult.Code).IsEqualTo(0);
+
 			var newProjectResult = await RunProcessAsync(
 				"dotnet",
-				"new classlib -n Proof.Lib -f net10.0",
+				"new classlib -n Proof.Lib -o src\\Proof.Lib -f net10.0",
 				consumerDirectory,
 				cancellationToken
 			);
@@ -74,7 +75,7 @@ public sealed class SdkPackageConsumptionTests
 
 			var addProjectResult = await RunProcessAsync(
 				"dotnet",
-				$"sln \"{solutionPath}\" add \"{Path.Combine(consumerDirectory, "Proof.Lib", "Proof.Lib.csproj")}\"",
+				$"sln \"{solutionPath}\" add \"{Path.Combine(consumerSrcDirectory, "Proof.Lib", "Proof.Lib.csproj")}\"",
 				consumerDirectory,
 				cancellationToken
 			);
@@ -96,7 +97,7 @@ public sealed class SdkPackageConsumptionTests
 			);
 
 			await File.WriteAllTextAsync(
-				Path.Combine(consumerDirectory, "Directory.Build.props"),
+				Path.Combine(consumerSrcDirectory, "Directory.Build.props"),
 				$"""
 				<Project>
 					<PropertyGroup>
@@ -109,7 +110,7 @@ public sealed class SdkPackageConsumptionTests
 			);
 
 			await File.WriteAllTextAsync(
-				Path.Combine(consumerDirectory, "Directory.Build.targets"),
+				Path.Combine(consumerSrcDirectory, "Directory.Build.targets"),
 				$"""
 				<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 					<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.targets" Version="{packageVersion}" />
@@ -120,7 +121,7 @@ public sealed class SdkPackageConsumptionTests
 
 			var evaluationResult = await RunProcessAsync(
 				"dotnet",
-				"msbuild \"Proof.Lib\\Proof.Lib.csproj\" -nologo -noconlog -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles",
+				"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -noconlog -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles",
 				consumerDirectory,
 				cancellationToken
 			);
@@ -154,6 +155,42 @@ public sealed class SdkPackageConsumptionTests
 
 			var editorConfigContent = await File.ReadAllTextAsync(editorConfigPath!, cancellationToken);
 			await Assert.That(editorConfigContent).Contains("csharp_prefer_braces = when_possible:error");
+
+			var buildResult = await RunProcessAsync(
+				"dotnet",
+				"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -t:EnsureRepositoryEditorConfigTarget -getProperty:RepositoryEditorConfigFilePath",
+				consumerDirectory,
+				cancellationToken
+			);
+			await Assert.That(buildResult.Code).IsEqualTo(0);
+
+			var repositoryEditorConfigPath = buildResult.StdOut.Trim();
+			await Assert.That(string.IsNullOrWhiteSpace(repositoryEditorConfigPath)).IsFalse();
+			repositoryEditorConfigPath = Path.GetFullPath(repositoryEditorConfigPath!);
+			await Assert.That(repositoryEditorConfigPath).IsEqualTo(Path.Combine(consumerDirectory, ".editorconfig"));
+
+			await Assert.That(File.Exists(repositoryEditorConfigPath)).IsTrue();
+
+			var repositoryEditorConfigContent = await File.ReadAllTextAsync(repositoryEditorConfigPath, cancellationToken);
+			await Assert.That(repositoryEditorConfigContent).Contains("csharp_prefer_braces = when_possible:error");
+
+			var globalJsonResult = await RunProcessAsync(
+				"dotnet",
+				"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -t:EnsureRepositoryGlobalJsonTarget -getProperty:RepositoryGlobalJsonFilePath",
+				consumerDirectory,
+				cancellationToken
+			);
+			await Assert.That(globalJsonResult.Code).IsEqualTo(0);
+
+			var repositoryGlobalJsonPath = globalJsonResult.StdOut.Trim();
+			await Assert.That(string.IsNullOrWhiteSpace(repositoryGlobalJsonPath)).IsFalse();
+			repositoryGlobalJsonPath = Path.GetFullPath(repositoryGlobalJsonPath!);
+			await Assert.That(repositoryGlobalJsonPath).IsEqualTo(Path.Combine(consumerDirectory, "global.json"));
+			await Assert.That(File.Exists(repositoryGlobalJsonPath)).IsTrue();
+
+			var repositoryGlobalJsonContent = await File.ReadAllTextAsync(repositoryGlobalJsonPath, cancellationToken);
+			await Assert.That(repositoryGlobalJsonContent).Contains("\"runner\": \"Microsoft.Testing.Platform\"");
+			await Assert.That(repositoryGlobalJsonContent).Contains("\"Purview.DotNetProjectSdk\"");
 		}
 		finally
 		{

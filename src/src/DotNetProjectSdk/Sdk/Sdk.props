@@ -198,6 +198,24 @@
 		<CompilerVisibleProperty Include="EditorConfigFilePath">
 			<Description>Path to the SDK-provided .editorconfig used for build-time style enforcement.</Description>
 		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="RepositoryEditorConfigFilePath">
+			<Description>Destination path for bootstrapping a physical repo-level .editorconfig when missing.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="BootstrapEditorConfigToRepoRoot">
+			<Description>When true, copies the SDK .editorconfig to RepositoryEditorConfigFilePath if that file does not exist.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="RepositoryGlobalJsonFilePath">
+			<Description>Destination path for bootstrapping a physical repo-level global.json when missing.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="BootstrapGlobalJsonToRepoRoot">
+			<Description>When true, bootstraps global.json to RepositoryGlobalJsonFilePath if that file does not exist.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="DisableAutoCopySdkFiles">
+			<Description>When true, disables SDK auto-copy bootstrapping for repository files such as .editorconfig and global.json.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="PurviewDotNetProjectSdkVersionForGlobalJson">
+			<Description>Version written to the msbuild-sdks Purview.DotNetProjectSdk entry when bootstrapping global.json.</Description>
+		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="CurrentYear">
 			<Description>Current year value used by generated assembly metadata.</Description>
 		</CompilerVisibleProperty>
@@ -227,6 +245,21 @@
 		<AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
 		<!-- EditorConfig from the NuGet package Sdk/ folder — used for build-time code-style enforcement -->
 		<EditorConfigFilePath>$(MSBuildThisFileDirectory).editorconfig</EditorConfigFilePath>
+		<!-- Also bootstrap a physical repo-level .editorconfig for tools (for example CSharpier) that don't read @(EditorConfigFiles). -->
+		<DisableAutoCopySdkFiles Condition="'$(DisableAutoCopySdkFiles)' == ''">false</DisableAutoCopySdkFiles>
+		<BootstrapEditorConfigToRepoRoot Condition="'$(BootstrapEditorConfigToRepoRoot)' == ''">true</BootstrapEditorConfigToRepoRoot>
+		<RepositoryEditorConfigFilePath Condition="'$(RepositoryEditorConfigFilePath)' == ''"></RepositoryEditorConfigFilePath>
+		<BootstrapGlobalJsonToRepoRoot Condition="'$(BootstrapGlobalJsonToRepoRoot)' == ''">true</BootstrapGlobalJsonToRepoRoot>
+		<RepositoryGlobalJsonFilePath Condition="'$(RepositoryGlobalJsonFilePath)' == ''"></RepositoryGlobalJsonFilePath>
+		<_PurviewSdkContainerDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</_PurviewSdkContainerDirectory>
+		<_PurviewSdkContainerDirectoryName>$([System.IO.Path]::GetFileName('$(_PurviewSdkContainerDirectory)'))</_PurviewSdkContainerDirectoryName>
+		<PurviewDotNetProjectSdkVersionForGlobalJson
+			Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(_PurviewSdkContainerDirectoryName)', '^\d+\.\d+\.\d+([-.].+)?$'))"
+			>$(_PurviewSdkContainerDirectoryName)</PurviewDotNetProjectSdkVersionForGlobalJson
+		>
+		<PurviewDotNetProjectSdkVersionForGlobalJson Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == ''"
+			>1.0.0</PurviewDotNetProjectSdkVersionForGlobalJson
+		>
 		<!-- Sensible default for SourceLink (override by setting SourceLinkPackageName) -->
 		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''"
 			>Microsoft.SourceLink.GitHub</SourceLinkPackageName
