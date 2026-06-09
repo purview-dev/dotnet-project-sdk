@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.5
+
+### Patch Changes
+
+- now copying .editorConfig and global.json into project structure
+
 ## 1.0.0-prerelease.4
 
 ### Patch Changes
