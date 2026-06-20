@@ -136,6 +136,50 @@ public sealed class VersionDetectionTests
 		await Assert.That(await h.GetPropertyAsync("PackageVersion", cancellationToken)).IsEqualTo("3.0.1");
 	}
 
+	[Test]
+	public async Task VersionDetection_UsesSessionCache_WhenGitMarkerIsRemoved(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+
+		await File.WriteAllTextAsync(Path.Combine(h.ProjectDirectory, ".git"), "", cancellationToken);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "package.json"),
+			"""{"name": "my-lib", "version": "6.7.8"}""",
+			cancellationToken
+		);
+
+		var cacheFile = await h.GetPropertyAsync("VersionDetectionCacheFile", cancellationToken);
+		await Assert.That(cacheFile).IsNotEqualTo(string.Empty);
+
+		using var process = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -t:WriteVersionDetectionCache",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		process.Start();
+		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+		await process.WaitForExitAsync(cancellationToken);
+		_ = (await stdoutTask) + (await stderrTask);
+
+		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(File.Exists(cacheFile)).IsTrue();
+
+		File.Delete(Path.Combine(h.ProjectDirectory, ".git"));
+
+		// If cache isn't used, RepoRoot discovery fails and Version falls back to 0.0.1.
+		await Assert.That(await h.GetPropertyAsync("Version", cancellationToken)).IsEqualTo("6.7.8");
+	}
+
 	// ---------- opt-out disables version detection ----------
 
 	[Test]

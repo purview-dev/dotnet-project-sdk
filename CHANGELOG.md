@@ -1,5 +1,17 @@
 # changeops
 
+## 1.0.0-prerelease.9
+
+### Patch Changes
+
+- added versioning caching per-session
+
+## 1.0.0-prerelease.8
+
+### Patch Changes
+
+- Fixed default variable issue
+
 ## 1.0.0-prerelease.7
 
 ### Patch Changes

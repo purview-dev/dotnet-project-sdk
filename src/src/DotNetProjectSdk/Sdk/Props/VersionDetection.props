@@ -13,6 +13,44 @@
 		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' == ''"
 			>false</_RootPackageJsonWasSpecified
 		>
+		<_VersionDetectionCacheRoot Condition="'$(EnableVersionDetectionCache)' == 'true'"
+			>$([System.IO.Path]::Combine('$([System.IO.Path]::GetTempPath())', 'Purview.DotNetProjectSdk', 'VersionDetection'))</_VersionDetectionCacheRoot
+		>
+		<_VersionDetectionCacheKey Condition="'$(EnableVersionDetectionCache)' == 'true'"
+			>$([System.Text.RegularExpressions.Regex]::Replace('$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)'))', '[^A-Za-z0-9_.-]', '_'))</_VersionDetectionCacheKey
+		>
+		<VersionDetectionCacheFile
+			Condition="'$(EnableVersionDetectionCache)' == 'true' and '$(VersionDetectionCacheFile)' == '' and '$(_VersionDetectionCacheRoot)' != '' and '$(_VersionDetectionCacheKey)' != ''"
+			>$([System.IO.Path]::Combine('$(_VersionDetectionCacheRoot)', '$(_VersionDetectionCacheKey).cache'))</VersionDetectionCacheFile
+		>
+		<_VersionDetectionCacheDirectory Condition="'$(VersionDetectionCacheFile)' != ''"
+			>$([System.IO.Path]::GetDirectoryName('$(VersionDetectionCacheFile)'))</_VersionDetectionCacheDirectory
+		>
+		<_VersionDetectionCacheText
+			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true' and '$(EnableVersionDetectionCache)' == 'true' and '$(VersionDetectionCacheFile)' != '' and Exists('$(VersionDetectionCacheFile)')"
+			>$([System.IO.File]::ReadAllText('$(VersionDetectionCacheFile)'))</_VersionDetectionCacheText
+		>
+		<_CachedRepoRoot Condition="'$(_VersionDetectionCacheText)' != ''"
+			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^RepoRoot=(.*)$').Groups[1].Value)).Trim())</_CachedRepoRoot
+		>
+		<_CachedRootPackageJson Condition="'$(_VersionDetectionCacheText)' != ''"
+			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^RootPackageJson=(.*)$').Groups[1].Value)).Trim())</_CachedRootPackageJson
+		>
+		<_CachedPackageJsonVersion Condition="'$(_VersionDetectionCacheText)' != ''"
+			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^PackageJsonVersion=(.*)$').Groups[1].Value)).Trim())</_CachedPackageJsonVersion
+		>
+		<RepoRoot
+			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true' and '$(RepoRoot)' == '' and '$(_CachedRepoRoot)' != ''"
+			>$(_CachedRepoRoot)</RepoRoot
+		>
+		<RootPackageJson
+			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true' and '$(RootPackageJson)' == '' and '$(_CachedRootPackageJson)' != '' and Exists('$(_CachedRootPackageJson)')"
+			>$(_CachedRootPackageJson)</RootPackageJson
+		>
+		<_PackageJsonVersion
+			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_PackageJsonVersion)' == '' and '$(_CachedPackageJsonVersion)' != '' and '$(RootPackageJson)' != '' and Exists('$(RootPackageJson)')"
+			>$(_CachedPackageJsonVersion)</_PackageJsonVersion
+		>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' == 'true'">

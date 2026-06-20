@@ -1,4 +1,5 @@
 <Project>
+	<Import Project="$(MSBuildThisFileDirectory)Props/Defaults.props" />
 	<Import Project="$(MSBuildThisFileDirectory)Props/VersionDetection.props " />
 
 	<!-- =====================================================================
@@ -11,6 +12,7 @@
 		<_SharedProjectNames>;Shared;SharedFramework;SharedInfrastructure;SharedInfra;SharedUtilities;SharedUtils;SharedLibrary;SharedLib;SharedHelpers;</_SharedProjectNames>
 		<_SharedTestingProjectNames>;SharedTestingFramework;SharedTestingInfrastructure;SharedTestingInfra;SharedTestingUtilities;SharedTestingUtils;SharedTestingLibrary;SharedTestingLib;SharedTestingHelpers;</_SharedTestingProjectNames>
 	</PropertyGroup>
+
 	<ItemGroup Label="Defining Shared Project Names">
 		<SharedProjectName Include="$(_SharedProjectNames)" />
 		<SharedTestingProjectName Include="$(_SharedTestingProjectNames)" />

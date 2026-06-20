@@ -1,5 +1,28 @@
 <Project>
 	<Target
+		Name="WriteVersionDetectionCache"
+		BeforeTargets="CollectPackageReferences;PrepareForBuild;GenerateNuspec;Pack"
+		Condition="'$(EnableVersionDetectionCache)' == 'true' and '$(VersionDetectionCacheFile)' != '' and '$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'"
+	>
+		<ItemGroup Condition="'$(VersionDetectionCacheFile)' != '' and ('$(RepoRoot)' != '' or '$(RootPackageJson)' != '' or '$(_PackageJsonVersion)' != '')">
+			<_VersionDetectionCacheLine Include="RepoRoot=$(RepoRoot)" />
+			<_VersionDetectionCacheLine Include="RootPackageJson=$(RootPackageJson)" />
+			<_VersionDetectionCacheLine Include="PackageJsonVersion=$(_PackageJsonVersion)" />
+		</ItemGroup>
+		<MakeDir
+			Directories="$(_VersionDetectionCacheDirectory)"
+			Condition="'$(_VersionDetectionCacheDirectory)' != ''"
+		/>
+		<WriteLinesToFile
+			File="$(VersionDetectionCacheFile)"
+			Lines="@(_VersionDetectionCacheLine)"
+			Overwrite="true"
+			WriteOnlyWhenDifferent="true"
+			Condition="'@(_VersionDetectionCacheLine)' != ''"
+		/>
+	</Target>
+
+	<Target
 		Name="ValidatePackageJsonVersion"
 		BeforeTargets="BeforeBuild;GenerateNuspec;Pack"
 		Condition="'$(_UsePackageJsonVersionEnabled)' == 'true'"
