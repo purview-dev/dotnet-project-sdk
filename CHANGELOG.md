@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.6
+
+### Patch Changes
+
+- Added Strict mode on package.json version
+
 ## 1.0.0-prerelease.5
 
 ### Patch Changes
