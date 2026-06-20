@@ -1,6 +1,11 @@
 <Project>
 	<PropertyGroup>
 		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''">true</UsePackageJsonVersion>
+		<_UsePackageJsonVersionNormalized>$([System.String]::Copy('$(UsePackageJsonVersion)').ToLowerInvariant())</_UsePackageJsonVersionNormalized>
+		<_UsePackageJsonVersionEnabled
+			Condition="'$(_UsePackageJsonVersionNormalized)' == 'true' OR '$(_UsePackageJsonVersionNormalized)' == 'strict'"
+			>true</_UsePackageJsonVersionEnabled
+		>
 
 		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' != ''"
 			>true</_RootPackageJsonWasSpecified
@@ -10,16 +15,16 @@
 		>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_RootPackageJsonWasSpecified)' == 'true'">
+	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' == 'true'">
 		<RootPackageJson>$([MSBuild]::NormalizePath('$(RootPackageJson)'))</RootPackageJson>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'">
+	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'">
 		<RepoRoot>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git'))</RepoRoot>
 	</PropertyGroup>
 
 	<PropertyGroup
-		Condition="'$(UsePackageJsonVersion)' == 'true'
+		Condition="'$(_UsePackageJsonVersionEnabled)' == 'true'
                             and '$(_RootPackageJsonWasSpecified)' != 'true'
                             and '$(RepoRoot)' != ''"
 	>
@@ -27,7 +32,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup
-		Condition="'$(UsePackageJsonVersion)' == 'true'
+		Condition="'$(_UsePackageJsonVersionEnabled)' == 'true'
                             and '$(RootPackageJson)' != ''
                             and Exists('$(RootPackageJson)')"
 	>
@@ -38,7 +43,7 @@
     ).Groups[1].Value)</_PackageJsonVersion>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(UsePackageJsonVersion)' == 'true' and '$(_PackageJsonVersion)' != ''">
+	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_PackageJsonVersion)' != ''">
 		<Version>$(_PackageJsonVersion)</Version>
 		<PackageVersion>$(_PackageJsonVersion)</PackageVersion>
 	</PropertyGroup>

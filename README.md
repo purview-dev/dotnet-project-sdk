@@ -91,15 +91,15 @@ Set any of these properties **before** the `<Import>` in your `Directory.Build.p
 
 | Property | Default | Description |
 |---|---|---|
-| `UsePackageJsonVersion` | `true` | Set to `false` to disable reading `Version`/`PackageVersion` from `package.json`. |
+| `UsePackageJsonVersion` | `true` | `true` enables version detection, `false` disables it, and `Strict` requires version detection to succeed (build fails if no version source can be resolved). |
 | `RootPackageJson` | *(auto-discovered)* | Explicit path to a `package.json`. Relative paths are resolved from the project directory. |
 
-When `UsePackageJsonVersion=true` (the default) the SDK:
+When `UsePackageJsonVersion=true` (the default) or `UsePackageJsonVersion=Strict`, the SDK:
 
 1. **Explicit path** — if `RootPackageJson` is set, reads that file directly.
 2. **Auto-discovery** — otherwise, walks up from the project directory looking for a `.git` marker to locate the repo root, then reads `package.json` from there.
 
-The extracted `version` field is applied to both `Version` and `PackageVersion`. A build error is raised if the file can't be found or contains no `version` field.
+The extracted `version` field is applied to both `Version` and `PackageVersion`. A build error is raised if the file can't be found or contains no `version` field. With `UsePackageJsonVersion=Strict`, the build also fails when no package.json source can be discovered (for example, no explicit `RootPackageJson` and no discoverable `.git` marker).
 
 > **Important — set before the import:** Both `UsePackageJsonVersion` and `RootPackageJson` must be set **before** the `<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.props" />` line in your `Directory.Build.props`. The version logic runs during that import and cannot see properties set afterwards (e.g. in individual `.csproj` files).
 >

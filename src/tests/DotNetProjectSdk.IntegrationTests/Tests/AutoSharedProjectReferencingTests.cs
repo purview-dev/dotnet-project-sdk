@@ -1,6 +1,3 @@
-using System.IO;
-using Purview.DotNetProjectSdk.Harness;
-
 namespace Purview.DotNetProjectSdk.Tests;
 
 /// <summary>
@@ -432,21 +429,13 @@ public sealed class AutoSharedProjectReferencingTests
 /// <summary>
 /// Simple test helper for evaluating MSBuild items without using the full ProjectHarness.
 /// </summary>
-sealed class SimpleProjectHarness : IAsyncDisposable
+sealed class SimpleProjectHarness(string projectDirectory, string projectName, string workDir) : IAsyncDisposable
 {
-	string _workDir;
+	public string ProjectName { get; } = projectName;
 
-	public string ProjectName { get; }
-	public string ProjectDirectory { get; }
-	public string ProjectFilePath { get; }
+	public string ProjectDirectory { get; } = projectDirectory;
 
-	public SimpleProjectHarness(string projectDirectory, string projectName, string workDir)
-	{
-		ProjectDirectory = projectDirectory;
-		ProjectName = projectName;
-		ProjectFilePath = Path.Combine(projectDirectory, $"{projectName}.csproj");
-		_workDir = workDir;
-	}
+	public string ProjectFilePath { get; } = Path.Combine(projectDirectory, $"{projectName}.csproj");
 
 	/// <summary>
 	/// Evaluates one or more MSBuild items via <c>dotnet msbuild -getItem</c>
@@ -514,8 +503,8 @@ sealed class SimpleProjectHarness : IAsyncDisposable
 	{
 		try
 		{
-			if (Directory.Exists(_workDir))
-				Directory.Delete(_workDir, recursive: true);
+			if (Directory.Exists(workDir))
+				Directory.Delete(workDir, recursive: true);
 		}
 		catch (IOException)
 		{

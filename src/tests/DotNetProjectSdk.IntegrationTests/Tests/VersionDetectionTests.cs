@@ -29,6 +29,17 @@ public sealed class VersionDetectionTests
 	}
 
 	[Test]
+	public async Task UsePackageJsonVersion_CanBeSetStrict(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraProps: "<UsePackageJsonVersion>Strict</UsePackageJsonVersion>",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("UsePackageJsonVersion", cancellationToken)).IsEqualTo("Strict");
+	}
+
+	[Test]
 	public async Task RootPackageJsonWasSpecified_FalseByDefault(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
@@ -218,7 +229,7 @@ public sealed class VersionDetectionTests
 			StartInfo = new System.Diagnostics.ProcessStartInfo
 			{
 				FileName = "dotnet",
-				Arguments = $"build \"{h.ProjectFilePath}\" --no-restore -nologo -v:minimal",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
 				WorkingDirectory = h.ProjectDirectory,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
@@ -237,5 +248,41 @@ public sealed class VersionDetectionTests
 		await Assert.That(process.ExitCode).IsEqualTo(0);
 		await Assert.That(output).Contains("Detected package version '5.4.3' from");
 		await Assert.That(output).Contains("package.json");
+	}
+
+	[Test]
+	public async Task Build_Errors_WhenUsePackageJsonVersionStrict_AndNoPackageJsonSourceIsFound(
+		CancellationToken cancellationToken
+	)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			preImportProps: "<UsePackageJsonVersion>Strict</UsePackageJsonVersion>",
+			cancellationToken: cancellationToken
+		);
+
+		using var process = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		process.Start();
+		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+		await process.WaitForExitAsync(cancellationToken);
+
+		var output = (await stdoutTask) + (await stderrTask);
+
+		await Assert.That(process.ExitCode).IsNotEqualTo(0);
+		await Assert.That(output).Contains("UsePackageJsonVersion=Strict requires resolving version from package.json");
 	}
 }

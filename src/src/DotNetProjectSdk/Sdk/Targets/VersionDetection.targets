@@ -2,7 +2,7 @@
 	<Target
 		Name="ValidatePackageJsonVersion"
 		BeforeTargets="BeforeBuild;GenerateNuspec;Pack"
-		Condition="'$(UsePackageJsonVersion)' == 'true'"
+		Condition="'$(_UsePackageJsonVersionEnabled)' == 'true'"
 	>
 		<Message
 			Condition="'$(RootPackageJson)' != '' and Exists('$(RootPackageJson)') and '$(_PackageJsonVersion)' != ''"
@@ -27,6 +27,14 @@
               and Exists('$(RootPackageJson)')
               and '$(_PackageJsonVersion)' == ''"
 			Text="package.json was found at '$(RootPackageJson)', but no version property could be read."
+		/>
+
+		<Error
+			Condition="'$(_UsePackageJsonVersionNormalized)' == 'strict'
+              and '$(_PackageJsonVersion)' == ''
+              and '$(_RootPackageJsonWasSpecified)' != 'true'
+              and '$(RepoRoot)' == ''"
+			Text="UsePackageJsonVersion=Strict requires resolving version from package.json, but no package.json source could be discovered. Set RootPackageJson explicitly or ensure a .git marker can be found above the project."
 		/>
 	</Target>
 </Project>
