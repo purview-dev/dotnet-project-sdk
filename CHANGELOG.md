@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.10
+
+### Patch Changes
+
+- fixing default values
+
 ## 1.0.0-prerelease.9
 
 ### Patch Changes
