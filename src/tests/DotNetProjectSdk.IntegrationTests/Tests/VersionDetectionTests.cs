@@ -197,4 +197,45 @@ public sealed class VersionDetectionTests
 		await Assert.That(success).IsFalse();
 		await Assert.That(output + errors).Contains("no version property could be read");
 	}
+
+	[Test]
+	public async Task Build_LogsDetectedVersion_WithSourceFileAndVersion(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			preImportProps: "<RootPackageJson>package.json</RootPackageJson>",
+			cancellationToken: cancellationToken
+		);
+
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "package.json"),
+			"""{"name": "my-lib", "version": "5.4.3"}""",
+			cancellationToken
+		);
+
+		using var process = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"build \"{h.ProjectFilePath}\" --no-restore -nologo -v:minimal",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		process.Start();
+		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+		await process.WaitForExitAsync(cancellationToken);
+
+		var output = (await stdoutTask) + (await stderrTask);
+
+		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(output).Contains("Detected package version '5.4.3' from");
+		await Assert.That(output).Contains("package.json");
+	}
 }

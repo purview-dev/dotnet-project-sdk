@@ -4,6 +4,12 @@
 		BeforeTargets="BeforeBuild;GenerateNuspec;Pack"
 		Condition="'$(UsePackageJsonVersion)' == 'true'"
 	>
+		<Message
+			Condition="'$(RootPackageJson)' != '' and Exists('$(RootPackageJson)') and '$(_PackageJsonVersion)' != ''"
+			Importance="High"
+			Text="Detected package version '$(_PackageJsonVersion)' from '$(RootPackageJson)'."
+		/>
+
 		<Error
 			Condition="'$(_RootPackageJsonWasSpecified)' == 'true' and !Exists('$(RootPackageJson)')"
 			Text="RootPackageJson was explicitly set to '$(RootPackageJson)', but that file does not exist."
