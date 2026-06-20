@@ -285,4 +285,52 @@ public sealed class VersionDetectionTests
 		await Assert.That(process.ExitCode).IsNotEqualTo(0);
 		await Assert.That(output).Contains("UsePackageJsonVersion=Strict requires resolving version from package.json");
 	}
+
+	[Test]
+	public async Task Build_Strict_Succeeds_WhenRepoHasGitDirectoryMarkerAndRootPackageJson(
+		CancellationToken cancellationToken
+	)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			preImportProps: "<UsePackageJsonVersion>Strict</UsePackageJsonVersion>",
+			cancellationToken: cancellationToken
+		);
+
+		Directory.CreateDirectory(Path.Combine(h.ProjectDirectory, ".git"));
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, ".git", "HEAD"),
+			"ref: refs/heads/main",
+			cancellationToken
+		);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "package.json"),
+			"""{"name": "my-lib", "version": "8.8.8"}""",
+			cancellationToken
+		);
+
+		using var process = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		process.Start();
+		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+		await process.WaitForExitAsync(cancellationToken);
+
+		var output = (await stdoutTask) + (await stderrTask);
+
+		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(output).Contains("Detected package version '8.8.8' from");
+	}
 }

@@ -21,6 +21,9 @@
 
 	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'">
 		<RepoRoot>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git'))</RepoRoot>
+		<RepoRoot Condition="'$(RepoRoot)' == ''"
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git\HEAD'))</RepoRoot
+		>
 	</PropertyGroup>
 
 	<PropertyGroup

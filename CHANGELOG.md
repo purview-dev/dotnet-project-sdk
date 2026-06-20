@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.7
+
+### Patch Changes
+
+- Fixed incorrect .git folder detection
+
 ## 1.0.0-prerelease.6
 
 ### Patch Changes
