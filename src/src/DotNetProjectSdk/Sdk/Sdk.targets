@@ -207,6 +207,17 @@
 		/>
 	</Target>
 
+	<Target
+		Name="EnsureExecutableOutputTypeForTopLevelProgramsTarget"
+		BeforeTargets="CoreCompile"
+		Condition="'$(IsCSharpProject)' == 'true' AND Exists('$(MSBuildProjectDirectory)\Program.cs') AND '$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true' AND '$(OutputType)' != 'Exe'"
+		Label="Ensures projects with top-level Program.cs compile as executables."
+	>
+		<PropertyGroup>
+			<OutputType>Exe</OutputType>
+		</PropertyGroup>
+	</Target>
+
 	<!-- =====================================================================
 	     INTERNALS VISIBLE TO
 	     Generates InternalsVisibleToAttribute for Non-Test Projects based on

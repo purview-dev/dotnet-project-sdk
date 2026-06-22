@@ -107,24 +107,25 @@
 		>
 		<IsAspireHostProject
 			Label="Detect Aspire.Sdk.Host SDK projects - only works when the SDK attribute is on the Project element"
-			Condition="$([System.String]::Copy('$(SdkProjectName)').StartsWith('Aspire.Sdk.Host'))"
+			Condition="$([System.String]::Copy('$(SdkProjectName)').StartsWith('Aspire.Sdk.Host')) == 'True' OR $([System.String]::Copy('$(SdkProjectName)').StartsWith('Aspire.AppHost.Sdk')) == 'True'"
 			>true</IsAspireHostProject
 		>
 		<IsCLIProject
-			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('CLI')) OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Console')) OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('CommandLine'))"
+			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('CLI')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Console')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('CommandLine')) == 'True'"
 			>true</IsCLIProject
 		>
-		<IsSharedProject Condition="$(_SharedProjectNames.Contains(';$(MSBuildProjectName);'))"
+		<IsSharedProject
+			Condition="$([System.String]::Copy('$(_SharedProjectNames)').Contains(';$(MSBuildProjectName);')) == 'True'"
 			>true</IsSharedProject
 		>
 		<!-- Determine the testing type from the project name suffix -->
 		<TestingType
-			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Test')) OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Tests'))"
+			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Test')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Tests')) == 'True'"
 			>$([System.Text.RegularExpressions.Regex]::Match($(MSBuildProjectName), `^.*\.([\w|_]\w*)Tests?$`).get_Groups().get_Item(1).ToString())</TestingType
 		>
 		<IsTestProject Condition="'$(TestingType)' != ''">true</IsTestProject>
 		<IsSharedTestingProject
-			Condition="$(_SharedTestingProjectNames.Contains(';$(MSBuildProjectName);'))"
+			Condition="$([System.String]::Copy('$(_SharedTestingProjectNames)').Contains(';$(MSBuildProjectName);')) == 'True'"
 			>true</IsSharedTestingProject
 		>
 	</PropertyGroup>
@@ -325,6 +326,12 @@
 			CA1515 to be created which is a pain as it's not really relevant.
 		-->
 		<NoWarn>$(NoWarn);CA1515;</NoWarn>
+	</PropertyGroup>
+	<PropertyGroup
+		Label="Executable Project Properties"
+		Condition="'$(OutputType)' == '' AND Exists('$(MSBuildProjectDirectory)\Program.cs') AND '$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'"
+	>
+		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 
 	<ItemGroup Label="CLI Item Properties" Condition="'$(IsCLIProject)' == 'true'">
