@@ -29,7 +29,7 @@ public sealed class SdkPackageConsumptionTests
 				Path.GetDirectoryName(sdkProjectPath)
 				?? throw new InvalidOperationException("Unable to determine SDK project directory.");
 
-			var packageVersion = $"1.0.0-integration-test-{Guid.NewGuid():N}";
+			var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
 			var (code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
 				$"pack \"{sdkProjectPath}\" -c Release -o \"{feedDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion}",
@@ -71,8 +71,9 @@ public sealed class SdkPackageConsumptionTests
 			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			var solutionPath =
-				Directory.GetFiles(consumerDirectory, "Proof.sln*", SearchOption.TopDirectoryOnly).FirstOrDefault()
-				?? throw new InvalidOperationException("Could not locate generated solution file.");
+				Directory.GetFiles(consumerDirectory, "Proof.sln*", SearchOption.TopDirectoryOnly).FirstOrDefault();
+
+			await Assert.That(solutionPath).IsNotNull().Because("The generated solution file was not found in the consumer directory.");
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
@@ -92,10 +93,20 @@ public sealed class SdkPackageConsumptionTests
 						<add key="local" value="{feedDirectory.Replace('\\', '/')}" />
 						<add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
 					</packageSources>
+					<packageSourceMapping>
+						<clear />
+						<packageSource key="local">
+							<package pattern="Purview.DotNetProjectSdk" />
+						</packageSource>
+						<packageSource key="nuget.org">
+							<package pattern="*" />
+						</packageSource>
+					</packageSourceMapping>
 				</configuration>
 				""",
 				cancellationToken
 			);
+			var nugetConfigPath = Path.Combine(consumerDirectory, "NuGet.Config");
 
 			await File.WriteAllTextAsync(
 				Path.Combine(consumerSrcDirectory, "Directory.Build.props"),
@@ -122,7 +133,7 @@ public sealed class SdkPackageConsumptionTests
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
-				"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -noconlog -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles",
+				$"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -noconlog -p:RestoreConfigFile=\"{nugetConfigPath}\" -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles",
 				consumerDirectory,
 				cancellationToken
 			);
@@ -164,7 +175,7 @@ public sealed class SdkPackageConsumptionTests
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
-				"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -t:EnsureRepositoryEditorConfigTarget -getProperty:RepositoryEditorConfigFilePath",
+				$"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryEditorConfigTarget -getProperty:RepositoryEditorConfigFilePath",
 				consumerDirectory,
 				cancellationToken
 			);
@@ -185,7 +196,7 @@ public sealed class SdkPackageConsumptionTests
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
-				"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -t:EnsureRepositoryGlobalJsonTarget -getProperty:RepositoryGlobalJsonFilePath",
+				$"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryGlobalJsonTarget -getProperty:RepositoryGlobalJsonFilePath",
 				consumerDirectory,
 				cancellationToken
 			);
