@@ -1,7 +1,0 @@
-
-Test run summary: Zero tests ran - P:\GitHub\kjldev\purview-dotnet-project-sdk\src\tests\DotNetProjectSdk.IntegrationTests\bin\Debug\net10.0\DotNetProjectSdk.IntegrationTests.dll (net10.0|x64)
-  total: 0
-  failed: 0
-  succeeded: 0
-  skipped: 0
-  duration: 405ms

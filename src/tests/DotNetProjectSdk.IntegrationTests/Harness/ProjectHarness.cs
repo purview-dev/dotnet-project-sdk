@@ -243,11 +243,13 @@ sealed class ProjectHarness : IAsyncDisposable
 	/// </summary>
 	public async Task<(bool Success, string Output, string Errors)> BuildAsync(
 		bool restore = false,
+		bool verbose = false,
 		CancellationToken cancellationToken = default
 	)
 	{
 		var restoreFlag = restore ? "" : "--no-restore ";
-		var args = $"build \"{ProjectFilePath}\" {restoreFlag}-nologo -v:quiet";
+		var verbosityFlag = verbose ? "-v:detailed" : "-v:quiet";
+		var args = $"build \"{ProjectFilePath}\" {restoreFlag}-nologo {verbosityFlag}";
 		var (code, stdout, stderr) = await RunAsync("dotnet", args, cancellationToken);
 		return (code == 0, stdout, stderr);
 	}

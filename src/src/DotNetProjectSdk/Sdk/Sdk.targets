@@ -44,6 +44,8 @@
 			Command="git -C &quot;$(_DirectoryBuildPropsDirectory)&quot; rev-parse --show-toplevel"
 			ConsoleToMSBuild="true"
 			IgnoreExitCode="true"
+			IgnoreStandardErrorWarningFormat="true"
+			StandardErrorImportance="low"
 			Condition="'$(RepositoryEditorConfigFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
 		>
 			<Output TaskParameter="ConsoleOutput" PropertyName="_GitRepositoryRoot" />
@@ -55,7 +57,8 @@
 			<_RepositoryProbe2>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe1)\..'))</_RepositoryProbe2>
 			<_RepositoryProbe3>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe2)\..'))</_RepositoryProbe3>
 			<_RepositoryProbe4>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe3)\..'))</_RepositoryProbe4>
-			<_DetectedRepositoryRoot Condition="'$(_GitRepositoryRoot)' != ''"
+			<_DetectedRepositoryRoot
+				Condition="'$(_GitRepositoryRoot)' != '' AND Exists('$(_GitRepositoryRoot)')"
 				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
@@ -119,6 +122,8 @@
 			Command="git -C &quot;$(_DirectoryBuildPropsDirectory)&quot; rev-parse --show-toplevel"
 			ConsoleToMSBuild="true"
 			IgnoreExitCode="true"
+			IgnoreStandardErrorWarningFormat="true"
+			StandardErrorImportance="low"
 			Condition="'$(RepositoryGlobalJsonFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
 		>
 			<Output TaskParameter="ConsoleOutput" PropertyName="_GitRepositoryRoot" />
@@ -130,7 +135,8 @@
 			<_RepositoryProbe2>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe1)\..'))</_RepositoryProbe2>
 			<_RepositoryProbe3>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe2)\..'))</_RepositoryProbe3>
 			<_RepositoryProbe4>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe3)\..'))</_RepositoryProbe4>
-			<_DetectedRepositoryRoot Condition="'$(_GitRepositoryRoot)' != ''"
+			<_DetectedRepositoryRoot
+				Condition="'$(_GitRepositoryRoot)' != '' AND Exists('$(_GitRepositoryRoot)')"
 				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot

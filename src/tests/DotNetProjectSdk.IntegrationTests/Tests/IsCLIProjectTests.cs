@@ -17,7 +17,22 @@ public sealed class IsCLIProjectTests
 		CancellationToken cancellationToken = default
 	)
 	{
-		var harness = await ProjectHarness.CreateAsync(projectName, cancellationToken: cancellationToken);
+		var extProps = """
+				<OutputType>Library</OutputType>
+			""";
+		var extraItems = """
+				<PackageReference Remove="Purview.Telemetry.SourceGenerator" />
+				<PackageReference Remove="Microsoft.Extensions.Telemetry.Abstractions" />
+				<PackageReference Remove="Microsoft.SourceLink.GitHub" />
+			""";
+
+		var harness = await ProjectHarness.CreateAsync(
+			projectName,
+			extraProps: extProps,
+			extraItems: extraItems,
+			cancellationToken: cancellationToken
+		);
+
 		var isCLIProjectValue = await harness.GetPropertyAsync("IsCLIProject", cancellationToken);
 		var isCLIProject = isCLIProjectValue.Equals("true", StringComparison.OrdinalIgnoreCase);
 
@@ -28,6 +43,88 @@ public sealed class IsCLIProjectTests
 	public async Task ProjectEndingWithCLI_Uppercase_IsCLIProject(CancellationToken cancellationToken)
 	{
 		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyCLI", cancellationToken);
+
+		await using (harness)
+		{
+			await Assert.That(isCLIProject).IsTrue();
+		}
+	}
+
+	[Test]
+	[Arguments("appsettings.json")]
+	[Arguments("appsettings.json", "appsettings.Development.json")]
+	[Arguments("appsettings.json", "appsettings.Development.json", "appsettings.Test.json")]
+	[Arguments(
+		"appsettings.json",
+		"appsettings.Development.json",
+		"appsettings.Test.json",
+		"appsettings.Acceptance.json"
+	)]
+	[Arguments(
+		"appsettings.json",
+		"appsettings.Development.json",
+		"appsettings.Test.json",
+		"appsettings.Acceptance.json",
+		"appsettings.Production.json"
+	)]
+	[Arguments(
+		"appsettings.Development.json",
+		"appsettings.Test.json",
+		"appsettings.Acceptance.json",
+		"appsettings.Production.json"
+	)]
+	[Arguments("appsettings.Test.json", "appsettings.Acceptance.json", "appsettings.Production.json")]
+	[Arguments("appsettings.Acceptance.json", "appsettings.Production.json")]
+	[Arguments("appsettings.Production.json")]
+	public async Task ProjectEndingWithCLI_HasAppSettings_CopiedOnBuild(
+		string[] appsettings,
+		CancellationToken cancellationToken
+	)
+	{
+		var (harness, _) = await CreateProjectAndEvaluateAsync("MyCLI", cancellationToken);
+
+		for (var i = 0; i < appsettings.Length; i++)
+		{
+			var appSettingsFile = Path.Combine(harness.ProjectDirectory, appsettings[i]);
+			await File.WriteAllTextAsync(appSettingsFile, "{ }", cancellationToken);
+		}
+
+		await using (harness)
+		{
+			var (success, output, errors) = await harness.BuildAsync(true, cancellationToken: cancellationToken);
+			await Assert.That(success).IsTrue().Because(TestHelpers.GenerateError(output, errors));
+
+			var bin = Path.Combine(harness.ProjectDirectory, "bin");
+
+			await Assert.That(Directory.Exists(bin)).IsTrue();
+
+			var files = Directory
+				.GetFiles(bin, "*", SearchOption.AllDirectories)
+				.Where(f => appsettings.Contains(Path.GetFileName(f)))
+				.ToArray();
+
+			await Assert.That(files.Length).IsEqualTo(appsettings.Length);
+		}
+	}
+
+	[Test]
+	public async Task ProjectCLI_HasNoWarnCA1515(CancellationToken cancellationToken)
+	{
+		var (harness, _) = await CreateProjectAndEvaluateAsync("MyCLI", cancellationToken);
+
+		await using (harness)
+		{
+			var properties = await harness.GetPropertiesAsync(cancellationToken, "NoWarn");
+
+			await Assert.That(properties).ContainsKey("NoWarn");
+			await Assert.That(properties["NoWarn"]).Contains("CA1515");
+		}
+	}
+
+	[Test]
+	public async Task ProjectEndingWithDotCLI_Uppercase_IsCLIProject(CancellationToken cancellationToken)
+	{
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("My.CLI", cancellationToken);
 
 		await using (harness)
 		{
