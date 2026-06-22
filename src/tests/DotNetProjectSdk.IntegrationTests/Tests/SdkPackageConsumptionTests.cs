@@ -28,26 +28,27 @@ public sealed class SdkPackageConsumptionTests
 			var sdkProjectDirectory =
 				Path.GetDirectoryName(sdkProjectPath)
 				?? throw new InvalidOperationException("Unable to determine SDK project directory.");
-			var packageVersion = $"1.0.0-test.{Guid.NewGuid():N}";
 
+			var packageVersion = $"1.0.0-integration-test-{Guid.NewGuid():N}";
 			var (code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
-				$"pack \"{sdkProjectPath}\" -c Release -o \"{feedDirectory}\" -p:PackageVersion={packageVersion}",
+				$"pack \"{sdkProjectPath}\" -c Release -o \"{feedDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion}",
 				sdkProjectDirectory,
 				cancellationToken
 			);
-			await Assert.That(code).IsEqualTo(0);
+			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			var packagePath = Directory
-				.GetFiles(feedDirectory, "Purview.DotNetProjectSdk.*.nupkg", SearchOption.TopDirectoryOnly)
-				.Where(path => !path.EndsWith(".symbols.nupkg", StringComparison.OrdinalIgnoreCase))
-				.OrderByDescending(path => path)
-				.FirstOrDefault();
-			await Assert.That(packagePath).IsNotNull();
+				.GetFiles(feedDirectory, $"Purview.DotNetProjectSdk.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
+				//.Where(path => !path.EndsWith(".symbols.nupkg", StringComparison.OrdinalIgnoreCase))
+				//.OrderByDescending(path => path)
+				.SingleOrDefault();
+
+			await Assert.That(packagePath).IsNotNull().Because($"The package {packageVersion} was not found in the feed directory.");
 
 			using (var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken))
 			{
-				await Assert.That(zip.Entries.Any(entry => entry.FullName == "Sdk/.editorconfig")).IsTrue();
+				await Assert.That(zip.Entries.Any(entry => entry.FullName == "Sdk/.editorconfig")).IsTrue().Because("The .editorconfig file is missing in the SDK package.");
 			}
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
@@ -56,10 +57,10 @@ public sealed class SdkPackageConsumptionTests
 				consumerDirectory,
 				cancellationToken
 			);
-			await Assert.That(code).IsEqualTo(0);
+			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			(code, stdOut, stdErr) = await RunProcessAsync("git", "init", consumerDirectory, cancellationToken);
-			await Assert.That(code).IsEqualTo(0);
+			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
@@ -67,7 +68,7 @@ public sealed class SdkPackageConsumptionTests
 				consumerDirectory,
 				cancellationToken
 			);
-			await Assert.That(code).IsEqualTo(0);
+			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			var solutionPath =
 				Directory.GetFiles(consumerDirectory, "Proof.sln*", SearchOption.TopDirectoryOnly).FirstOrDefault()
@@ -79,7 +80,7 @@ public sealed class SdkPackageConsumptionTests
 				consumerDirectory,
 				cancellationToken
 			);
-			await Assert.That(code).IsEqualTo(0);
+			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			await File.WriteAllTextAsync(
 				Path.Combine(consumerDirectory, "NuGet.Config"),
@@ -125,7 +126,7 @@ public sealed class SdkPackageConsumptionTests
 				consumerDirectory,
 				cancellationToken
 			);
-			await Assert.That(code).IsEqualTo(0);
+			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			var evaluationJsonStart = stdOut.IndexOf('{', StringComparison.Ordinal);
 			await Assert.That(evaluationJsonStart >= 0).IsTrue();
@@ -137,8 +138,8 @@ public sealed class SdkPackageConsumptionTests
 				.GetProperty("EditorConfigFilePath")
 				.GetString();
 
-			await Assert.That(string.IsNullOrWhiteSpace(editorConfigPath)).IsFalse();
-			await Assert.That(File.Exists(editorConfigPath!)).IsTrue();
+			await Assert.That(string.IsNullOrWhiteSpace(editorConfigPath)).IsFalse().Because("EditorConfigFilePath property is missing or empty.");
+			await Assert.That(File.Exists(editorConfigPath!)).IsTrue().Because($"EditorConfig file not found at path: {editorConfigPath}");
 
 			var itemPaths = doc
 				.RootElement.GetProperty("Items")
@@ -159,7 +160,7 @@ public sealed class SdkPackageConsumptionTests
 				.IsTrue();
 
 			var editorConfigContent = await File.ReadAllTextAsync(editorConfigPath!, cancellationToken);
-			await Assert.That(editorConfigContent).Contains("csharp_prefer_braces = when_possible:error");
+			await Assert.That(editorConfigContent).Contains("csharp_prefer_braces = when_possible:error").Because($"EditorConfig file at path {editorConfigPath} does not contain the expected content.");
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
@@ -167,20 +168,20 @@ public sealed class SdkPackageConsumptionTests
 				consumerDirectory,
 				cancellationToken
 			);
-			await Assert.That(code).IsEqualTo(0);
+			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			var repositoryEditorConfigPath = stdOut.Trim();
-			await Assert.That(string.IsNullOrWhiteSpace(repositoryEditorConfigPath)).IsFalse();
+			await Assert.That(string.IsNullOrWhiteSpace(repositoryEditorConfigPath)).IsFalse().Because("RepositoryEditorConfigFilePath property is missing or empty.");
 			repositoryEditorConfigPath = Path.GetFullPath(repositoryEditorConfigPath!);
-			await Assert.That(repositoryEditorConfigPath).IsEqualTo(Path.Combine(consumerDirectory, ".editorconfig"));
+			await Assert.That(repositoryEditorConfigPath).IsEqualTo(Path.Combine(consumerDirectory, ".editorconfig")).Because("RepositoryEditorConfigFilePath does not match the expected path.");
 
-			await Assert.That(File.Exists(repositoryEditorConfigPath)).IsTrue();
+			await Assert.That(File.Exists(repositoryEditorConfigPath)).IsTrue().Because($"Repository EditorConfig file not found at path: {repositoryEditorConfigPath}");
 
 			var repositoryEditorConfigContent = await File.ReadAllTextAsync(
 				repositoryEditorConfigPath,
 				cancellationToken
 			);
-			await Assert.That(repositoryEditorConfigContent).Contains("csharp_prefer_braces = when_possible:error");
+			await Assert.That(repositoryEditorConfigContent).Contains("csharp_prefer_braces = when_possible:error").Because($"Repository EditorConfig file at path {repositoryEditorConfigPath} does not contain the expected content.");
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
@@ -188,23 +189,39 @@ public sealed class SdkPackageConsumptionTests
 				consumerDirectory,
 				cancellationToken
 			);
-			await Assert.That(code).IsEqualTo(0);
+			await Assert.That(code).IsEqualTo(0).Because(GenerateError(stdOut, stdErr));
 
 			var repositoryGlobalJsonPath = stdOut.Trim();
-			await Assert.That(string.IsNullOrWhiteSpace(repositoryGlobalJsonPath)).IsFalse();
+			await Assert.That(string.IsNullOrWhiteSpace(repositoryGlobalJsonPath)).IsFalse().Because("RepositoryGlobalJsonFilePath property is missing or empty.");
 			repositoryGlobalJsonPath = Path.GetFullPath(repositoryGlobalJsonPath!);
-			await Assert.That(repositoryGlobalJsonPath).IsEqualTo(Path.Combine(consumerDirectory, "global.json"));
-			await Assert.That(File.Exists(repositoryGlobalJsonPath)).IsTrue();
+			await Assert.That(repositoryGlobalJsonPath).IsEqualTo(Path.Combine(consumerDirectory, "global.json")).Because("RepositoryGlobalJsonFilePath does not match the expected path.");
+			await Assert.That(File.Exists(repositoryGlobalJsonPath)).IsTrue().Because($"Repository GlobalJson file not found at path: {repositoryGlobalJsonPath}");
 
 			var repositoryGlobalJsonContent = await File.ReadAllTextAsync(repositoryGlobalJsonPath, cancellationToken);
-			await Assert.That(repositoryGlobalJsonContent).Contains("\"runner\": \"Microsoft.Testing.Platform\"");
-			await Assert.That(repositoryGlobalJsonContent).Contains("\"Purview.DotNetProjectSdk\"");
+			await Assert.That(repositoryGlobalJsonContent).Contains("\"runner\": \"Microsoft.Testing.Platform\"").Because($"Repository GlobalJson file at path {repositoryGlobalJsonPath} does not contain the expected content.");
+			await Assert.That(repositoryGlobalJsonContent).Contains("\"Purview.DotNetProjectSdk\"").Because($"Repository GlobalJson file at path {repositoryGlobalJsonPath} does not contain the expected content.");
 		}
 		finally
 		{
 			if (Directory.Exists(tempRoot))
 				Directory.Delete(tempRoot, recursive: true);
 		}
+	}
+
+	string GenerateError(string stdOut, string stdErr)
+	{
+		var msg = "";
+		if (!string.IsNullOrWhiteSpace(stdOut))
+			msg += "Standard Output:\n" + stdOut + "\n";
+		if (!string.IsNullOrWhiteSpace(stdErr))
+			msg += "Standard Error:\n" + stdErr + "\n";
+
+		msg = msg?.Trim();
+
+		if (string.IsNullOrWhiteSpace(msg))
+			msg = "No additional information returned";
+
+		return msg;
 	}
 
 	static async Task<(int Code, string StdOut, string StdErr)> RunProcessAsync(
