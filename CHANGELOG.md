@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.11
+
+### Patch Changes
+
+- Make SDK property conditions explicit and harden executable project detection for top-level Program.cs projects.
+
 ## 1.0.0-prerelease.10
 
 ### Patch Changes
