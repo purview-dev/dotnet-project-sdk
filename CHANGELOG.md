@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.11
+
+### Patch Changes
+
+- expanded support for CLI
+
 ## 1.0.0-prerelease.10
 
 ### Patch Changes
