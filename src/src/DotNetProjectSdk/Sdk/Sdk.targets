@@ -62,23 +62,23 @@
 				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)\.git\HEAD') OR Exists('$(_RepositoryProbe0)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)/.git/HEAD') OR Exists('$(_RepositoryProbe0)/.git'))"
 				>$(_RepositoryProbe0)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe1)\.git\HEAD') OR Exists('$(_RepositoryProbe1)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe1)/.git/HEAD') OR Exists('$(_RepositoryProbe1)/.git'))"
 				>$(_RepositoryProbe1)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe2)\.git\HEAD') OR Exists('$(_RepositoryProbe2)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe2)/.git/HEAD') OR Exists('$(_RepositoryProbe2)/.git'))"
 				>$(_RepositoryProbe2)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe3)\.git\HEAD') OR Exists('$(_RepositoryProbe3)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe3)/.git/HEAD') OR Exists('$(_RepositoryProbe3)/.git'))"
 				>$(_RepositoryProbe3)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe4)\.git\HEAD') OR Exists('$(_RepositoryProbe4)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe4)/.git/HEAD') OR Exists('$(_RepositoryProbe4)/.git'))"
 				>$(_RepositoryProbe4)</_DetectedRepositoryRoot
 			>
 			<_EffectiveRepositoryEditorConfigFilePath>$(RepositoryEditorConfigFilePath)</_EffectiveRepositoryEditorConfigFilePath>
@@ -140,23 +140,23 @@
 				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)\.git\HEAD') OR Exists('$(_RepositoryProbe0)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)/.git/HEAD') OR Exists('$(_RepositoryProbe0)/.git'))"
 				>$(_RepositoryProbe0)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe1)\.git\HEAD') OR Exists('$(_RepositoryProbe1)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe1)/.git/HEAD') OR Exists('$(_RepositoryProbe1)/.git'))"
 				>$(_RepositoryProbe1)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe2)\.git\HEAD') OR Exists('$(_RepositoryProbe2)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe2)/.git/HEAD') OR Exists('$(_RepositoryProbe2)/.git'))"
 				>$(_RepositoryProbe2)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe3)\.git\HEAD') OR Exists('$(_RepositoryProbe3)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe3)/.git/HEAD') OR Exists('$(_RepositoryProbe3)/.git'))"
 				>$(_RepositoryProbe3)</_DetectedRepositoryRoot
 			>
 			<_DetectedRepositoryRoot
-				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe4)\.git\HEAD') OR Exists('$(_RepositoryProbe4)\.git'))"
+				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe4)/.git/HEAD') OR Exists('$(_RepositoryProbe4)/.git'))"
 				>$(_RepositoryProbe4)</_DetectedRepositoryRoot
 			>
 			<_EffectiveRepositoryGlobalJsonFilePath>$(RepositoryGlobalJsonFilePath)</_EffectiveRepositoryGlobalJsonFilePath>

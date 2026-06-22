@@ -137,6 +137,38 @@ public sealed class VersionDetectionTests
 	}
 
 	[Test]
+	public async Task Version_SetFromGitHubWorkspacePackageJson_WhenGitMarkersAreUnavailable(
+		CancellationToken cancellationToken
+	)
+	{
+		var workspaceRoot = Path.Combine(Path.GetTempPath(), $"PurviewSdkWorkspace_{Guid.NewGuid():N}");
+
+		Directory.CreateDirectory(workspaceRoot);
+
+		try
+		{
+			await using var h = await ProjectHarness.CreateAsync(
+				"MyLibrary",
+				extraEnv: new Dictionary<string, string> { ["GITHUB_WORKSPACE"] = workspaceRoot },
+				cancellationToken: cancellationToken
+			);
+
+			await File.WriteAllTextAsync(
+				Path.Combine(workspaceRoot, "package.json"),
+				"""{"name": "my-lib", "version": "2.4.6"}""",
+				cancellationToken
+			);
+
+			await Assert.That(await h.GetPropertyAsync("Version", cancellationToken)).IsEqualTo("2.4.6");
+		}
+		finally
+		{
+			if (Directory.Exists(workspaceRoot))
+				Directory.Delete(workspaceRoot, recursive: true);
+		}
+	}
+
+	[Test]
 	public async Task VersionDetection_UsesSessionCache_WhenGitMarkerIsRemoved(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);

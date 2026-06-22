@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.14
+
+### Patch Changes
+
+- hardenend version detection
+
 ## 1.0.0-prerelease.13
 
 ### Patch Changes

@@ -57,7 +57,7 @@
               and '$(_PackageJsonVersion)' == ''
               and '$(_RootPackageJsonWasSpecified)' != 'true'
               and '$(RepoRoot)' == ''"
-			Text="UsePackageJsonVersion=Strict requires resolving version from package.json, but no package.json source could be discovered. Set RootPackageJson explicitly or ensure a .git marker can be found above the project."
+			Text="UsePackageJsonVersion=Strict requires resolving version from package.json, but no package.json source could be discovered. Set RootPackageJson explicitly or provide a discoverable repository root (for example via CI workspace variables, git metadata, or package.json above the project)."
 		/>
 	</Target>
 </Project>

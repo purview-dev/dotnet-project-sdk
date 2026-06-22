@@ -58,9 +58,33 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'">
-		<RepoRoot>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git'))</RepoRoot>
+		<RepoRoot
+			Condition="'$(RepoRoot)' == '' and '$(GITHUB_WORKSPACE)' != '' and Exists('$(GITHUB_WORKSPACE)')"
+			>$([MSBuild]::NormalizePath('$(GITHUB_WORKSPACE)'))</RepoRoot
+		>
+		<RepoRoot
+			Condition="'$(RepoRoot)' == '' and '$(BUILD_SOURCESDIRECTORY)' != '' and Exists('$(BUILD_SOURCESDIRECTORY)')"
+			>$([MSBuild]::NormalizePath('$(BUILD_SOURCESDIRECTORY)'))</RepoRoot
+		>
+		<RepoRoot
+			Condition="'$(RepoRoot)' == '' and '$(BUILD_REPOSITORY_LOCALPATH)' != '' and Exists('$(BUILD_REPOSITORY_LOCALPATH)')"
+			>$([MSBuild]::NormalizePath('$(BUILD_REPOSITORY_LOCALPATH)'))</RepoRoot
+		>
+		<RepoRoot
+			Condition="'$(RepoRoot)' == '' and '$(CI_PROJECT_DIR)' != '' and Exists('$(CI_PROJECT_DIR)')"
+			>$([MSBuild]::NormalizePath('$(CI_PROJECT_DIR)'))</RepoRoot
+		>
 		<RepoRoot Condition="'$(RepoRoot)' == ''"
-			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git\HEAD'))</RepoRoot
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git'))</RepoRoot
+		>
+		<RepoRoot Condition="'$(RepoRoot)' == ''"
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git/HEAD'))</RepoRoot
+		>
+		<RepoRoot Condition="'$(RepoRoot)' == ''"
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git/config'))</RepoRoot
+		>
+		<RepoRoot Condition="'$(RepoRoot)' == ''"
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'package.json'))</RepoRoot
 		>
 	</PropertyGroup>
 
