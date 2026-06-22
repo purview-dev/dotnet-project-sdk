@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.15
+
+### Patch Changes
+
+- hardended aspire host defaults
+
 ## 1.0.0-prerelease.14
 
 ### Patch Changes
