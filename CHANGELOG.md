@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.13
+
+### Patch Changes
+
+- fixed IsCLIProject properties
+
 ## 1.0.0-prerelease.12
 
 ### Patch Changes
