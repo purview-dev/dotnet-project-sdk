@@ -238,6 +238,56 @@ sealed class ProjectHarness : IAsyncDisposable
 	}
 
 	/// <summary>
+	/// Evaluates metadata values for a given MSBuild item type.
+	/// </summary>
+	public async Task<IReadOnlyList<string>> GetItemMetadataValuesAsync(
+		string itemType,
+		string metadataName,
+		CancellationToken cancellationToken = default
+	)
+	{
+		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getItem:{itemType}";
+		var (_, stdout, _) = await RunAsync("dotnet", args, cancellationToken);
+
+		var jsonStart = stdout.Trim().IndexOf('{', StringComparison.Ordinal);
+		if (jsonStart < 0)
+			return [];
+
+		try
+		{
+			using var doc = JsonDocument.Parse(stdout[jsonStart..]);
+			if (
+				doc.RootElement.TryGetProperty("Items", out var itemsEl)
+				&& itemsEl.TryGetProperty(itemType, out var typeEl)
+			)
+			{
+				var values = new List<string>();
+				foreach (var item in typeEl.EnumerateArray())
+				{
+					if (item.TryGetProperty(metadataName, out var metadataValue))
+						values.Add(metadataValue.GetString() ?? string.Empty);
+				}
+
+				return values;
+			}
+		}
+		catch (JsonException)
+		{ /* fall through */
+		}
+
+		return [];
+	}
+
+	public async Task<(int Code, string StdOut, string StdErr)> RunMSBuildAsync(
+		string msbuildArguments,
+		CancellationToken cancellationToken = default
+	)
+	{
+		var args = $"msbuild \"{ProjectFilePath}\" -nologo {msbuildArguments}";
+		return await RunAsync("dotnet", args, cancellationToken);
+	}
+
+	/// <summary>
 	/// Runs a full build of the consumer project.
 	/// Pass <paramref name="restore"/>=<c>true</c> when the project references NuGet packages.
 	/// </summary>

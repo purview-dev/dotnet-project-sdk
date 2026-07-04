@@ -59,27 +59,26 @@ public sealed class CoreDefaultsTests
 	}
 
 	[Test]
-	public async Task RootNamespace_TestSuffixStripped_ForTestProjects(CancellationToken cancellationToken)
+	public async Task RootNamespace_Keeps_TestSuffix_ForTestProjects(CancellationToken cancellationToken)
 	{
 		// ProjectName=MyApp.UnitTests, NamespacePrefix=Test → Test.MyApp.UnitTests
-		// After FixRootNamespaceTarget strips ".UnitTests" → Test.MyApp
 		await using var h = await ProjectHarness.CreateAsync(
 			"MyApp.UnitTests",
 			namespacePrefix: "Test",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("Test.MyApp");
+		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("Test.MyApp.UnitTests");
 	}
 
 	[Test]
-	public async Task RootNamespace_IntegrationTestsSuffixStripped(CancellationToken cancellationToken)
+	public async Task RootNamespace_IntegrationTestsSuffixPreserved(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync(
 			"MyApp.IntegrationTests",
 			namespacePrefix: "Test",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("Test.MyApp");
+		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("Test.MyApp.IntegrationTests");
 	}
 
 	[Test]

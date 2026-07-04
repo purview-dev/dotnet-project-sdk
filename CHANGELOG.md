@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.16
+
+### Patch Changes
+
+- updated to support different substitite frameworks
+
 ## 1.0.0-prerelease.15
 
 ### Patch Changes

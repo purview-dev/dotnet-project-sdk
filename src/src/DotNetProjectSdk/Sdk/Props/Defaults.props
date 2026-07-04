@@ -31,6 +31,10 @@
 		>
 		<CurrentYear Condition="'$(CurrentYear)' == ''"></CurrentYear>
 		<Deterministic Condition="'$(Deterministic)' == ''">false</Deterministic>
+		<DisableProjectFileNamingConventionCheck
+			Condition="'$(DisableProjectFileNamingConventionCheck)' == ''"
+			>false</DisableProjectFileNamingConventionCheck
+		>
 		<DisableAutoCopySdkFiles Condition="'$(DisableAutoCopySdkFiles)' == ''"
 			>false</DisableAutoCopySdkFiles
 		>
@@ -113,6 +117,16 @@
 		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''"
 			>TUnit</ProjectSdkTestFramework
 		>
+		<TestingFramework Condition="'$(TestingFramework)' == ''"></TestingFramework>
+		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''"></SubstituteFramework>
+		<TestDataFramework Condition="'$(TestDataFramework)' == ''"></TestDataFramework>
+		<PurviewLogicalProjectName Condition="'$(PurviewLogicalProjectName)' == ''"
+		></PurviewLogicalProjectName>
+		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"
+		></PurviewNamespacePrefix>
+		<PurviewProjectShortName Condition="'$(PurviewProjectShortName)' == ''"
+		></PurviewProjectShortName>
+		<PurviewTestType Condition="'$(PurviewTestType)' == ''"></PurviewTestType>
 		<PublishAot Condition="'$(PublishAot)' == ''">false</PublishAot>
 		<PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''">false</PublishRepositoryUrl>
 		<PurviewDotNetProjectSdkVersionForGlobalJson

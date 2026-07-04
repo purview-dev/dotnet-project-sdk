@@ -38,10 +38,11 @@
 
 		<!-- ── Testing (TUnit — default framework) ────────────────────────  -->
 		<PackageVersion Include="TUnit" Version="*" />
+		<PackageVersion Include="TUnit.Mocks" Version="*" />
 		<PackageVersion Include="TUnit.Aspire" Version="*" />
 		<PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="*" />
 
-		<!-- ── Testing (XUnit — opt-in via ProjectSdkTestFramework=XUnit) ── -->
+		<!-- ── Testing (Xunit — opt-in via TestingFramework=Xunit) ───────── -->
 		<PackageVersion Include="xunit.v3" Version="*" />
 		<PackageVersion Include="xunit.runner.visualstudio" Version="*" />
 

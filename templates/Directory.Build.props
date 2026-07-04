@@ -12,7 +12,9 @@
 		4. Copy templates/Directory.Packages.props to your repo root
 
 		Override options (set before this Import):
-		  <ProjectSdkTestFramework>XUnit</ProjectSdkTestFramework>    ← default: TUnit
+		  <TestingFramework>Xunit</TestingFramework>                  ← default: TUnit
+		  <SubstituteFramework>NSubstitute</SubstituteFramework>      ← default: TUnitMock
+		  <TestDataFramework>None</TestDataFramework>                 ← default: Bogus
 		  <ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>     ← default: false
 		  <ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
 		  <DisableNamespacePrefixCheck>true</DisableNamespacePrefixCheck>

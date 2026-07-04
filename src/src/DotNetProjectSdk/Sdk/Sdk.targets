@@ -213,6 +213,56 @@
 		/>
 	</Target>
 
+	<Target
+		Name="ValidateTestingFrameworkConfigurationTarget"
+		BeforeTargets="PrepareForBuild"
+		Label="Validates testing framework configuration values."
+		Condition="'$(IsCSharpProject)' == 'true'"
+	>
+		<PropertyGroup>
+			<_AllowedTestingFrameworks>;TUnit;Xunit;None;</_AllowedTestingFrameworks>
+			<_AllowedSubstituteFrameworks>;TUnitMocks;NSubstitute;None;</_AllowedSubstituteFrameworks>
+			<_AllowedTestDataFrameworks>;Bogus;None;</_AllowedTestDataFrameworks>
+		</PropertyGroup>
+		<Error
+			Text="Invalid TestingFramework '$(TestingFramework)'. Supported values: TUnit, Xunit, None."
+			Condition="$([System.String]::Copy('$(_AllowedTestingFrameworks)').Contains(';$(TestingFramework);')) != 'True'"
+			Code="PurviewInvalidTestingFramework"
+			File="$(MSBuildProjectFile)"
+		/>
+		<Error
+			Text="Invalid SubstituteFramework '$(SubstituteFramework)'. Supported values: TUnitMocks, NSubstitute, None."
+			Condition="$([System.String]::Copy('$(_AllowedSubstituteFrameworks)').Contains(';$(SubstituteFramework);')) != 'True'"
+			Code="PurviewInvalidSubstituteFramework"
+			File="$(MSBuildProjectFile)"
+		/>
+		<Error
+			Text="Invalid TestDataFramework '$(TestDataFramework)'. Supported values: Bogus, None."
+			Condition="$([System.String]::Copy('$(_AllowedTestDataFrameworks)').Contains(';$(TestDataFramework);')) != 'True'"
+			Code="PurviewInvalidTestDataFramework"
+			File="$(MSBuildProjectFile)"
+		/>
+	</Target>
+
+	<Target
+		Name="ValidateProjectFileNamingConventionTarget"
+		BeforeTargets="PrepareForBuild"
+		Label="Validates the physical project directory and file naming convention."
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(DisableProjectFileNamingConventionCheck)' != 'true'"
+	>
+		<PropertyGroup>
+			<_PurviewProjectDirectoryName>$([System.IO.Path]::GetFileName('$(MSBuildProjectDirectory)'))</_PurviewProjectDirectoryName>
+			<_PurviewProjectFileNameWithoutExtension>$([System.IO.Path]::GetFileNameWithoutExtension('$(MSBuildProjectFile)'))</_PurviewProjectFileNameWithoutExtension>
+		</PropertyGroup>
+		<Error
+			Text="Project naming convention violation: expected the .csproj filename to match its directory name. Directory '$(_PurviewProjectDirectoryName)' must contain '$(_PurviewProjectDirectoryName).csproj', but found '$(MSBuildProjectFile)'."
+			ContinueOnError="false"
+			Condition="'$(_PurviewProjectDirectoryName)' != '$(_PurviewProjectFileNameWithoutExtension)'"
+			Code="PurviewProjectFileNameMismatch"
+			File="$(MSBuildProjectFile)"
+		/>
+	</Target>
+
 	<!-- =====================================================================
 	     INTERNALS VISIBLE TO
 	     Generates InternalsVisibleToAttribute for Non-Test Projects based on
@@ -228,7 +278,7 @@
 		<ItemGroup>
 			<!-- InternalsVisibleTo for each TestType -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-				<_Parameter1>$(MSBuildProjectName).%(TestType.Identity)Tests</_Parameter1>
+				<_Parameter1>$(PurviewLogicalProjectName).%(TestType.Identity)Tests</_Parameter1>
 			</AssemblyAttribute>
 			<!-- InternalsVisibleTo for all SharedTesting projects -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">

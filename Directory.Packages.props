@@ -10,6 +10,7 @@
 		<PackageVersion Include="xunit.v3" Version="*" />
 		<PackageVersion Include="xunit.runner.visualstudio" Version="*" />
 		<PackageVersion Include="TUnit" Version="*" />
+		<PackageVersion Include="TUnit.Mocks" Version="*" />
 		<PackageVersion Include="TUnit.Aspire" Version="*" />
 		<PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="*" />
 		<PackageVersion Include="Bogus" Version="*" />
