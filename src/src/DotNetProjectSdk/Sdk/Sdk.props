@@ -159,37 +159,36 @@
 	</PropertyGroup>
 
 	<!-- =====================================================================
-	     TESTING FRAMEWORK SELECTION
+	     TESTING FRAMEWORKS
 	     Defaults:
 	     - TestingFramework: TUnit (supported: TUnit, Xunit, None)
 	     - SubstituteFramework: TUnitMocks (supported: TUnitMocks, NSubstitute, None)
 	     - TestDataFramework: Bogus (supported: Bogus, None)
 	     ===================================================================== -->
 	<PropertyGroup Label="Testing Framework Selection">
-		<TestingFramework Condition="'$(TestingFramework)' == '' AND '$(ProjectSdkTestFramework)' != ''"
-			>$(ProjectSdkTestFramework)</TestingFramework
-		>
-		<TestingFramework Condition="'$(TestingFramework)' == ''">TUnit</TestingFramework>
-		<TestingFramework Condition="'$(TestingFramework)' == 'xunit' OR '$(TestingFramework)' == 'XUnit'"
-			>Xunit</TestingFramework
-		>
-		<TestingFramework Condition="'$(TestingFramework)' == 'none'">None</TestingFramework>
-		<ProjectSdkTestFramework>$(TestingFramework)</ProjectSdkTestFramework>
+		<!--<_TestingFrameworkRaw>$(TestingFramework)</_TestingFrameworkRaw>-->
+		<_TestingFrameworkNormalized>$([System.String]::Copy('$(TestingFramework)').Trim().ToLowerInvariant())</_TestingFrameworkNormalized>
 
-		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''">TUnitMocks</SubstituteFramework>
-		<SubstituteFramework
-			Condition="'$(SubstituteFramework)' == 'tunit.mock' OR '$(SubstituteFramework)' == 'TUnit.Mock' OR '$(SubstituteFramework)' == 'tunit.mocks' OR '$(SubstituteFramework)' == 'TUnit.Mocks'"
-			>TUnitMocks</SubstituteFramework
-		>
-		<SubstituteFramework
-			Condition="'$(SubstituteFramework)' == 'nsubstitute' OR '$(SubstituteFramework)' == 'Nsubstitute'"
-			>NSubstitute</SubstituteFramework
-		>
-		<SubstituteFramework Condition="'$(SubstituteFramework)' == 'none'">None</SubstituteFramework>
+		<!--<TestingFramework Condition="'$(_TestingFrameworkNormalized)' == '' OR '$(_TestingFrameworkNormalized)' == 'tunit'">TUnit</TestingFramework>
+		<TestingFramework Condition="'$(_TestingFrameworkNormalized)' == 'xunit'">Xunit</TestingFramework>
+		<TestingFramework Condition="'$(_TestingFrameworkNormalized)' == 'none'">None</TestingFramework>-->
+	</PropertyGroup>
 
-		<TestDataFramework Condition="'$(TestDataFramework)' == ''">Bogus</TestDataFramework>
-		<TestDataFramework Condition="'$(TestDataFramework)' == 'bogus'">Bogus</TestDataFramework>
-		<TestDataFramework Condition="'$(TestDataFramework)' == 'none'">None</TestDataFramework>
+	<PropertyGroup Label="Substitution Framework Selection">
+		<!--<_SubstituteFrameworkRaw>$(SubstituteFramework)</_SubstituteFrameworkRaw>-->
+		<_SubstituteFrameworkNormalized>$([System.String]::Copy('$(SubstituteFramework)').Trim().ToLowerInvariant())</_SubstituteFrameworkNormalized>
+
+		<!--<SubstituteFramework Condition="'$(_SubstituteFrameworkNormalized)' == '' OR '$(_SubstituteFrameworkNormalized)' == 'tunit.mocks'">TUnitMocks</SubstituteFramework>
+		<SubstituteFramework Condition="'$(_SubstituteFrameworkNormalized)' == 'nsubstitute'">NSubstitute</SubstituteFramework>
+		<SubstituteFramework Condition="'$(_SubstituteFrameworkNormalized)' == 'none'">None</SubstituteFramework>-->
+	</PropertyGroup>
+
+	<PropertyGroup Label="Testing Framework Data Selection">
+		<!--<_TestDataFrameworkRaw>$(TestDataFramework)</_TestDataFrameworkRaw>-->
+		<_TestDataFrameworkNormalized>$([System.String]::Copy('$(TestDataFramework)').Trim().ToLowerInvariant())</_TestDataFrameworkNormalized>
+
+		<!--<TestDataFramework Condition="'$(_TestDataFrameworkNormalized)' == '' OR '$(_TestDataFrameworkNormalized)' == 'bogus'">Bogus</TestDataFramework>
+		<TestDataFramework Condition="'$(_TestDataFrameworkNormalized)' == 'none'">None</TestDataFramework>-->
 	</PropertyGroup>
 
 	<!-- =====================================================================
@@ -204,17 +203,14 @@
 		<CompilerVisibleProperty Include="DisableNamespacePrefixCheck">
 			<Description>Disables the build error that requires NamespacePrefix to be set.</Description>
 		</CompilerVisibleProperty>
-		<CompilerVisibleProperty Include="ProjectSdkTestFramework">
-			<Description>Legacy alias for TestingFramework.</Description>
-		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="TestingFramework">
-			<Description>Selected testing framework (TUnit, Xunit, or None).</Description>
+			<Description>Selected testing framework (TUnit, Xunit, or None). Defaults to TUnit.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="SubstituteFramework">
-			<Description>Selected mocking/substitute framework (TUnitMocks, NSubstitute, or None).</Description>
+			<Description>Selected mocking/substitute framework (TUnitMocks, NSubstitute, or None). Defaults to TUnitMocks.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="TestDataFramework">
-			<Description>Selected test data framework (Bogus or None).</Description>
+			<Description>Selected test data framework (Bogus or None). Defaults to Bogus.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="SourceLinkPackageName">
 			<Description>NuGet package ID used for SourceLink integration.</Description>
@@ -322,7 +318,7 @@
 		<Deterministic>true</Deterministic>
 		<!-- Auto-detect CI environment from common env vars -->
 		<ContinuousIntegrationBuild
-			Condition="'$(CI)' == 'true' OR '$(GITHUB_ACTIONS)' == 'true' OR '$(TF_BUILD)' == 'true'"
+			Condition="'$(CI)' == 'true' OR '$(GITHUB_ACTIONS)' == 'true' OR '$(TF_BUILD)' == 'true' OR '$(IsPackable)' == 'true'"
 			>true</ContinuousIntegrationBuild
 		>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -356,8 +352,7 @@
 			>1.0.0</PurviewDotNetProjectSdkVersionForGlobalJson
 		>
 		<!-- Sensible default for SourceLink (override by setting SourceLinkPackageName) -->
-		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''"
-			>Microsoft.SourceLink.GitHub</SourceLinkPackageName
+		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''">Microsoft.SourceLink.GitHub</SourceLinkPackageName
 		>
 		<DisableSourceLink>false</DisableSourceLink>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
@@ -365,7 +360,7 @@
 		<IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AnalysisMode>All</AnalysisMode>
 		<AnalysisLevel>Latest</AnalysisLevel>
 		<NoWarn>AD0001;$(NoWarn)</NoWarn>
 		<NoWarn>IDE2001;$(NoWarn)</NoWarn>
@@ -484,6 +479,7 @@
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 		<DockerfileContext>..\..\</DockerfileContext>
 	</PropertyGroup>
+	
 	<ItemGroup
 		Label="Container Project"
 		Condition="'$(IsContainerProject)' == 'true' AND '$(IsTestProject)' != 'true'"
@@ -567,8 +563,9 @@
 		<IsPackable>false</IsPackable>
 		<IsPublishable>false</IsPublishable>
 	</PropertyGroup>
+	
 	<PropertyGroup Label="Testing Project Properties" Condition="'$(IsTestProject)' == 'true'">
-		<OutputType Condition="'$(TestingFramework)' != 'None'">Exe</OutputType>
+		<OutputType Condition="'$(_TestingFrameworkNormalized)' != 'none'">Exe</OutputType>
 		<MaxCpuCount>0</MaxCpuCount>
 		<CollectCoverage>true</CollectCoverage>
 		<Exclude>[NSubstitute*]*,[TUnit.*]*,[xunit.*]*,[Microsoft.Testing.*]*,[Microsoft.NET.Test*]*,[Bogus*]*</Exclude>
@@ -579,21 +576,24 @@
 		<EnableStaticNativeInstrumentation>false</EnableStaticNativeInstrumentation>
 		<EnableDynamicNativeInstrumentation>false</EnableDynamicNativeInstrumentation>
 	</PropertyGroup>
+	
 	<PropertyGroup
 		Label="Testing NuGet Packages"
 		Condition="'$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true'"
 	>
 		<DisableGenerateAssemblyInfoClass>true</DisableGenerateAssemblyInfoClass>
 	</PropertyGroup>
+	
 	<ItemGroup
 		Label="Testing NuGet Packages"
 		Condition="'$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true'"
 	>
 		<AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
 	</ItemGroup>
+	
 	<ItemGroup
 		Label="Substitute Framework NuGet Packages"
-		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(SubstituteFramework)' == 'NSubstitute'"
+		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_SubstituteFrameworkNormalized)' == 'nsubstitute'"
 	>
 		<Using Include="NSubstitute" />
 		<PackageReference Include="NSubstitute" />
@@ -602,15 +602,17 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
+	
 	<ItemGroup
 		Label="Substitute Framework NuGet Packages"
-		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(SubstituteFramework)' == 'TUnitMocks'"
+		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_SubstituteFrameworkNormalized)' == 'tunitmocks'"
 	>
 		<PackageReference Include="TUnit.Mocks" />
 	</ItemGroup>
+	
 	<ItemGroup
 		Label="Test Data Framework NuGet Packages"
-		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(TestDataFramework)' == 'Bogus'"
+		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_TestDataFrameworkNormalized)' == 'bogus'"
 	>
 		<Using Include="Bogus" />
 		<PackageReference Include="Bogus" />
@@ -621,15 +623,16 @@
 	     ===================================================================== -->
 	<PropertyGroup
 		Label="TUnit Testing Platform Properties"
-		Condition="'$(IsTestProject)' == 'true' AND '$(TestingFramework)' == 'TUnit'"
+		Condition="'$(IsTestProject)' == 'true' AND '$(_TestingFrameworkNormalized)' == 'tunit'"
 	>
 		<TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
 		<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
 		<EnableMicrosoftTestingPlatform>true</EnableMicrosoftTestingPlatform>
 	</PropertyGroup>
+	
 	<ItemGroup
 		Label="TUnit NuGet Packages"
-		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(TestingFramework)' == 'TUnit'"
+		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_TestingFrameworkNormalized)' == 'tunit'"
 	>
 		<AssemblyAttribute
 			Include="TUnit.Core.Category"
@@ -649,7 +652,7 @@
 	     ===================================================================== -->
 	<ItemGroup
 		Label="XUnit NuGet Packages"
-		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(TestingFramework)' == 'Xunit'"
+		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_TestingFrameworkNormalized)' == 'xunit'"
 	>
 		<AssemblyAttribute Include="Xunit.Trait" Condition="'$(IsSharedTestingProject)' != 'true'">
 			<_Parameter1>Category</_Parameter1>

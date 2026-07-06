@@ -117,9 +117,9 @@
 		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''"
 			>TUnit</ProjectSdkTestFramework
 		>
-		<TestingFramework Condition="'$(TestingFramework)' == ''"></TestingFramework>
-		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''"></SubstituteFramework>
-		<TestDataFramework Condition="'$(TestDataFramework)' == ''"></TestDataFramework>
+		<TestingFramework Condition="'$(TestingFramework)' == ''">TUnit</TestingFramework>
+		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''">TUnitMocks</SubstituteFramework>
+		<TestDataFramework Condition="'$(TestDataFramework)' == ''">Bogus</TestDataFramework>
 		<PurviewLogicalProjectName Condition="'$(PurviewLogicalProjectName)' == ''"
 		></PurviewLogicalProjectName>
 		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"

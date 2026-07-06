@@ -11,9 +11,9 @@ default:
     just --list
 
 # Build and test with the specified configuration, defaulting to "Release"
-build solutionOrProject=solution configuration=build_configuration:
+build solutionOrProject=solution configuration=build_configuration *args:
     echo "Building {{ BLUE }}{{ solutionOrProject }}{{ NORMAL }} with configuration {{ YELLOW }}{{ configuration }}{{ NORMAL }}"
-    dotnet build {{ solutionOrProject }} -c {{ configuration }}
+    dotnet build {{ solutionOrProject }} -c {{ configuration }} {{ args }}
 
 # Run tests with the specified configuration, defaulting to "Release"
 test solutionOrProject=solution configuration=build_configuration filter=default_test_filter *args:

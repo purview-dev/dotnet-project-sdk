@@ -12,5 +12,6 @@
 		<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
 	</PropertyGroup>
 
+	<!-- Dog fooding the Sdk... -->
 	<Import Project="$(MSBuildThisFileDirectory)src/DotNetProjectSdk/Sdk/Sdk.props" />
 </Project>

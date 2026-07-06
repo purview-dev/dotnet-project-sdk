@@ -109,6 +109,47 @@
 		/>
 	</Target>
 
+	<!-- 
+		VALIDATE Testing Framework.
+	-->
+	<Target Name="ValidateTestingFramework"
+	        BeforeTargets="Build;Restore;Pack">
+		<Error
+			Condition="
+				'$(_TestingFrameworkNormalized)' != '' AND
+				'$(_TestingFrameworkNormalized)' != 'none' AND
+				'$(_TestingFrameworkNormalized)' != 'tunit' AND
+				'$(_TestingFrameworkNormalized)' != 'xunit'"
+			Text="Invalid TestingFramework value '$(TestingFramework)'. Supported values are: None, Xunit, and TUnit (default)." />
+	</Target>
+
+	<!-- 
+		VALIDATE Substitution Framework.
+	-->
+	<Target Name="ValidateSubstituteFramework"
+	        BeforeTargets="Build;Restore;Pack">
+		<Error
+			Condition="
+				'$(_SubstituteFrameworkNormalized)' != '' AND
+				'$(_SubstituteFrameworkNormalized)' != 'none' AND
+				'$(_SubstituteFrameworkNormalized)' != 'nsubstitute' AND
+				'$(_SubstituteFrameworkNormalized)' != 'tunitmocks'"
+			Text="Invalid SubstituteFramework value '$(SubstituteFramework)'. Supported values are: None, NSubstitute, and TUnitMocks (default)." />
+	</Target>
+
+	<!-- 
+		VALIDATE Testing Data Framework.
+	-->
+	<Target Name="ValidateTestingDataFramework"
+	        BeforeTargets="Build;Restore;Pack">
+		<Error
+			Condition="
+				'$(_TestingDataFrameworkNormalized)' != '' AND
+				'$(_TestingDataFrameworkNormalized)' != 'none' AND
+				'$(_TestingDataFrameworkNormalized)' != 'bogus'"
+			Text="Invalid TestingDataFramework value '$(TestingDataFramework)'. Supported values are: None, and Bogus (default)." />
+	</Target>
+
 	<Target
 		Name="EnsureRepositoryGlobalJsonTarget"
 		BeforeTargets="PrepareForBuild"
@@ -213,7 +254,7 @@
 		/>
 	</Target>
 
-	<Target
+	<!--<Target
 		Name="ValidateTestingFrameworkConfigurationTarget"
 		BeforeTargets="PrepareForBuild"
 		Label="Validates testing framework configuration values."
@@ -242,7 +283,7 @@
 			Code="PurviewInvalidTestDataFramework"
 			File="$(MSBuildProjectFile)"
 		/>
-	</Target>
+	</Target>-->
 
 	<Target
 		Name="ValidateProjectFileNamingConventionTarget"
