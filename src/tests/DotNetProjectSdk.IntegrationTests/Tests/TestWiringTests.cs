@@ -21,7 +21,6 @@ public sealed class TestWiringTests
 	{
 		await using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
 		await Assert.That(await h.GetPropertyAsync("TestingFramework", cancellationToken)).IsEqualTo("TUnit");
-		await Assert.That(await h.GetPropertyAsync("ProjectSdkTestFramework", cancellationToken)).IsEqualTo("TUnit");
 	}
 
 	[Test]

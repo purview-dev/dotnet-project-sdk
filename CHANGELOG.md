@@ -1,5 +1,11 @@
 # changeops
 
+## 1.0.0-prerelease.17
+
+### Patch Changes
+
+- fixed test project namespace generation
+
 ## 1.0.0-prerelease.16
 
 ### Patch Changes

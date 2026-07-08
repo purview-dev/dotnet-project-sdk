@@ -421,6 +421,9 @@
 			Condition="('$(RootNamespace)' == '' OR '$(RootNamespace)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
 			>$(PurviewLogicalProjectName)</RootNamespace
 		>
+		<RootNamespace Condition="'$(TestingType)' != ''"
+			>$([System.Text.RegularExpressions.Regex]::Replace($(RootNamespace), `[.]$(TestingType)Tests?$$`, ``))</RootNamespace
+		>
 	</PropertyGroup>
 
 	<!-- Test project target resolution -->
