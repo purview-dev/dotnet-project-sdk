@@ -138,7 +138,9 @@ public sealed class ProjectIdentityRulesTests
 			namespacePrefix: "ExampleProject",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("ExampleProject.Api.IntegrationTests");
+		await Assert
+			.That(await h.GetPropertyAsync("AssemblyName", cancellationToken))
+			.IsEqualTo("ExampleProject.Api.IntegrationTests");
 	}
 
 	[Test]
@@ -149,7 +151,9 @@ public sealed class ProjectIdentityRulesTests
 			namespacePrefix: "ExampleProject",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("ExampleProject.Core.ArchitectureTests");
+		await Assert
+			.That(await h.GetPropertyAsync("AssemblyName", cancellationToken))
+			.IsEqualTo("ExampleProject.Core.ArchitectureTests");
 	}
 
 	[Test]
@@ -160,7 +164,9 @@ public sealed class ProjectIdentityRulesTests
 			namespacePrefix: "ExampleProject",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("ExampleProject.Core.ContractTests");
+		await Assert
+			.That(await h.GetPropertyAsync("AssemblyName", cancellationToken))
+			.IsEqualTo("ExampleProject.Core.ContractTests");
 	}
 
 	[Test]
@@ -171,7 +177,9 @@ public sealed class ProjectIdentityRulesTests
 			namespacePrefix: "ExampleProject",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("ExampleProject.Core.FunctionalTests");
+		await Assert
+			.That(await h.GetPropertyAsync("AssemblyName", cancellationToken))
+			.IsEqualTo("ExampleProject.Core.FunctionalTests");
 	}
 
 	[Test]
@@ -311,11 +319,7 @@ public sealed class ProjectIdentityRulesTests
 		}
 	}
 
-	static List<string> ExtractItemMetadataValues(
-		string msbuildOutput,
-		string itemType,
-		string metadataName
-	)
+	static List<string> ExtractItemMetadataValues(string msbuildOutput, string itemType, string metadataName)
 	{
 		var jsonStart = msbuildOutput.IndexOf('{', StringComparison.Ordinal);
 		if (jsonStart < 0)

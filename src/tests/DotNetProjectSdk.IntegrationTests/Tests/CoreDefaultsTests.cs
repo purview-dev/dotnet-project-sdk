@@ -67,7 +67,9 @@ public sealed class CoreDefaultsTests
 			namespacePrefix: "Test",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("Test.MyApp.UnitTests");
+		await Assert
+			.That(await h.GetPropertyAsync("RootNamespace", cancellationToken))
+			.IsEqualTo("Test.MyApp.UnitTests");
 	}
 
 	[Test]
@@ -78,7 +80,9 @@ public sealed class CoreDefaultsTests
 			namespacePrefix: "Test",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("Test.MyApp.IntegrationTests");
+		await Assert
+			.That(await h.GetPropertyAsync("RootNamespace", cancellationToken))
+			.IsEqualTo("Test.MyApp.IntegrationTests");
 	}
 
 	[Test]

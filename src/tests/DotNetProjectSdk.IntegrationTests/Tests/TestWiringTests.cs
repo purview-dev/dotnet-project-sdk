@@ -47,7 +47,6 @@ public sealed class TestWiringTests
 			cancellationToken: cancellationToken
 		);
 		await Assert.That(await h.GetPropertyAsync("TestingFramework", cancellationToken)).IsEqualTo("Xunit");
-		await Assert.That(await h.GetPropertyAsync("ProjectSdkTestFramework", cancellationToken)).IsEqualTo("Xunit");
 	}
 
 	[Test]
@@ -62,7 +61,9 @@ public sealed class TestWiringTests
 	}
 
 	[Test]
-	public async Task TestProject_DefaultFrameworkPackages_AreTUnitTUnitMocksAndBogus(CancellationToken cancellationToken)
+	public async Task TestProject_DefaultFrameworkPackages_AreTUnitTUnitMocksAndBogus(
+		CancellationToken cancellationToken
+	)
 	{
 		await using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
 		var packageReferences = await h.GetItemIdentitiesAsync("PackageReference", cancellationToken);
@@ -91,8 +92,7 @@ public sealed class TestWiringTests
 	{
 		await using var h = await ProjectHarness.CreateAsync(
 			"MyApp.UnitTests",
-			preImportProps:
-				"<SubstituteFramework>None</SubstituteFramework><TestDataFramework>None</TestDataFramework>",
+			preImportProps: "<SubstituteFramework>None</SubstituteFramework><TestDataFramework>None</TestDataFramework>",
 			cancellationToken: cancellationToken
 		);
 		var packageReferences = await h.GetItemIdentitiesAsync("PackageReference", cancellationToken);

@@ -120,11 +120,12 @@
 		<TestingFramework Condition="'$(TestingFramework)' == ''">TUnit</TestingFramework>
 		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''">TUnitMocks</SubstituteFramework>
 		<TestDataFramework Condition="'$(TestDataFramework)' == ''">Bogus</TestDataFramework>
-		<PurviewLogicalProjectName Condition="'$(PurviewLogicalProjectName)' == ''"
+		<PurviewLogicalProjectName
+			Condition="'$(PurviewLogicalProjectName)' == ''"
 		></PurviewLogicalProjectName>
-		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"
-		></PurviewNamespacePrefix>
-		<PurviewProjectShortName Condition="'$(PurviewProjectShortName)' == ''"
+		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"></PurviewNamespacePrefix>
+		<PurviewProjectShortName
+			Condition="'$(PurviewProjectShortName)' == ''"
 		></PurviewProjectShortName>
 		<PurviewTestType Condition="'$(PurviewTestType)' == ''"></PurviewTestType>
 		<PublishAot Condition="'$(PublishAot)' == ''">false</PublishAot>

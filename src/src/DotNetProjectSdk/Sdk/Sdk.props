@@ -123,18 +123,18 @@
 		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"
 			>$(NamespacePrefix)</PurviewNamespacePrefix
 		>
-		<NamespacePrefix Condition="'$(NamespacePrefix)' == ''">$(PurviewNamespacePrefix)</NamespacePrefix>
+		<NamespacePrefix Condition="'$(NamespacePrefix)' == ''"
+			>$(PurviewNamespacePrefix)</NamespacePrefix
+		>
 		<PurviewProjectShortName>$(MSBuildProjectName)</PurviewProjectShortName>
-		<_PurviewEscapedNamespacePrefix
-			Condition="'$(PurviewNamespacePrefix)' != ''"
+		<_PurviewEscapedNamespacePrefix Condition="'$(PurviewNamespacePrefix)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Escape('$(PurviewNamespacePrefix)'))</_PurviewEscapedNamespacePrefix
 		>
 		<_PurviewIsSegmentPrefixedProjectName
 			Condition="'$(PurviewNamespacePrefix)' != '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^$(_PurviewEscapedNamespacePrefix)($|\.)'))"
 			>true</_PurviewIsSegmentPrefixedProjectName
 		>
-		<PurviewLogicalProjectName
-			Condition="'$(PurviewNamespacePrefix)' == ''"
+		<PurviewLogicalProjectName Condition="'$(PurviewNamespacePrefix)' == ''"
 			>$(MSBuildProjectName)</PurviewLogicalProjectName
 		>
 		<PurviewLogicalProjectName
@@ -352,7 +352,8 @@
 			>1.0.0</PurviewDotNetProjectSdkVersionForGlobalJson
 		>
 		<!-- Sensible default for SourceLink (override by setting SourceLinkPackageName) -->
-		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''">Microsoft.SourceLink.GitHub</SourceLinkPackageName
+		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''"
+			>Microsoft.SourceLink.GitHub</SourceLinkPackageName
 		>
 		<DisableSourceLink>false</DisableSourceLink>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
@@ -479,7 +480,7 @@
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 		<DockerfileContext>..\..\</DockerfileContext>
 	</PropertyGroup>
-	
+
 	<ItemGroup
 		Label="Container Project"
 		Condition="'$(IsContainerProject)' == 'true' AND '$(IsTestProject)' != 'true'"
@@ -563,7 +564,7 @@
 		<IsPackable>false</IsPackable>
 		<IsPublishable>false</IsPublishable>
 	</PropertyGroup>
-	
+
 	<PropertyGroup Label="Testing Project Properties" Condition="'$(IsTestProject)' == 'true'">
 		<OutputType Condition="'$(_TestingFrameworkNormalized)' != 'none'">Exe</OutputType>
 		<MaxCpuCount>0</MaxCpuCount>
@@ -576,21 +577,21 @@
 		<EnableStaticNativeInstrumentation>false</EnableStaticNativeInstrumentation>
 		<EnableDynamicNativeInstrumentation>false</EnableDynamicNativeInstrumentation>
 	</PropertyGroup>
-	
+
 	<PropertyGroup
 		Label="Testing NuGet Packages"
 		Condition="'$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true'"
 	>
 		<DisableGenerateAssemblyInfoClass>true</DisableGenerateAssemblyInfoClass>
 	</PropertyGroup>
-	
+
 	<ItemGroup
 		Label="Testing NuGet Packages"
 		Condition="'$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true'"
 	>
 		<AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
 	</ItemGroup>
-	
+
 	<ItemGroup
 		Label="Substitute Framework NuGet Packages"
 		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_SubstituteFrameworkNormalized)' == 'nsubstitute'"
@@ -602,14 +603,14 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
-	
+
 	<ItemGroup
 		Label="Substitute Framework NuGet Packages"
 		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_SubstituteFrameworkNormalized)' == 'tunitmocks'"
 	>
 		<PackageReference Include="TUnit.Mocks" />
 	</ItemGroup>
-	
+
 	<ItemGroup
 		Label="Test Data Framework NuGet Packages"
 		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_TestDataFrameworkNormalized)' == 'bogus'"
@@ -629,7 +630,7 @@
 		<UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
 		<EnableMicrosoftTestingPlatform>true</EnableMicrosoftTestingPlatform>
 	</PropertyGroup>
-	
+
 	<ItemGroup
 		Label="TUnit NuGet Packages"
 		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_TestingFrameworkNormalized)' == 'tunit'"

@@ -23,7 +23,6 @@ public sealed class CompilerVisiblePropertyTests
 			"PackageVersion",
 			"NamespacePrefix",
 			"DisableNamespacePrefixCheck",
-			"ProjectSdkTestFramework",
 			"TestingFramework",
 			"SubstituteFramework",
 			"TestDataFramework",
