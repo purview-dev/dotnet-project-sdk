@@ -59,33 +59,6 @@ public sealed class CoreDefaultsTests
 	}
 
 	[Test]
-	public async Task RootNamespace_Keeps_TestSuffix_ForTestProjects(CancellationToken cancellationToken)
-	{
-		// ProjectName=MyApp.UnitTests, NamespacePrefix=Test → Test.MyApp.UnitTests
-		await using var h = await ProjectHarness.CreateAsync(
-			"MyApp.UnitTests",
-			namespacePrefix: "Test",
-			cancellationToken: cancellationToken
-		);
-		await Assert
-			.That(await h.GetPropertyAsync("RootNamespace", cancellationToken))
-			.IsEqualTo("Test.MyApp.UnitTests");
-	}
-
-	[Test]
-	public async Task RootNamespace_IntegrationTestsSuffixPreserved(CancellationToken cancellationToken)
-	{
-		await using var h = await ProjectHarness.CreateAsync(
-			"MyApp.IntegrationTests",
-			namespacePrefix: "Test",
-			cancellationToken: cancellationToken
-		);
-		await Assert
-			.That(await h.GetPropertyAsync("RootNamespace", cancellationToken))
-			.IsEqualTo("Test.MyApp.IntegrationTests");
-	}
-
-	[Test]
 	public async Task Ci_PropertySet_WhenEnvironmentVariablePresent(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync(

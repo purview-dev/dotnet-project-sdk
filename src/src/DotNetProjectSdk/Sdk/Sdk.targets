@@ -46,6 +46,7 @@
 			IgnoreExitCode="true"
 			IgnoreStandardErrorWarningFormat="true"
 			StandardErrorImportance="low"
+			StandardOutputImportance="low"
 			Condition="'$(RepositoryEditorConfigFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
 		>
 			<Output TaskParameter="ConsoleOutput" PropertyName="_GitRepositoryRoot" />
@@ -165,6 +166,7 @@
 			IgnoreExitCode="true"
 			IgnoreStandardErrorWarningFormat="true"
 			StandardErrorImportance="low"
+			StandardOutputImportance="low"
 			Condition="'$(RepositoryGlobalJsonFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
 		>
 			<Output TaskParameter="ConsoleOutput" PropertyName="_GitRepositoryRoot" />

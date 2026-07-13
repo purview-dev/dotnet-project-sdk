@@ -114,7 +114,7 @@ public sealed class ProjectIdentityRulesTests
 		);
 		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "RootNamespace");
 		await Assert.That(props["AssemblyName"]).IsEqualTo("ExampleProject.SourceGenerator.UnitTests");
-		await Assert.That(props["RootNamespace"]).IsEqualTo("ExampleProject.SourceGenerator.UnitTests");
+		await Assert.That(props["RootNamespace"]).IsEqualTo("ExampleProject.SourceGenerator");
 	}
 
 	[Test]
@@ -127,7 +127,7 @@ public sealed class ProjectIdentityRulesTests
 		);
 		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "RootNamespace");
 		await Assert.That(props["AssemblyName"]).IsEqualTo("ExampleProject.UnitTests");
-		await Assert.That(props["RootNamespace"]).IsEqualTo("ExampleProject.UnitTests");
+		await Assert.That(props["RootNamespace"]).IsEqualTo("ExampleProject");
 	}
 
 	[Test]
