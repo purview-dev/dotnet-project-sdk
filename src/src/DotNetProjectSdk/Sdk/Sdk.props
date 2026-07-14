@@ -70,17 +70,13 @@
 		<!-- Set some defaults -->
 		<IsCSharpProject>true</IsCSharpProject>
 		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''"
-			>false</ExcludePurviewTelemetry
-		>
+			>false</ExcludePurviewTelemetry>
 		<ExcludeMSTelemetryExtension Condition="'$(ExcludeMSTelemetryExtension)' == ''"
-			>false</ExcludeMSTelemetryExtension
-		>
+			>false</ExcludeMSTelemetryExtension>
 		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''"
-			>false</DisableGenerateAssemblyInfoClass
-		>
+			>false</DisableGenerateAssemblyInfoClass>
 		<DisableAutoInternalsVisibleTo Condition="'$(DisableAutoInternalsVisibleTo)' == ''"
-			>false</DisableAutoInternalsVisibleTo
-		>
+			>false</DisableAutoInternalsVisibleTo>
 		<AutoIncludeUsings Condition="'$(AutoIncludeUsings)' == ''">true</AutoIncludeUsings>
 		<!-- Test project types -->
 		<IsTestProject>false</IsTestProject>
@@ -98,64 +94,49 @@
 		<SdkProjectName>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText(`$(MSBuildProjectFullPath)`)), `(?s-i)(?:^|\s|&gt;)(?s-i)(?:^|\s|&gt;)&lt;\s*(?:Project|Import)\s(?:[^&gt;]*?)\s?Sdk\s*="(?&lt;sdkproj&gt;.*?)"`).Groups['sdkproj'].Value)</SdkProjectName>
 		<IsSdkProject Condition="'$(SdkProjectName)' != ''">true</IsSdkProject>
 		<IsWebSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Web'"
-			>true</IsWebSdkProject
-		>
+			>true</IsWebSdkProject>
 		<IsWorkerSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Worker'"
-			>true</IsWorkerSdkProject
-		>
+			>true</IsWorkerSdkProject>
 		<IsContainerProject
 			Condition="Exists('$(MSBuildProjectDirectory)\Dockerfile') OR Exists('$(MSBuildProjectDirectory)\dockerfile') OR Exists('$(MSBuildProjectDirectory)\Dockerfile.dev')"
-			>true</IsContainerProject
-		>
+			>true</IsContainerProject>
 		<IsAspireHostProject
 			Label="Detect Aspire.Sdk.Host SDK projects - only works when the SDK attribute is on the Project element"
 			Condition="$([System.String]::Copy('$(SdkProjectName)').StartsWith('Aspire.Sdk.Host')) == 'True' OR $([System.String]::Copy('$(SdkProjectName)').StartsWith('Aspire.AppHost.Sdk')) == 'True'"
-			>true</IsAspireHostProject
-		>
+			>true</IsAspireHostProject>
 		<IsCLIProject
 			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('CLI')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Console')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('CommandLine')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('QuickStart')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('QuickStarts')) == 'True'"
-			>true</IsCLIProject
-		>
+			>true</IsCLIProject>
 		<IsSharedProject
 			Condition="$([System.String]::Copy('$(_SharedProjectNames)').Contains(';$(MSBuildProjectName);')) == 'True'"
-			>true</IsSharedProject
-		>
+			>true</IsSharedProject>
 		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"
-			>$(NamespacePrefix)</PurviewNamespacePrefix
-		>
+			>$(NamespacePrefix)</PurviewNamespacePrefix>
 		<NamespacePrefix Condition="'$(NamespacePrefix)' == ''"
-			>$(PurviewNamespacePrefix)</NamespacePrefix
-		>
+			>$(PurviewNamespacePrefix)</NamespacePrefix>
 		<PurviewProjectShortName>$(MSBuildProjectName)</PurviewProjectShortName>
 		<_PurviewEscapedNamespacePrefix Condition="'$(PurviewNamespacePrefix)' != ''"
-			>$([System.Text.RegularExpressions.Regex]::Escape('$(PurviewNamespacePrefix)'))</_PurviewEscapedNamespacePrefix
-		>
+			>$([System.Text.RegularExpressions.Regex]::Escape('$(PurviewNamespacePrefix)'))</_PurviewEscapedNamespacePrefix>
 		<_PurviewIsSegmentPrefixedProjectName
 			Condition="'$(PurviewNamespacePrefix)' != '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^$(_PurviewEscapedNamespacePrefix)($|\.)'))"
-			>true</_PurviewIsSegmentPrefixedProjectName
-		>
+			>true</_PurviewIsSegmentPrefixedProjectName>
 		<PurviewLogicalProjectName Condition="'$(PurviewNamespacePrefix)' == ''"
-			>$(MSBuildProjectName)</PurviewLogicalProjectName
-		>
+			>$(MSBuildProjectName)</PurviewLogicalProjectName>
 		<PurviewLogicalProjectName
 			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewIsSegmentPrefixedProjectName)' == 'true'"
-			>$(MSBuildProjectName)</PurviewLogicalProjectName
-		>
+			>$(MSBuildProjectName)</PurviewLogicalProjectName>
 		<PurviewLogicalProjectName
 			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewIsSegmentPrefixedProjectName)' != 'true'"
-			>$(PurviewNamespacePrefix).$(MSBuildProjectName)</PurviewLogicalProjectName
-		>
+			>$(PurviewNamespacePrefix).$(MSBuildProjectName)</PurviewLogicalProjectName>
 		<!-- Determine the testing type from the project name suffix -->
 		<TestingType
 			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Test')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Tests')) == 'True'"
-			>$([System.Text.RegularExpressions.Regex]::Match($(MSBuildProjectName), `^.*\.([\w|_]\w*)Tests?$`).get_Groups().get_Item(1).ToString())</TestingType
-		>
+			>$([System.Text.RegularExpressions.Regex]::Match($(MSBuildProjectName), `^.*\.([\w|_]\w*)Tests?$`).get_Groups().get_Item(1).ToString())</TestingType>
 		<PurviewTestType Condition="'$(TestingType)' != ''">$(TestingType)Tests</PurviewTestType>
 		<IsTestProject Condition="'$(TestingType)' != ''">true</IsTestProject>
 		<IsSharedTestingProject
 			Condition="$([System.String]::Copy('$(_SharedTestingProjectNames)').Contains(';$(MSBuildProjectName);')) == 'True'"
-			>true</IsSharedTestingProject
-		>
+			>true</IsSharedTestingProject>
 	</PropertyGroup>
 
 	<!-- =====================================================================
@@ -309,8 +290,7 @@
 	     ===================================================================== -->
 	<PropertyGroup Label="C# Project Property Groups" Condition="'$(IsCSharpProject)' == 'true'">
 		<TargetFramework Condition="'$(TargetFramework)' == '' AND '$(TargetFrameworks)' == ''"
-			>net10.0</TargetFramework
-		>
+			>net10.0</TargetFramework>
 		<LangVersion>preview</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -319,25 +299,21 @@
 		<!-- Auto-detect CI environment from common env vars -->
 		<ContinuousIntegrationBuild
 			Condition="'$(CI)' == 'true' OR '$(GITHUB_ACTIONS)' == 'true' OR '$(TF_BUILD)' == 'true' OR '$(IsPackable)' == 'true'"
-			>true</ContinuousIntegrationBuild
-		>
+			>true</ContinuousIntegrationBuild>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
 		<AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
 		<!-- EditorConfig from the NuGet package Sdk/ folder — used for build-time code-style enforcement -->
 		<EditorConfigFilePath>$(MSBuildThisFileDirectory).editorconfig</EditorConfigFilePath>
 		<!-- Also bootstrap a physical repo-level .editorconfig for tools (for example CSharpier) that don't read @(EditorConfigFiles). -->
 		<DisableAutoCopySdkFiles Condition="'$(DisableAutoCopySdkFiles)' == ''"
-			>false</DisableAutoCopySdkFiles
-		>
+			>false</DisableAutoCopySdkFiles>
 		<BootstrapEditorConfigToRepoRoot Condition="'$(BootstrapEditorConfigToRepoRoot)' == ''"
-			>true</BootstrapEditorConfigToRepoRoot
-		>
+			>true</BootstrapEditorConfigToRepoRoot>
 		<RepositoryEditorConfigFilePath
 			Condition="'$(RepositoryEditorConfigFilePath)' == ''"
 		></RepositoryEditorConfigFilePath>
 		<BootstrapGlobalJsonToRepoRoot Condition="'$(BootstrapGlobalJsonToRepoRoot)' == ''"
-			>true</BootstrapGlobalJsonToRepoRoot
-		>
+			>true</BootstrapGlobalJsonToRepoRoot>
 		<RepositoryGlobalJsonFilePath
 			Condition="'$(RepositoryGlobalJsonFilePath)' == ''"
 		></RepositoryGlobalJsonFilePath>
@@ -345,16 +321,13 @@
 		<_PurviewSdkContainerDirectoryName>$([System.IO.Path]::GetFileName('$(_PurviewSdkContainerDirectory)'))</_PurviewSdkContainerDirectoryName>
 		<PurviewDotNetProjectSdkVersionForGlobalJson
 			Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(_PurviewSdkContainerDirectoryName)', '^\d+\.\d+\.\d+([-.].+)?$'))"
-			>$(_PurviewSdkContainerDirectoryName)</PurviewDotNetProjectSdkVersionForGlobalJson
-		>
+			>$(_PurviewSdkContainerDirectoryName)</PurviewDotNetProjectSdkVersionForGlobalJson>
 		<PurviewDotNetProjectSdkVersionForGlobalJson
 			Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == ''"
-			>1.0.0</PurviewDotNetProjectSdkVersionForGlobalJson
-		>
+			>1.0.0</PurviewDotNetProjectSdkVersionForGlobalJson>
 		<!-- Sensible default for SourceLink (override by setting SourceLinkPackageName) -->
 		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''"
-			>Microsoft.SourceLink.GitHub</SourceLinkPackageName
-		>
+			>Microsoft.SourceLink.GitHub</SourceLinkPackageName>
 		<DisableSourceLink>false</DisableSourceLink>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
@@ -415,15 +388,12 @@
 	<PropertyGroup>
 		<AssemblyName
 			Condition="('$(AssemblyName)' == '' OR '$(AssemblyName)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
-			>$(PurviewLogicalProjectName)</AssemblyName
-		>
+			>$(PurviewLogicalProjectName)</AssemblyName>
 		<RootNamespace
 			Condition="('$(RootNamespace)' == '' OR '$(RootNamespace)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
-			>$(PurviewLogicalProjectName)</RootNamespace
-		>
+			>$(PurviewLogicalProjectName)</RootNamespace>
 		<RootNamespace Condition="'$(TestingType)' != ''"
-			>$([System.Text.RegularExpressions.Regex]::Replace($(RootNamespace), `[.]$(TestingType)Tests?$$`, ``))</RootNamespace
-		>
+			>$([System.Text.RegularExpressions.Regex]::Replace($(RootNamespace), `[.]$(TestingType)Tests?$$`, ``))</RootNamespace>
 	</PropertyGroup>
 
 	<!-- Test project target resolution -->
@@ -681,7 +651,15 @@
 		Condition="'$(IsTestProject)' != 'true' AND '$(IsSharedProject)' != 'true'"
 	>
 		<!-- Shared project alongside this one (wildcards silently match 0 files) -->
-		<ProjectReference Include="../Shared*/Shared*.csproj" />
+		<ProjectReference
+			Condition="'$(IsAspireHostProject)' == 'false'"
+			Include="../Shared*/Shared*.csproj"
+		/>
+		<ProjectReference
+			Condition="'$(IsAspireHostProject)' == 'true'"
+			Include="../Shared*/Shared*.csproj"
+			IsAspireProjectResource="false"
+		/>
 		<ProjectReference Remove="../SharedTesting*/SharedTesting*.csproj" />
 		<ProjectReference Remove="../$(MSBuildProjectName)/$(MSBuildProjectName).csproj" />
 	</ItemGroup>

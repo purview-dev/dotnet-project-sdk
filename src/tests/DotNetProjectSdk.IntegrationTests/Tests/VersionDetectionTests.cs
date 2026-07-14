@@ -8,8 +8,6 @@ namespace Purview.DotNetProjectSdk.Tests;
 /// </summary>
 public sealed class VersionDetectionTests
 {
-	// ---------- property defaults ----------
-
 	[Test]
 	public async Task UsePackageJsonVersion_DefaultsToTrue(CancellationToken cancellationToken)
 	{

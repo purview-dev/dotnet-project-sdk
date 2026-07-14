@@ -4,53 +4,39 @@
 		<_UsePackageJsonVersionNormalized>$([System.String]::Copy('$(UsePackageJsonVersion)').ToLowerInvariant())</_UsePackageJsonVersionNormalized>
 		<_UsePackageJsonVersionEnabled
 			Condition="'$(_UsePackageJsonVersionNormalized)' == 'true' OR '$(_UsePackageJsonVersionNormalized)' == 'strict'"
-			>true</_UsePackageJsonVersionEnabled
-		>
+			>true</_UsePackageJsonVersionEnabled>
 
 		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' != ''"
-			>true</_RootPackageJsonWasSpecified
-		>
+			>true</_RootPackageJsonWasSpecified>
 		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' == ''"
-			>false</_RootPackageJsonWasSpecified
-		>
+			>false</_RootPackageJsonWasSpecified>
 		<_VersionDetectionCacheRoot Condition="'$(EnableVersionDetectionCache)' == 'true'"
-			>$([System.IO.Path]::Combine('$([System.IO.Path]::GetTempPath())', 'Purview.DotNetProjectSdk', 'VersionDetection'))</_VersionDetectionCacheRoot
-		>
+			>$([System.IO.Path]::Combine('$([System.IO.Path]::GetTempPath())', 'Purview.DotNetProjectSdk', 'VersionDetection'))</_VersionDetectionCacheRoot>
 		<_VersionDetectionCacheKey Condition="'$(EnableVersionDetectionCache)' == 'true'"
-			>$([System.Text.RegularExpressions.Regex]::Replace('$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)'))', '[^A-Za-z0-9_.-]', '_'))</_VersionDetectionCacheKey
-		>
+			>$([System.Text.RegularExpressions.Regex]::Replace('$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)'))', '[^A-Za-z0-9_.-]', '_'))</_VersionDetectionCacheKey>
 		<VersionDetectionCacheFile
 			Condition="'$(EnableVersionDetectionCache)' == 'true' and '$(VersionDetectionCacheFile)' == '' and '$(_VersionDetectionCacheRoot)' != '' and '$(_VersionDetectionCacheKey)' != ''"
-			>$([System.IO.Path]::Combine('$(_VersionDetectionCacheRoot)', '$(_VersionDetectionCacheKey).cache'))</VersionDetectionCacheFile
-		>
+			>$([System.IO.Path]::Combine('$(_VersionDetectionCacheRoot)', '$(_VersionDetectionCacheKey).cache'))</VersionDetectionCacheFile>
 		<_VersionDetectionCacheDirectory Condition="'$(VersionDetectionCacheFile)' != ''"
-			>$([System.IO.Path]::GetDirectoryName('$(VersionDetectionCacheFile)'))</_VersionDetectionCacheDirectory
-		>
+			>$([System.IO.Path]::GetDirectoryName('$(VersionDetectionCacheFile)'))</_VersionDetectionCacheDirectory>
 		<_VersionDetectionCacheText
 			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true' and '$(EnableVersionDetectionCache)' == 'true' and '$(VersionDetectionCacheFile)' != '' and Exists('$(VersionDetectionCacheFile)')"
-			>$([System.IO.File]::ReadAllText('$(VersionDetectionCacheFile)'))</_VersionDetectionCacheText
-		>
+			>$([System.IO.File]::ReadAllText('$(VersionDetectionCacheFile)'))</_VersionDetectionCacheText>
 		<_CachedRepoRoot Condition="'$(_VersionDetectionCacheText)' != ''"
-			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^RepoRoot=(.*)$').Groups[1].Value)).Trim())</_CachedRepoRoot
-		>
+			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^RepoRoot=(.*)$').Groups[1].Value)).Trim())</_CachedRepoRoot>
 		<_CachedRootPackageJson Condition="'$(_VersionDetectionCacheText)' != ''"
-			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^RootPackageJson=(.*)$').Groups[1].Value)).Trim())</_CachedRootPackageJson
-		>
+			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^RootPackageJson=(.*)$').Groups[1].Value)).Trim())</_CachedRootPackageJson>
 		<_CachedPackageJsonVersion Condition="'$(_VersionDetectionCacheText)' != ''"
-			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^PackageJsonVersion=(.*)$').Groups[1].Value)).Trim())</_CachedPackageJsonVersion
-		>
+			>$([System.String]::Copy($([System.Text.RegularExpressions.Regex]::Match('$(_VersionDetectionCacheText)', '(?m)^PackageJsonVersion=(.*)$').Groups[1].Value)).Trim())</_CachedPackageJsonVersion>
 		<RepoRoot
 			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true' and '$(RepoRoot)' == '' and '$(_CachedRepoRoot)' != ''"
-			>$(_CachedRepoRoot)</RepoRoot
-		>
+			>$(_CachedRepoRoot)</RepoRoot>
 		<RootPackageJson
 			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true' and '$(RootPackageJson)' == '' and '$(_CachedRootPackageJson)' != '' and Exists('$(_CachedRootPackageJson)')"
-			>$(_CachedRootPackageJson)</RootPackageJson
-		>
+			>$(_CachedRootPackageJson)</RootPackageJson>
 		<_PackageJsonVersion
 			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_PackageJsonVersion)' == '' and '$(_CachedPackageJsonVersion)' != '' and '$(RootPackageJson)' != '' and Exists('$(RootPackageJson)')"
-			>$(_CachedPackageJsonVersion)</_PackageJsonVersion
-		>
+			>$(_CachedPackageJsonVersion)</_PackageJsonVersion>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' == 'true'">
@@ -60,32 +46,24 @@
 	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'">
 		<RepoRoot
 			Condition="'$(RepoRoot)' == '' and '$(GITHUB_WORKSPACE)' != '' and Exists('$(GITHUB_WORKSPACE)')"
-			>$([MSBuild]::NormalizePath('$(GITHUB_WORKSPACE)'))</RepoRoot
-		>
+			>$([MSBuild]::NormalizePath('$(GITHUB_WORKSPACE)'))</RepoRoot>
 		<RepoRoot
 			Condition="'$(RepoRoot)' == '' and '$(BUILD_SOURCESDIRECTORY)' != '' and Exists('$(BUILD_SOURCESDIRECTORY)')"
-			>$([MSBuild]::NormalizePath('$(BUILD_SOURCESDIRECTORY)'))</RepoRoot
-		>
+			>$([MSBuild]::NormalizePath('$(BUILD_SOURCESDIRECTORY)'))</RepoRoot>
 		<RepoRoot
 			Condition="'$(RepoRoot)' == '' and '$(BUILD_REPOSITORY_LOCALPATH)' != '' and Exists('$(BUILD_REPOSITORY_LOCALPATH)')"
-			>$([MSBuild]::NormalizePath('$(BUILD_REPOSITORY_LOCALPATH)'))</RepoRoot
-		>
+			>$([MSBuild]::NormalizePath('$(BUILD_REPOSITORY_LOCALPATH)'))</RepoRoot>
 		<RepoRoot
 			Condition="'$(RepoRoot)' == '' and '$(CI_PROJECT_DIR)' != '' and Exists('$(CI_PROJECT_DIR)')"
-			>$([MSBuild]::NormalizePath('$(CI_PROJECT_DIR)'))</RepoRoot
-		>
+			>$([MSBuild]::NormalizePath('$(CI_PROJECT_DIR)'))</RepoRoot>
 		<RepoRoot Condition="'$(RepoRoot)' == ''"
-			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git'))</RepoRoot
-		>
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git'))</RepoRoot>
 		<RepoRoot Condition="'$(RepoRoot)' == ''"
-			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git/HEAD'))</RepoRoot
-		>
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git/HEAD'))</RepoRoot>
 		<RepoRoot Condition="'$(RepoRoot)' == ''"
-			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git/config'))</RepoRoot
-		>
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', '.git/config'))</RepoRoot>
 		<RepoRoot Condition="'$(RepoRoot)' == ''"
-			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'package.json'))</RepoRoot
-		>
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'package.json'))</RepoRoot>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true' and '$(RepoRoot)' != ''">

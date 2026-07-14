@@ -8,13 +8,12 @@ namespace Purview.DotNetProjectSdk.Harness;
 /// Creates throwaway consumer projects on disk that import the SDK from source,
 /// allowing integration tests to invoke MSBuild and assert on observable build behaviour.
 /// </summary>
-sealed class ProjectHarness : IAsyncDisposable
+partial class ProjectHarness : IAsyncDisposable
 {
-	static readonly string TempBase = Path.Combine(Path.GetTempPath(), "PurviewSdkTests");
-
 	readonly string _workDir;
+	readonly bool _ownsWorkDir;
 
-	IDictionary<string, string>? _extraEnv;
+	readonly IReadOnlyDictionary<string, string> _extraEnv;
 
 	public string ProjectName { get; }
 
@@ -22,13 +21,24 @@ sealed class ProjectHarness : IAsyncDisposable
 
 	public string ProjectFilePath { get; }
 
-	ProjectHarness(string workDir, string projectName)
+	public string SolutionDirectory => _workDir;
+
+	internal ProjectHarness(
+		string workDir,
+		string projectName,
+		IReadOnlyDictionary<string, string>? extraEnv = null,
+		bool ownsWorkDir = true
+	)
 	{
 		_workDir = workDir;
+		_ownsWorkDir = ownsWorkDir;
 		ProjectName = projectName;
 		ProjectDirectory = Path.Combine(workDir, projectName);
 		ProjectFilePath = Path.Combine(ProjectDirectory, $"{projectName}.csproj");
+		_extraEnv = extraEnv ?? ImmutableDictionary<string, string>.Empty;
 	}
+
+	public static ProjectHarnessBuilder For(string projectName) => new(projectName);
 
 	/// <summary>
 	/// Creates a standard SDK-style consumer project.
@@ -46,36 +56,27 @@ sealed class ProjectHarness : IAsyncDisposable
 		CancellationToken cancellationToken = default
 	)
 	{
-		var workDir = Path.Combine(TempBase, Guid.NewGuid().ToString("N"));
-		ProjectHarness harness = new(workDir, projectName);
-		await harness.WriteBoilerplateAsync(namespacePrefix, preImportProps, cancellationToken);
-
-		var propBlock = extraProps is null ? "" : $"\n\t<PropertyGroup>\n\t\t{extraProps}\n\t</PropertyGroup>";
-		var itemBlock = extraItems is null ? "" : $"\n\t<ItemGroup>\n\t\t{extraItems}\n\t</ItemGroup>";
-
-		await File.WriteAllTextAsync(
-			harness.ProjectFilePath,
-			$"""
-			<Project Sdk="{sdk}">
-				<PropertyGroup>
-					<TargetFramework>{targetFramework}</TargetFramework>
-				</PropertyGroup>{propBlock}{itemBlock}
-			</Project>
-			""",
-			cancellationToken
-		);
+		var builder = For(projectName)
+			.WithSdk(sdk)
+			.WithTargetFramework(targetFramework)
+			.WithNamespacePrefix(namespacePrefix);
 
 		if (withDockerfile)
-		{
-			await File.WriteAllTextAsync(
-				Path.Combine(harness.ProjectDirectory, "Dockerfile"),
-				"FROM mcr.microsoft.com/dotnet/runtime:10.0",
-				cancellationToken
-			);
-		}
+			builder.WithDockerfile();
 
-		harness._extraEnv = extraEnv;
-		return harness;
+		if (!string.IsNullOrWhiteSpace(preImportProps))
+			builder.WithPreImportPropertiesRaw(preImportProps);
+
+		if (!string.IsNullOrWhiteSpace(extraProps))
+			builder.AddPropertyRaw(extraProps);
+
+		if (!string.IsNullOrWhiteSpace(extraItems))
+			builder.AddItemRaw(extraItems);
+
+		if (extraEnv is not null)
+			builder.WithEnvironmentVariables(extraEnv);
+
+		return await builder.BuildAsync(cancellationToken);
 	}
 
 	/// <summary>
@@ -89,15 +90,13 @@ sealed class ProjectHarness : IAsyncDisposable
 		CancellationToken cancellationToken = default
 	)
 	{
-		var workDir = Path.Combine(TempBase, Guid.NewGuid().ToString("N"));
-		ProjectHarness harness = new(workDir, projectName);
-		await harness.WriteBoilerplateAsync(namespacePrefix, preImportProps: null, cancellationToken);
-		await File.WriteAllTextAsync(harness.ProjectFilePath, projectFileContent, cancellationToken);
-
-		return harness;
+		return await For(projectName)
+			.WithNamespacePrefix(namespacePrefix)
+			.WithProjectFileContent(projectFileContent)
+			.BuildAsync(cancellationToken);
 	}
 
-	async Task WriteBoilerplateAsync(
+	internal async Task WriteBoilerplateAsync(
 		string namespacePrefix,
 		string? preImportProps,
 		CancellationToken cancellationToken
@@ -109,40 +108,52 @@ sealed class ProjectHarness : IAsyncDisposable
 			? ""
 			: $"\n\t<PropertyGroup>\n\t\t{preImportProps}\n\t</PropertyGroup>";
 
-		await File.WriteAllTextAsync(
-			Path.Combine(ProjectDirectory, "Directory.Build.props"),
-			$"""
-			<Project>
-				<PropertyGroup>
-					<NamespacePrefix>{namespacePrefix}</NamespacePrefix>
-				</PropertyGroup>{preImportBlock}
-				<Import Project="{SdkPaths.SdkDirectory}/Sdk.props" />
-			</Project>
-			""",
-			cancellationToken
-		);
+		var directoryBuildPropsPath = Path.Combine(ProjectDirectory, "Directory.Build.props");
+		if (!File.Exists(directoryBuildPropsPath))
+		{
+			await File.WriteAllTextAsync(
+				directoryBuildPropsPath,
+				$"""
+				<Project>
+					<PropertyGroup>
+						<NamespacePrefix>{namespacePrefix}</NamespacePrefix>
+					</PropertyGroup>{preImportBlock}
+					<Import Project="{SdkPaths.SdkDirectory}/Sdk.props" />
+				</Project>
+				""",
+				cancellationToken
+			);
+		}
 
-		await File.WriteAllTextAsync(
-			Path.Combine(ProjectDirectory, "Directory.Build.targets"),
-			$"""
-			<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-				<Import Project="{SdkPaths.SdkDirectory}/Sdk.targets" />
-			</Project>
-			""",
-			cancellationToken
-		);
+		var directoryBuildTargetsPath = Path.Combine(ProjectDirectory, "Directory.Build.targets");
+		if (!File.Exists(directoryBuildTargetsPath))
+		{
+			await File.WriteAllTextAsync(
+				directoryBuildTargetsPath,
+				$"""
+				<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+					<Import Project="{SdkPaths.SdkDirectory}/Sdk.targets" />
+				</Project>
+				""",
+				cancellationToken
+			);
+		}
 
-		await File.WriteAllTextAsync(
-			Path.Combine(ProjectDirectory, "Directory.Packages.props"),
-			"""
-			<Project>
-				<PropertyGroup>
-					<CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
-				</PropertyGroup>
-			</Project>
-			""",
-			cancellationToken
-		);
+		var directoryPackagesPropsPath = Path.Combine(ProjectDirectory, "Directory.Packages.props");
+		if (!File.Exists(directoryPackagesPropsPath))
+		{
+			await File.WriteAllTextAsync(
+				directoryPackagesPropsPath,
+				"""
+				<Project>
+					<PropertyGroup>
+						<CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
+					</PropertyGroup>
+				</Project>
+				""",
+				cancellationToken
+			);
+		}
 	}
 
 	/// <summary>
@@ -179,8 +190,10 @@ sealed class ProjectHarness : IAsyncDisposable
 		{
 			using var doc = JsonDocument.Parse(stdout[jsonStart..]);
 			if (doc.RootElement.TryGetProperty("Properties", out var propsEl))
+			{
 				foreach (var prop in propsEl.EnumerateObject())
 					result[prop.Name] = prop.Value.GetString() ?? string.Empty;
+			}
 		}
 		catch (JsonException)
 		{ /* return what we have */
@@ -205,36 +218,19 @@ sealed class ProjectHarness : IAsyncDisposable
 		CancellationToken cancellationToken = default
 	)
 	{
-		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getItem:{itemType}";
-		var (_, stdout, _) = await RunAsync("dotnet", args, cancellationToken);
+		return await GetItemValuesAsync(itemType, "Identity", cancellationToken);
+	}
 
-		var jsonStart = stdout.Trim().IndexOf('{', StringComparison.Ordinal);
-		if (jsonStart < 0)
-			return [];
+	public Task<IReadOnlyList<string>> GetProjectReferencesAsync(CancellationToken cancellationToken = default) =>
+		GetItemIdentitiesAsync("ProjectReference", cancellationToken);
 
-		try
-		{
-			using var doc = JsonDocument.Parse(stdout[jsonStart..]);
-			if (
-				doc.RootElement.TryGetProperty("Items", out var itemsEl)
-				&& itemsEl.TryGetProperty(itemType, out var typeEl)
-			)
-			{
-				var ids = new List<string>();
-				foreach (var item in typeEl.EnumerateArray())
-				{
-					if (item.TryGetProperty("Identity", out var id))
-						ids.Add(id.GetString() ?? string.Empty);
-				}
-
-				return ids;
-			}
-		}
-		catch (JsonException)
-		{ /* fall through */
-		}
-
-		return [];
+	public async Task<bool> HasProjectReferenceAsync(
+		string projectReferencePath,
+		CancellationToken cancellationToken = default
+	)
+	{
+		var references = await GetProjectReferencesAsync(cancellationToken);
+		return references.Any(r => string.Equals(r, projectReferencePath, StringComparison.OrdinalIgnoreCase));
 	}
 
 	/// <summary>
@@ -244,6 +240,15 @@ sealed class ProjectHarness : IAsyncDisposable
 		string itemType,
 		string metadataName,
 		CancellationToken cancellationToken = default
+	)
+	{
+		return await GetItemValuesAsync(itemType, metadataName, cancellationToken);
+	}
+
+	async Task<IReadOnlyList<string>> GetItemValuesAsync(
+		string itemType,
+		string metadataName,
+		CancellationToken cancellationToken
 	)
 	{
 		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getItem:{itemType}";
@@ -310,9 +315,9 @@ sealed class ProjectHarness : IAsyncDisposable
 		CancellationToken cancellationToken
 	)
 	{
-		using var process = new Process
+		using Process process = new()
 		{
-			StartInfo = new ProcessStartInfo
+			StartInfo = new()
 			{
 				FileName = fileName,
 				Arguments = arguments,
@@ -324,13 +329,14 @@ sealed class ProjectHarness : IAsyncDisposable
 			},
 		};
 
-		if (_extraEnv is not null)
+		if (_extraEnv.Count > 0)
 		{
 			foreach (var (key, value) in _extraEnv)
 				process.StartInfo.Environment[key] = value;
 		}
 
 		process.Start();
+
 		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
 		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
 
@@ -343,7 +349,7 @@ sealed class ProjectHarness : IAsyncDisposable
 	{
 		try
 		{
-			if (Directory.Exists(_workDir))
+			if (_ownsWorkDir && Directory.Exists(_workDir))
 				Directory.Delete(_workDir, recursive: true);
 		}
 		catch (IOException)

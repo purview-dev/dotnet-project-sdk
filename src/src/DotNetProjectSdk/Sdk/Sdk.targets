@@ -60,44 +60,35 @@
 			<_RepositoryProbe4>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe3)\..'))</_RepositoryProbe4>
 			<_DetectedRepositoryRoot
 				Condition="'$(_GitRepositoryRoot)' != '' AND Exists('$(_GitRepositoryRoot)')"
-				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot
-			>
+				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)/.git/HEAD') OR Exists('$(_RepositoryProbe0)/.git'))"
-				>$(_RepositoryProbe0)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe0)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe1)/.git/HEAD') OR Exists('$(_RepositoryProbe1)/.git'))"
-				>$(_RepositoryProbe1)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe1)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe2)/.git/HEAD') OR Exists('$(_RepositoryProbe2)/.git'))"
-				>$(_RepositoryProbe2)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe2)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe3)/.git/HEAD') OR Exists('$(_RepositoryProbe3)/.git'))"
-				>$(_RepositoryProbe3)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe3)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe4)/.git/HEAD') OR Exists('$(_RepositoryProbe4)/.git'))"
-				>$(_RepositoryProbe4)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe4)</_DetectedRepositoryRoot>
 			<_EffectiveRepositoryEditorConfigFilePath>$(RepositoryEditorConfigFilePath)</_EffectiveRepositoryEditorConfigFilePath>
 			<_EffectiveRepositoryEditorConfigFilePath
 				Condition="'$(_EffectiveRepositoryEditorConfigFilePath)' == '' AND '$(_DetectedRepositoryRoot)' != ''"
-				>$([System.IO.Path]::Combine('$(_DetectedRepositoryRoot)', '.editorconfig'))</_EffectiveRepositoryEditorConfigFilePath
-			>
+				>$([System.IO.Path]::Combine('$(_DetectedRepositoryRoot)', '.editorconfig'))</_EffectiveRepositoryEditorConfigFilePath>
 			<_EffectiveRepositoryEditorConfigFilePath
 				Condition="'$(_EffectiveRepositoryEditorConfigFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
-				>$([System.IO.Path]::Combine('$(_DirectoryBuildPropsDirectory)', '.editorconfig'))</_EffectiveRepositoryEditorConfigFilePath
-			>
+				>$([System.IO.Path]::Combine('$(_DirectoryBuildPropsDirectory)', '.editorconfig'))</_EffectiveRepositoryEditorConfigFilePath>
 			<_RepositoryEditorConfigDirectory>$([System.IO.Path]::GetDirectoryName('$(_EffectiveRepositoryEditorConfigFilePath)'))</_RepositoryEditorConfigDirectory>
 		</PropertyGroup>
 		<PropertyGroup>
 			<RepositoryEditorConfigFilePath
 				Condition="'$(RepositoryEditorConfigFilePath)' == '' AND '$(_EffectiveRepositoryEditorConfigFilePath)' != ''"
-				>$(_EffectiveRepositoryEditorConfigFilePath)</RepositoryEditorConfigFilePath
-			>
+				>$(_EffectiveRepositoryEditorConfigFilePath)</RepositoryEditorConfigFilePath>
 		</PropertyGroup>
 		<MakeDir
 			Directories="$(_RepositoryEditorConfigDirectory)"
@@ -180,44 +171,35 @@
 			<_RepositoryProbe4>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe3)\..'))</_RepositoryProbe4>
 			<_DetectedRepositoryRoot
 				Condition="'$(_GitRepositoryRoot)' != '' AND Exists('$(_GitRepositoryRoot)')"
-				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot
-			>
+				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)/.git/HEAD') OR Exists('$(_RepositoryProbe0)/.git'))"
-				>$(_RepositoryProbe0)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe0)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe1)/.git/HEAD') OR Exists('$(_RepositoryProbe1)/.git'))"
-				>$(_RepositoryProbe1)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe1)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe2)/.git/HEAD') OR Exists('$(_RepositoryProbe2)/.git'))"
-				>$(_RepositoryProbe2)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe2)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe3)/.git/HEAD') OR Exists('$(_RepositoryProbe3)/.git'))"
-				>$(_RepositoryProbe3)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe3)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe4)/.git/HEAD') OR Exists('$(_RepositoryProbe4)/.git'))"
-				>$(_RepositoryProbe4)</_DetectedRepositoryRoot
-			>
+				>$(_RepositoryProbe4)</_DetectedRepositoryRoot>
 			<_EffectiveRepositoryGlobalJsonFilePath>$(RepositoryGlobalJsonFilePath)</_EffectiveRepositoryGlobalJsonFilePath>
 			<_EffectiveRepositoryGlobalJsonFilePath
 				Condition="'$(_EffectiveRepositoryGlobalJsonFilePath)' == '' AND '$(_DetectedRepositoryRoot)' != ''"
-				>$([System.IO.Path]::Combine('$(_DetectedRepositoryRoot)', 'global.json'))</_EffectiveRepositoryGlobalJsonFilePath
-			>
+				>$([System.IO.Path]::Combine('$(_DetectedRepositoryRoot)', 'global.json'))</_EffectiveRepositoryGlobalJsonFilePath>
 			<_EffectiveRepositoryGlobalJsonFilePath
 				Condition="'$(_EffectiveRepositoryGlobalJsonFilePath)' == '' AND '$(_DirectoryBuildPropsDirectory)' != ''"
-				>$([System.IO.Path]::Combine('$(_DirectoryBuildPropsDirectory)', 'global.json'))</_EffectiveRepositoryGlobalJsonFilePath
-			>
+				>$([System.IO.Path]::Combine('$(_DirectoryBuildPropsDirectory)', 'global.json'))</_EffectiveRepositoryGlobalJsonFilePath>
 			<_RepositoryGlobalJsonDirectory>$([System.IO.Path]::GetDirectoryName('$(_EffectiveRepositoryGlobalJsonFilePath)'))</_RepositoryGlobalJsonDirectory>
 		</PropertyGroup>
 		<PropertyGroup>
 			<RepositoryGlobalJsonFilePath
 				Condition="'$(RepositoryGlobalJsonFilePath)' == '' AND '$(_EffectiveRepositoryGlobalJsonFilePath)' != ''"
-				>$(_EffectiveRepositoryGlobalJsonFilePath)</RepositoryGlobalJsonFilePath
-			>
+				>$(_EffectiveRepositoryGlobalJsonFilePath)</RepositoryGlobalJsonFilePath>
 		</PropertyGroup>
 		<MakeDir
 			Directories="$(_RepositoryGlobalJsonDirectory)"

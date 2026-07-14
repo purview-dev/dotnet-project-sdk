@@ -1,3 +1,5 @@
+using Purview.DotNetProjectSdk.Harness;
+
 namespace Purview.DotNetProjectSdk.Tests;
 
 /// <summary>
@@ -8,88 +10,48 @@ namespace Purview.DotNetProjectSdk.Tests;
 /// </summary>
 public sealed class AutoSharedProjectReferencingTests
 {
-	/// <summary>
-	/// Normalizes a path to use forward slashes for consistent comparison.
-	/// </summary>
-	static string NormalizePath(string path) => path.Replace('\\', '/');
-
-	/// <summary>
-	/// Helper to create a complete project structure with SDK boilerplate,
-	/// then evaluate the project to get items.
-	/// </summary>
-	static async Task<(
-		SimpleProjectHarness Harness,
-		IReadOnlyList<string> ProjectReferences
-	)> CreateProjectStructureAsync(
-		string projectName,
-		Action<string>? createSiblings = null,
-		CancellationToken cancellationToken = default
+	[Test]
+	public async Task AspireHostProject_WithSharedProject_HasIsAspireProjectResourceFalse(
+		CancellationToken cancellationToken
 	)
 	{
-		var workDir = Path.Combine(Path.GetTempPath(), "PurviewSdkTests", Guid.NewGuid().ToString("N"));
-		Directory.CreateDirectory(workDir);
+		await using var sharedHarness = await ProjectHarness
+			.For("Shared")
+			.WithTargetFramework("net10.0")
+			.BuildAsync(cancellationToken);
 
-		// Create the main project directory
-		var projectDir = Path.Combine(workDir, projectName);
-		Directory.CreateDirectory(projectDir);
+		await using var appHostHarness = await ProjectHarness
+			.For("Acme.AppHost")
+			.WithProjectFileContent(
+				$"""
+				<Project>
+					<Import Project="{SdkPaths.SdkDirectory}/Sdk.props" />
+					<PropertyGroup>
+						<NamespacePrefix>Acme</NamespacePrefix>
+						<DisableNamespacePrefixCheck>true</DisableNamespacePrefixCheck>
+						<TargetFramework>net10.0</TargetFramework>
+					</PropertyGroup>
+					<!--
+					  <Project Sdk="Aspire.Sdk.Host" />
+					-->
+				</Project>
+				"""
+			)
+			.WithSolutionDirectory(sharedHarness.SolutionDirectory)
+			.BuildAsync(cancellationToken);
 
-		// Allow caller to create sibling projects before we set up the SDK
-		createSiblings?.Invoke(workDir);
+		var projectReferences = await appHostHarness.GetProjectReferencesAsync(cancellationToken);
+		var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 
-		// Now create the SDK boilerplate for the main project
-		await File.WriteAllTextAsync(
-			Path.Combine(projectDir, "Directory.Build.props"),
-			$"""
-			<Project>
-				<PropertyGroup>
-					<NamespacePrefix>Test</NamespacePrefix>
-				</PropertyGroup>
-				<Import Project="{SdkPaths.SdkDirectory}/Sdk.props" />
-			</Project>
-			""",
+		await Assert.That(normalized).Contains("../Shared/Shared.csproj");
+
+		var aspireResourceFlags = await appHostHarness.GetItemMetadataValuesAsync(
+			"ProjectReference",
+			"IsAspireProjectResource",
 			cancellationToken
 		);
 
-		await File.WriteAllTextAsync(
-			Path.Combine(projectDir, "Directory.Build.targets"),
-			$"""
-			<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-				<Import Project="{SdkPaths.SdkDirectory}/Sdk.targets" />
-			</Project>
-			""",
-			cancellationToken
-		);
-
-		await File.WriteAllTextAsync(
-			Path.Combine(projectDir, "Directory.Packages.props"),
-			"""
-			<Project>
-				<PropertyGroup>
-					<CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
-				</PropertyGroup>
-			</Project>
-			""",
-			cancellationToken
-		);
-
-		// Create the project file
-		await File.WriteAllTextAsync(
-			Path.Combine(projectDir, $"{projectName}.csproj"),
-			"""
-			<Project Sdk="Microsoft.NET.Sdk">
-				<PropertyGroup>
-					<TargetFramework>net10.0</TargetFramework>
-				</PropertyGroup>
-			</Project>
-			""",
-			cancellationToken
-		);
-
-		// Create harness manually to use our custom setup
-		var harness = new SimpleProjectHarness(projectDir, projectName, workDir);
-		var projectReferences = await harness.GetItemIdentitiesAsync("ProjectReference", cancellationToken);
-
-		return (harness, projectReferences);
+		await Assert.That(aspireResourceFlags).Contains("false");
 	}
 
 	[Test]
@@ -97,13 +59,13 @@ public sealed class AutoSharedProjectReferencingTests
 		CancellationToken cancellationToken
 	)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
-			workDir =>
+			async workDir =>
 			{
 				var sharedDir = Path.Combine(workDir, "Shared");
 				Directory.CreateDirectory(sharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedDir, "Shared.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -111,15 +73,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			await Assert.That(normalized).Contains("../Shared/Shared.csproj");
 		}
 	}
@@ -127,13 +91,13 @@ public sealed class AutoSharedProjectReferencingTests
 	[Test]
 	public async Task NonTestProject_AutoReferences_SharedFramework_Project(CancellationToken cancellationToken)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
-			workDir =>
+			async workDir =>
 			{
 				var sharedDir = Path.Combine(workDir, "SharedFramework");
 				Directory.CreateDirectory(sharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedDir, "SharedFramework.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -141,15 +105,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			await Assert.That(normalized).Contains("../SharedFramework/SharedFramework.csproj");
 		}
 	}
@@ -157,14 +123,14 @@ public sealed class AutoSharedProjectReferencingTests
 	[Test]
 	public async Task NonTestProject_AutoReferences_Multiple_SharedProjects(CancellationToken cancellationToken)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
-			workDir =>
+			async workDir =>
 			{
 				// Create Shared project
 				var sharedDir = Path.Combine(workDir, "Shared");
 				Directory.CreateDirectory(sharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedDir, "Shared.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -172,13 +138,14 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 
 				// Create SharedUtils project
 				var sharedUtilsDir = Path.Combine(workDir, "SharedUtils");
 				Directory.CreateDirectory(sharedUtilsDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedUtilsDir, "SharedUtils.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -186,15 +153,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			await Assert.That(normalized).Contains("../Shared/Shared.csproj");
 			await Assert.That(normalized).Contains("../SharedUtils/SharedUtils.csproj");
 		}
@@ -203,13 +172,13 @@ public sealed class AutoSharedProjectReferencingTests
 	[Test]
 	public async Task NonTestProject_AutoReferences_SharedInfrastructure_Project(CancellationToken cancellationToken)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
-			workDir =>
+			async workDir =>
 			{
 				var sharedDir = Path.Combine(workDir, "SharedInfrastructure");
 				Directory.CreateDirectory(sharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedDir, "SharedInfrastructure.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -217,15 +186,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			await Assert.That(normalized).Contains("../SharedInfrastructure/SharedInfrastructure.csproj");
 		}
 	}
@@ -233,13 +204,13 @@ public sealed class AutoSharedProjectReferencingTests
 	[Test]
 	public async Task NonTestProject_DoesNotAutoReference_SharedTestingProject(CancellationToken cancellationToken)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
-			workDir =>
+			async workDir =>
 			{
 				var sharedDir = Path.Combine(workDir, "SharedTestingFramework");
 				Directory.CreateDirectory(sharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedDir, "SharedTestingFramework.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -247,15 +218,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// SharedTesting* projects should be excluded from non-test projects
 			await Assert.That(normalized).DoesNotContain("../SharedTestingFramework/SharedTestingFramework.csproj");
 		}
@@ -264,13 +237,13 @@ public sealed class AutoSharedProjectReferencingTests
 	[Test]
 	public async Task TestProject_DoesNotAutoReference_SharedProject(CancellationToken cancellationToken)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary.UnitTests",
-			workDir =>
+			async workDir =>
 			{
 				var sharedDir = Path.Combine(workDir, "Shared");
 				Directory.CreateDirectory(sharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedDir, "Shared.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -278,15 +251,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Test projects should NOT auto-reference regular Shared*.csproj projects
 			await Assert.That(normalized).DoesNotContain("../Shared/Shared.csproj");
 		}
@@ -295,13 +270,13 @@ public sealed class AutoSharedProjectReferencingTests
 	[Test]
 	public async Task TestProject_AutoReferences_SharedTestingProject(CancellationToken cancellationToken)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary.UnitTests",
-			workDir =>
+			async workDir =>
 			{
 				var sharedDir = Path.Combine(workDir, "SharedTestingFramework");
 				Directory.CreateDirectory(sharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedDir, "SharedTestingFramework.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -309,15 +284,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Test projects SHOULD auto-reference SharedTesting* projects
 			await Assert.That(normalized).Contains("../SharedTestingFramework/SharedTestingFramework.csproj");
 		}
@@ -326,13 +303,13 @@ public sealed class AutoSharedProjectReferencingTests
 	[Test]
 	public async Task TestProject_AutoReferences_TargetProject_InSiblingDirectory(CancellationToken cancellationToken)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary.UnitTests",
-			workDir =>
+			async workDir =>
 			{
 				var targetDir = Path.Combine(workDir, "MyLibrary");
 				Directory.CreateDirectory(targetDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(targetDir, "MyLibrary.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -340,15 +317,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Test projects should auto-reference their target project (MyLibrary in this case)
 			await Assert.That(normalized).Contains("../MyLibrary/MyLibrary.csproj");
 		}
@@ -357,13 +336,13 @@ public sealed class AutoSharedProjectReferencingTests
 	[Test]
 	public async Task SharedProject_DoesNotAutoReference_SharedProjects(CancellationToken cancellationToken)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"Shared",
-			workDir =>
+			async workDir =>
 			{
 				var anotherSharedDir = Path.Combine(workDir, "SharedUtils");
 				Directory.CreateDirectory(anotherSharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(anotherSharedDir, "SharedUtils.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -371,15 +350,17 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Shared projects should NOT auto-reference other shared projects
 			await Assert.That(normalized).DoesNotContain("../SharedUtils/SharedUtils.csproj");
 		}
@@ -398,13 +379,13 @@ public sealed class AutoSharedProjectReferencingTests
 		CancellationToken cancellationToken
 	)
 	{
-		var (harness, projectReferences) = await CreateProjectStructureAsync(
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
-			workDir =>
+			async workDir =>
 			{
 				var sharedDir = Path.Combine(workDir, sharedProjectName);
 				Directory.CreateDirectory(sharedDir);
-				File.WriteAllText(
+				await File.WriteAllTextAsync(
 					Path.Combine(sharedDir, $"{sharedProjectName}.csproj"),
 					"""
 					<Project Sdk="Microsoft.NET.Sdk">
@@ -412,103 +393,18 @@ public sealed class AutoSharedProjectReferencingTests
 							<TargetFramework>net10.0</TargetFramework>
 						</PropertyGroup>
 					</Project>
-					"""
+					""",
+					cancellationToken
 				);
 			},
+			null,
 			cancellationToken
 		);
 
 		await using (harness)
 		{
-			var normalized = projectReferences.Select(NormalizePath).ToList();
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			await Assert.That(normalized).Contains($"../{sharedProjectName}/{sharedProjectName}.csproj");
-		}
-	}
-}
-
-/// <summary>
-/// Simple test helper for evaluating MSBuild items without using the full ProjectHarness.
-/// </summary>
-sealed class SimpleProjectHarness(string projectDirectory, string projectName, string workDir) : IAsyncDisposable
-{
-	public string ProjectName { get; } = projectName;
-
-	public string ProjectDirectory { get; } = projectDirectory;
-
-	public string ProjectFilePath { get; } = Path.Combine(projectDirectory, $"{projectName}.csproj");
-
-	/// <summary>
-	/// Evaluates one or more MSBuild items via <c>dotnet msbuild -getItem</c>
-	/// without triggering a build or package restore.
-	/// </summary>
-	public async Task<IReadOnlyList<string>> GetItemIdentitiesAsync(
-		string itemType,
-		CancellationToken cancellationToken = default
-	)
-	{
-		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getItem:{itemType}";
-
-		using var process = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = args,
-				WorkingDirectory = ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
-
-		process.Start();
-		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-
-		await process.WaitForExitAsync(cancellationToken);
-
-		var stdout = await stdoutTask;
-
-		var jsonStart = stdout.Trim().IndexOf('{', StringComparison.Ordinal);
-		if (jsonStart < 0)
-			return [];
-
-		try
-		{
-			using var doc = System.Text.Json.JsonDocument.Parse(stdout[jsonStart..]);
-			if (
-				doc.RootElement.TryGetProperty("Items", out var itemsEl)
-				&& itemsEl.TryGetProperty(itemType, out var typeEl)
-			)
-			{
-				var ids = new List<string>();
-				foreach (var item in typeEl.EnumerateArray())
-				{
-					if (item.TryGetProperty("Identity", out var id))
-						ids.Add(id.GetString() ?? string.Empty);
-				}
-
-				return ids;
-			}
-		}
-		catch (System.Text.Json.JsonException)
-		{ /* fall through */
-		}
-
-		return [];
-	}
-
-	public async ValueTask DisposeAsync()
-	{
-		try
-		{
-			if (Directory.Exists(workDir))
-				Directory.Delete(workDir, recursive: true);
-		}
-		catch (IOException)
-		{
-			// Best-effort cleanup; don't fail tests on leftover temp files.
 		}
 	}
 }
