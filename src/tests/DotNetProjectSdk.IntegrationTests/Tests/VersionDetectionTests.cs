@@ -325,6 +325,76 @@ public sealed class VersionDetectionTests
 	}
 
 	[Test]
+	public async Task Build_LogsDetectedVersion_OnlyOncePerSessionId(CancellationToken cancellationToken)
+	{
+		const string sessionId = "it-session-123";
+
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			preImportProps: $"<RootPackageJson>package.json</RootPackageJson><VersionDetectionLogSessionId>{sessionId}</VersionDetectionLogSessionId>",
+			cancellationToken: cancellationToken
+		);
+
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "package.json"),
+			"""{"name": "my-lib", "version": "5.5.5"}""",
+			cancellationToken
+		);
+
+		var stampFile = await h.GetPropertyAsync("VersionDetectionLogStampFile", cancellationToken);
+		if (!string.IsNullOrWhiteSpace(stampFile) && File.Exists(stampFile))
+			File.Delete(stampFile);
+
+		using var firstProcess = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		firstProcess.Start();
+		var firstStdOutTask = firstProcess.StandardOutput.ReadToEndAsync(cancellationToken);
+		var firstStdErrTask = firstProcess.StandardError.ReadToEndAsync(cancellationToken);
+		await firstProcess.WaitForExitAsync(cancellationToken);
+
+		var firstOutput = (await firstStdOutTask) + (await firstStdErrTask);
+
+		await Assert.That(firstProcess.ExitCode).IsEqualTo(0);
+		await Assert.That(firstOutput).Contains("Detected package version '5.5.5' from");
+
+		using var secondProcess = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		secondProcess.Start();
+		var secondStdOutTask = secondProcess.StandardOutput.ReadToEndAsync(cancellationToken);
+		var secondStdErrTask = secondProcess.StandardError.ReadToEndAsync(cancellationToken);
+		await secondProcess.WaitForExitAsync(cancellationToken);
+
+		var secondOutput = (await secondStdOutTask) + (await secondStdErrTask);
+
+		await Assert.That(secondProcess.ExitCode).IsEqualTo(0);
+		await Assert.That(secondOutput).DoesNotContain("Detected package version '5.5.5' from");
+	}
+
+	[Test]
 	public async Task Build_Errors_WhenUsePackageJsonVersionStrict_AndNoPackageJsonSourceIsFound(
 		CancellationToken cancellationToken
 	)

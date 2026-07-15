@@ -149,6 +149,12 @@
 		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''">true</UsePackageJsonVersion>
 		<EnableVersionDetectionCache Condition="'$(EnableVersionDetectionCache)' == ''"
 			>true</EnableVersionDetectionCache>
+		<VersionDetectionLogSessionId
+			Condition="'$(VersionDetectionLogSessionId)' == ''"
+		></VersionDetectionLogSessionId>
+		<VersionDetectionLogStampFile
+			Condition="'$(VersionDetectionLogStampFile)' == ''"
+		></VersionDetectionLogStampFile>
 		<VersionDetectionCacheFile
 			Condition="'$(VersionDetectionCacheFile)' == ''"
 		></VersionDetectionCacheFile>
@@ -175,5 +181,20 @@
 		<_VersionDetectionCacheRoot
 			Condition="'$(_VersionDetectionCacheRoot)' == ''"
 		></_VersionDetectionCacheRoot>
+		<_VersionDetectionLogDirectory
+			Condition="'$(_VersionDetectionLogDirectory)' == ''"
+		></_VersionDetectionLogDirectory>
+		<_VersionDetectionLogRoot
+			Condition="'$(_VersionDetectionLogRoot)' == ''"
+		></_VersionDetectionLogRoot>
+		<_VersionDetectionLogSessionId
+			Condition="'$(_VersionDetectionLogSessionId)' == ''"
+		></_VersionDetectionLogSessionId>
+		<_VersionDetectionLogSessionKey
+			Condition="'$(_VersionDetectionLogSessionKey)' == ''"
+		></_VersionDetectionLogSessionKey>
+		<_VersionDetectionLogPackageKey
+			Condition="'$(_VersionDetectionLogPackageKey)' == ''"
+		></_VersionDetectionLogPackageKey>
 	</PropertyGroup>
 </Project>

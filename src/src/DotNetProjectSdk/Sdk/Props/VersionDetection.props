@@ -5,6 +5,12 @@
 		<_UsePackageJsonVersionEnabled
 			Condition="'$(_UsePackageJsonVersionNormalized)' == 'true' OR '$(_UsePackageJsonVersionNormalized)' == 'strict'"
 			>true</_UsePackageJsonVersionEnabled>
+		<_VersionDetectionLogSessionId
+			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(VersionDetectionLogSessionId)' != ''"
+			>$(VersionDetectionLogSessionId)</_VersionDetectionLogSessionId>
+		<_VersionDetectionLogSessionId
+			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_VersionDetectionLogSessionId)' == '' and '$(BuildSessionId)' != ''"
+			>$(BuildSessionId)</_VersionDetectionLogSessionId>
 
 		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' != ''"
 			>true</_RootPackageJsonWasSpecified>
@@ -73,6 +79,17 @@
 	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(RootPackageJson)' != '' and Exists('$(RootPackageJson)')">
 		<_RootPackageJsonText>$([System.IO.File]::ReadAllText('$(RootPackageJson)'))</_RootPackageJsonText>
 		<_PackageJsonVersion>$([System.Text.RegularExpressions.Regex]::Match('$(_RootPackageJsonText)','&quot;version&quot;\s*:\s*&quot;([^&quot;]+)&quot;').Groups[1].Value)</_PackageJsonVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_VersionDetectionLogSessionId)' != '' and '$(RootPackageJson)' != '' and Exists('$(RootPackageJson)')">
+		<_VersionDetectionLogRoot>$([System.IO.Path]::Combine('$([System.IO.Path]::GetTempPath())', 'Purview.DotNetProjectSdk', 'VersionDetectionLog'))</_VersionDetectionLogRoot>
+		<_VersionDetectionLogSessionKey>$([System.Text.RegularExpressions.Regex]::Replace('$(_VersionDetectionLogSessionId)', '[^A-Za-z0-9_.-]', '_'))</_VersionDetectionLogSessionKey>
+		<_VersionDetectionLogPackageKey>$([System.Text.RegularExpressions.Regex]::Replace('$([MSBuild]::NormalizePath('$(RootPackageJson)'))', '[^A-Za-z0-9_.-]', '_'))</_VersionDetectionLogPackageKey>
+		<VersionDetectionLogStampFile
+			Condition="'$(VersionDetectionLogStampFile)' == '' and '$(_VersionDetectionLogRoot)' != '' and '$(_VersionDetectionLogSessionKey)' != '' and '$(_VersionDetectionLogPackageKey)' != ''"
+			>$([System.IO.Path]::Combine('$(_VersionDetectionLogRoot)', '$(_VersionDetectionLogSessionKey)__$(_VersionDetectionLogPackageKey).stamp'))</VersionDetectionLogStampFile>
+		<_VersionDetectionLogDirectory Condition="'$(VersionDetectionLogStampFile)' != ''"
+			>$([System.IO.Path]::GetDirectoryName('$(VersionDetectionLogStampFile)'))</_VersionDetectionLogDirectory>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_PackageJsonVersion)' != ''">

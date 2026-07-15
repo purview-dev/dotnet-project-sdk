@@ -23,12 +23,33 @@
 	</Target>
 
 	<Target
+		Name="LogDetectedPackageVersionOncePerSession"
+		BeforeTargets="ValidatePackageJsonVersion"
+		Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(VersionDetectionLogStampFile)' != '' and '$(RootPackageJson)' != '' and Exists('$(RootPackageJson)') and '$(_PackageJsonVersion)' != '' and !Exists('$(VersionDetectionLogStampFile)')"
+	>
+		<MakeDir
+			Directories="$(_VersionDetectionLogDirectory)"
+			Condition="'$(_VersionDetectionLogDirectory)' != ''"
+		/>
+		<Message
+			Importance="High"
+			Text="Detected package version '$(_PackageJsonVersion)' from '$(RootPackageJson)'."
+		/>
+		<WriteLinesToFile
+			File="$(VersionDetectionLogStampFile)"
+			Lines="$(MSBuildProjectFullPath)"
+			Overwrite="true"
+			WriteOnlyWhenDifferent="true"
+		/>
+	</Target>
+
+	<Target
 		Name="ValidatePackageJsonVersion"
 		BeforeTargets="BeforeBuild;GenerateNuspec;Pack"
 		Condition="'$(_UsePackageJsonVersionEnabled)' == 'true'"
 	>
 		<Message
-			Condition="'$(RootPackageJson)' != '' and Exists('$(RootPackageJson)') and '$(_PackageJsonVersion)' != ''"
+			Condition="'$(VersionDetectionLogStampFile)' == '' and '$(RootPackageJson)' != '' and Exists('$(RootPackageJson)') and '$(_PackageJsonVersion)' != ''"
 			Importance="High"
 			Text="Detected package version '$(_PackageJsonVersion)' from '$(RootPackageJson)'."
 		/>
