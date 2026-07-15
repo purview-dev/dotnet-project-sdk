@@ -81,6 +81,55 @@ public sealed class ProjectIdentityRulesTests
 	}
 
 	[Test]
+	public async Task ProjectName_MatchingNamespacePrefixTail_DoesNotDuplicateSegment(
+		CancellationToken cancellationToken
+	)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"ResourceIsolation",
+			namespacePrefix: "Purview.Aspire.ResourceIsolation",
+			cancellationToken: cancellationToken
+		);
+
+		var props = await h.GetPropertiesAsync(
+			cancellationToken,
+			"AssemblyName",
+			"RootNamespace",
+			"PackageId"
+		);
+
+		await Assert.That(props["AssemblyName"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
+		await Assert.That(props["RootNamespace"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
+		await Assert.That(props["PackageId"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
+	}
+
+	[Test]
+	[Arguments("ServiceDefaults")]
+	[Arguments("ResourceIsolation.ServiceDefaults")]
+	[Arguments("Purview.Aspire.ResourceIsolation.ServiceDefaults")]
+	public async Task ProjectName_StartingWithNamespacePrefixTail_StripsOnlyLeadingDuplicateSegment(string projectName,
+		CancellationToken cancellationToken
+	)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			projectName,
+			namespacePrefix: "Purview.Aspire.ResourceIsolation",
+			cancellationToken: cancellationToken
+		);
+
+		var props = await h.GetPropertiesAsync(
+			cancellationToken,
+			"AssemblyName",
+			"RootNamespace",
+			"PackageId"
+		);
+
+		await Assert.That(props["AssemblyName"]).IsEqualTo("Purview.Aspire.ResourceIsolation.ServiceDefaults");
+		await Assert.That(props["RootNamespace"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
+		await Assert.That(props["PackageId"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
+	}
+
+	[Test]
 	public async Task ExplicitAssemblyName_IsRespected(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync(
@@ -102,6 +151,21 @@ public sealed class ProjectIdentityRulesTests
 			cancellationToken: cancellationToken
 		);
 		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("Custom.Namespace");
+	}
+
+	[Test]
+	public async Task PackageId_DefaultsToAssemblyName(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"Api",
+			namespacePrefix: "ExampleProject",
+			cancellationToken: cancellationToken
+		);
+
+		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "PackageId");
+
+		await Assert.That(props["AssemblyName"]).IsEqualTo("ExampleProject.Api");
+		await Assert.That(props["PackageId"]).IsEqualTo("ExampleProject.Api");
 	}
 
 	[Test]

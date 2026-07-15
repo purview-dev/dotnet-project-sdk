@@ -117,6 +117,13 @@
 		<PurviewProjectShortName>$(MSBuildProjectName)</PurviewProjectShortName>
 		<_PurviewEscapedNamespacePrefix Condition="'$(PurviewNamespacePrefix)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Escape('$(PurviewNamespacePrefix)'))</_PurviewEscapedNamespacePrefix>
+		<_PurviewNamespacePrefixTailSegment Condition="'$(PurviewNamespacePrefix)' != ''"
+			>$([System.Text.RegularExpressions.Regex]::Match('$(PurviewNamespacePrefix)', '([^\.]+)$').Groups[1].Value)</_PurviewNamespacePrefixTailSegment>
+		<_PurviewEscapedNamespacePrefixTailSegment Condition="'$(_PurviewNamespacePrefixTailSegment)' != ''"
+			>$([System.Text.RegularExpressions.Regex]::Escape('$(_PurviewNamespacePrefixTailSegment)'))</_PurviewEscapedNamespacePrefixTailSegment>
+		<_PurviewProjectNameWithoutRepeatedTail
+			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewEscapedNamespacePrefixTailSegment)' != ''"
+			>$([System.Text.RegularExpressions.Regex]::Replace('$(MSBuildProjectName)', '^$(_PurviewEscapedNamespacePrefixTailSegment)(?=\.|$)\.?', ''))</_PurviewProjectNameWithoutRepeatedTail>
 		<_PurviewIsSegmentPrefixedProjectName
 			Condition="'$(PurviewNamespacePrefix)' != '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^$(_PurviewEscapedNamespacePrefix)($|\.)'))"
 			>true</_PurviewIsSegmentPrefixedProjectName>
@@ -126,8 +133,11 @@
 			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewIsSegmentPrefixedProjectName)' == 'true'"
 			>$(MSBuildProjectName)</PurviewLogicalProjectName>
 		<PurviewLogicalProjectName
-			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewIsSegmentPrefixedProjectName)' != 'true'"
-			>$(PurviewNamespacePrefix).$(MSBuildProjectName)</PurviewLogicalProjectName>
+			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewIsSegmentPrefixedProjectName)' != 'true' AND '$(_PurviewProjectNameWithoutRepeatedTail)' == ''"
+			>$(PurviewNamespacePrefix)</PurviewLogicalProjectName>
+		<PurviewLogicalProjectName
+			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewIsSegmentPrefixedProjectName)' != 'true' AND '$(_PurviewProjectNameWithoutRepeatedTail)' != ''"
+			>$(PurviewNamespacePrefix).$(_PurviewProjectNameWithoutRepeatedTail)</PurviewLogicalProjectName>
 		<!-- Determine the testing type from the project name suffix -->
 		<TestingType
 			Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Test')) == 'True' OR $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('Tests')) == 'True'"
@@ -386,12 +396,23 @@
 
 	<!-- Default assembly and namespace from logical project identity -->
 	<PropertyGroup>
+		<_PurviewSharedProjectRemovePattern>$([System.Text.RegularExpressions.Regex]::Replace('$(_SharedProjectNames)', '^;|;$', '').Replace(';', '|'))</_PurviewSharedProjectRemovePattern>
+		<_PurviewSharedTestingProjectRemovePattern>$([System.Text.RegularExpressions.Regex]::Replace('$(_SharedTestingProjectNames)', '^;|;$', '').Replace(';', '|'))</_PurviewSharedTestingProjectRemovePattern>
+		<_PurviewNamespaceRemovePattern>$(_PurviewSharedProjectRemovePattern)|$(_PurviewSharedTestingProjectRemovePattern)|Core|EF|Shared|ClientShared|ServiceDefaults</_PurviewNamespaceRemovePattern>
 		<AssemblyName
 			Condition="('$(AssemblyName)' == '' OR '$(AssemblyName)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
 			>$(PurviewLogicalProjectName)</AssemblyName>
 		<RootNamespace
 			Condition="('$(RootNamespace)' == '' OR '$(RootNamespace)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
 			>$(PurviewLogicalProjectName)</RootNamespace>
+		<RootNamespace Condition="'$(_PurviewNamespaceRemovePattern)' != ''"
+			>$([System.Text.RegularExpressions.Regex]::Replace('$(RootNamespace)', '\.(?:$(_PurviewNamespaceRemovePattern))(?=\.|$)', ''))</RootNamespace>
+		<_PurviewDefaultPackageId>$(AssemblyName)</_PurviewDefaultPackageId>
+		<_PurviewDefaultPackageId Condition="'$(_PurviewNamespaceRemovePattern)' != ''"
+			>$([System.Text.RegularExpressions.Regex]::Replace('$(_PurviewDefaultPackageId)', '\.(?:$(_PurviewNamespaceRemovePattern))(?=\.|$)', ''))</_PurviewDefaultPackageId>
+		<PackageId
+			Condition="('$(PackageId)' == '' OR '$(PackageId)' == '$(MSBuildProjectName)') AND '$(_PurviewDefaultPackageId)' != ''"
+			>$(_PurviewDefaultPackageId)</PackageId>
 		<RootNamespace Condition="'$(TestingType)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Replace($(RootNamespace), `[.]$(TestingType)Tests?$$`, ``))</RootNamespace>
 	</PropertyGroup>
