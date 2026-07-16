@@ -75,6 +75,8 @@
 			>false</ExcludeMSTelemetryExtension>
 		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''"
 			>false</DisableGenerateAssemblyInfoClass>
+		<EnableAssemblyNameGeneration Condition="'$(EnableAssemblyNameGeneration)' == ''"
+			>false</EnableAssemblyNameGeneration>
 		<DisableAutoInternalsVisibleTo Condition="'$(DisableAutoInternalsVisibleTo)' == ''"
 			>false</DisableAutoInternalsVisibleTo>
 		<AutoIncludeUsings Condition="'$(AutoIncludeUsings)' == ''">true</AutoIncludeUsings>
@@ -119,7 +121,8 @@
 			>$([System.Text.RegularExpressions.Regex]::Escape('$(PurviewNamespacePrefix)'))</_PurviewEscapedNamespacePrefix>
 		<_PurviewNamespacePrefixTailSegment Condition="'$(PurviewNamespacePrefix)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Match('$(PurviewNamespacePrefix)', '([^\.]+)$').Groups[1].Value)</_PurviewNamespacePrefixTailSegment>
-		<_PurviewEscapedNamespacePrefixTailSegment Condition="'$(_PurviewNamespacePrefixTailSegment)' != ''"
+		<_PurviewEscapedNamespacePrefixTailSegment
+			Condition="'$(_PurviewNamespacePrefixTailSegment)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Escape('$(_PurviewNamespacePrefixTailSegment)'))</_PurviewEscapedNamespacePrefixTailSegment>
 		<_PurviewProjectNameWithoutRepeatedTail
 			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewEscapedNamespacePrefixTailSegment)' != ''"
@@ -217,6 +220,9 @@
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="DisableGenerateAssemblyInfoClass">
 			<Description>Disables generation of the AssemblyInfo helper class in intermediate output.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="EnableAssemblyNameGeneration">
+			<Description>When true, enables SDK generation of AssemblyName from the logical project name. When false (default), AssemblyName uses the standard .NET behavior (project name).</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="DisableAutoInternalsVisibleTo">
 			<Description>Disables automatic InternalsVisibleTo generation for test and shared testing projects.</Description>
@@ -394,25 +400,16 @@
 		<EditorConfigFiles Include="$(EditorConfigFilePath)" />
 	</ItemGroup>
 
-	<!-- Default assembly and namespace from logical project identity -->
+	<!-- Default namespace from logical project identity -->
 	<PropertyGroup>
 		<_PurviewSharedProjectRemovePattern>$([System.Text.RegularExpressions.Regex]::Replace('$(_SharedProjectNames)', '^;|;$', '').Replace(';', '|'))</_PurviewSharedProjectRemovePattern>
 		<_PurviewSharedTestingProjectRemovePattern>$([System.Text.RegularExpressions.Regex]::Replace('$(_SharedTestingProjectNames)', '^;|;$', '').Replace(';', '|'))</_PurviewSharedTestingProjectRemovePattern>
 		<_PurviewNamespaceRemovePattern>$(_PurviewSharedProjectRemovePattern)|$(_PurviewSharedTestingProjectRemovePattern)|Core|EF|Shared|ClientShared|ServiceDefaults</_PurviewNamespaceRemovePattern>
-		<AssemblyName
-			Condition="('$(AssemblyName)' == '' OR '$(AssemblyName)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
-			>$(PurviewLogicalProjectName)</AssemblyName>
 		<RootNamespace
 			Condition="('$(RootNamespace)' == '' OR '$(RootNamespace)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
 			>$(PurviewLogicalProjectName)</RootNamespace>
 		<RootNamespace Condition="'$(_PurviewNamespaceRemovePattern)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Replace('$(RootNamespace)', '\.(?:$(_PurviewNamespaceRemovePattern))(?=\.|$)', ''))</RootNamespace>
-		<_PurviewDefaultPackageId>$(AssemblyName)</_PurviewDefaultPackageId>
-		<_PurviewDefaultPackageId Condition="'$(_PurviewNamespaceRemovePattern)' != ''"
-			>$([System.Text.RegularExpressions.Regex]::Replace('$(_PurviewDefaultPackageId)', '\.(?:$(_PurviewNamespaceRemovePattern))(?=\.|$)', ''))</_PurviewDefaultPackageId>
-		<PackageId
-			Condition="('$(PackageId)' == '' OR '$(PackageId)' == '$(MSBuildProjectName)') AND '$(_PurviewDefaultPackageId)' != ''"
-			>$(_PurviewDefaultPackageId)</PackageId>
 		<RootNamespace Condition="'$(TestingType)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Replace($(RootNamespace), `[.]$(TestingType)Tests?$$`, ``))</RootNamespace>
 	</PropertyGroup>

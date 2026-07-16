@@ -25,6 +25,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"SourceGenerator",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "RootNamespace");
@@ -51,6 +52,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"ExampleProjectExtra",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "RootNamespace");
@@ -64,6 +66,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"Api",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("ExampleProject.Api");
@@ -88,15 +91,11 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"ResourceIsolation",
 			namespacePrefix: "Purview.Aspire.ResourceIsolation",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 
-		var props = await h.GetPropertiesAsync(
-			cancellationToken,
-			"AssemblyName",
-			"RootNamespace",
-			"PackageId"
-		);
+		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "RootNamespace", "PackageId");
 
 		await Assert.That(props["AssemblyName"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
 		await Assert.That(props["RootNamespace"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
@@ -107,22 +106,19 @@ public sealed class ProjectIdentityRulesTests
 	[Arguments("ServiceDefaults")]
 	[Arguments("ResourceIsolation.ServiceDefaults")]
 	[Arguments("Purview.Aspire.ResourceIsolation.ServiceDefaults")]
-	public async Task ProjectName_StartingWithNamespacePrefixTail_StripsOnlyLeadingDuplicateSegment(string projectName,
+	public async Task ProjectName_StartingWithNamespacePrefixTail_StripsOnlyLeadingDuplicateSegment(
+		string projectName,
 		CancellationToken cancellationToken
 	)
 	{
 		await using var h = await ProjectHarness.CreateAsync(
 			projectName,
 			namespacePrefix: "Purview.Aspire.ResourceIsolation",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 
-		var props = await h.GetPropertiesAsync(
-			cancellationToken,
-			"AssemblyName",
-			"RootNamespace",
-			"PackageId"
-		);
+		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "RootNamespace", "PackageId");
 
 		await Assert.That(props["AssemblyName"]).IsEqualTo("Purview.Aspire.ResourceIsolation.ServiceDefaults");
 		await Assert.That(props["RootNamespace"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
@@ -159,6 +155,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"Api",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 
@@ -174,6 +171,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"SourceGenerator.UnitTests",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "RootNamespace");
@@ -200,6 +198,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"Api.IntegrationTests",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 		await Assert
@@ -213,6 +212,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"Core.ArchitectureTests",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 		await Assert
@@ -226,6 +226,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"Core.ContractTests",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 		await Assert
@@ -239,6 +240,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"Core.FunctionalTests",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 		await Assert
@@ -252,6 +254,7 @@ public sealed class ProjectIdentityRulesTests
 		await using var h = await ProjectHarness.CreateAsync(
 			"SourceGenerator",
 			namespacePrefix: "ExampleProject",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
 			cancellationToken: cancellationToken
 		);
 
@@ -267,6 +270,100 @@ public sealed class ProjectIdentityRulesTests
 		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.ArchitectureTests");
 		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.ContractTests");
 		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.FunctionalTests");
+	}
+
+	[Test]
+	public async Task InternalsVisibleTo_UsesShortTestAssemblyNames_ByDefault(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"SourceGenerator",
+			namespacePrefix: "ExampleProject",
+			cancellationToken: cancellationToken
+		);
+
+		var (exitCode, stdOut, stdErr) = await h.RunMSBuildAsync(
+			"-t:InternalsVisibleToTarget -noconlog -getItem:AssemblyAttribute",
+			cancellationToken
+		);
+		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+		var friendAssemblies = ExtractItemMetadataValues(stdOut, "AssemblyAttribute", "_Parameter1");
+
+		await Assert.That(friendAssemblies).Contains("SourceGenerator.UnitTests");
+		await Assert.That(friendAssemblies).Contains("SourceGenerator.IntegrationTests");
+		await Assert.That(friendAssemblies).Contains("SourceGenerator.ArchitectureTests");
+		await Assert.That(friendAssemblies).Contains("SourceGenerator.ContractTests");
+		await Assert.That(friendAssemblies).Contains("SourceGenerator.FunctionalTests");
+	}
+
+	[Test]
+	public async Task AssemblyName_DefaultsToProjectName_WhenGenerationDisabled(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"Api",
+			namespacePrefix: "ExampleProject",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("Api");
+	}
+
+	[Test]
+	public async Task AssemblyName_DefaultsToProjectName_ForShortChildProject(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"SourceGenerator",
+			namespacePrefix: "ExampleProject",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("SourceGenerator");
+	}
+
+	[Test]
+	public async Task PackageId_DefaultsToProjectName_WhenGenerationDisabled(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"Api",
+			namespacePrefix: "ExampleProject",
+			cancellationToken: cancellationToken
+		);
+
+		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "PackageId");
+
+		await Assert.That(props["AssemblyName"]).IsEqualTo("Api");
+		await Assert.That(props["PackageId"]).IsEqualTo("Api");
+	}
+
+	[Test]
+	public async Task EnableAssemblyNameGeneration_DefaultsToFalse(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert
+			.That(await h.GetPropertyAsync("EnableAssemblyNameGeneration", cancellationToken))
+			.IsEqualTo("false");
+	}
+
+	[Test]
+	public async Task EnableAssemblyNameGeneration_CanBeSetToTrue(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("EnableAssemblyNameGeneration", cancellationToken))
+			.IsEqualTo("true");
+	}
+
+	[Test]
+	public async Task EnableAssemblyNameGeneration_CanBeSetViaDirectoryBuildProps(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"Api",
+			namespacePrefix: "ExampleProject",
+			preImportProps: "<EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("ExampleProject.Api");
 	}
 
 	[Test]

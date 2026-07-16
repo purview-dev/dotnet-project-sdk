@@ -30,6 +30,7 @@ public sealed class CompilerVisiblePropertyTests
 			"ExcludePurviewTelemetry",
 			"ExcludeMSTelemetryExtension",
 			"DisableGenerateAssemblyInfoClass",
+			"EnableAssemblyNameGeneration",
 			"DisableAutoInternalsVisibleTo",
 			"AutoIncludeUsings",
 			"IsCSharpProject",

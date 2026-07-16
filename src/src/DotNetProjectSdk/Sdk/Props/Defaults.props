@@ -49,6 +49,8 @@
 			>false</EnableStaticNativeInstrumentation>
 		<EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''"
 			>false</EnforceCodeStyleInBuild>
+		<EnableAssemblyNameGeneration Condition="'$(EnableAssemblyNameGeneration)' == ''"
+			>false</EnableAssemblyNameGeneration>
 		<Exclude Condition="'$(Exclude)' == ''"></Exclude>
 		<ExcludeByAttribute Condition="'$(ExcludeByAttribute)' == ''"></ExcludeByAttribute>
 		<ExcludeMSTelemetryExtension Condition="'$(ExcludeMSTelemetryExtension)' == ''"

@@ -2,6 +2,27 @@
 	<Import Project="$(MSBuildThisFileDirectory)Targets/VersionDetection.targets " />
 
 	<!-- =====================================================================
+	     ASSEMBLY NAME AND PACKAGE ID GENERATION
+	     Evaluated after the project body so EnableAssemblyNameGeneration (set
+	     in .csproj or Directory.Build.props) is visible. When disabled (default),
+	     AssemblyName uses standard .NET behavior (MSBuildProjectName).
+	     ===================================================================== -->
+	<PropertyGroup
+		Condition="'$(IsCSharpProject)' == 'true'"
+		Label="Assembly Name and Package ID Generation"
+	>
+		<AssemblyName
+			Condition="'$(EnableAssemblyNameGeneration)' == 'true' AND ('$(AssemblyName)' == '' OR '$(AssemblyName)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
+			>$(PurviewLogicalProjectName)</AssemblyName>
+		<_PurviewDefaultPackageId>$(AssemblyName)</_PurviewDefaultPackageId>
+		<_PurviewDefaultPackageId Condition="'$(_PurviewNamespaceRemovePattern)' != ''"
+			>$([System.Text.RegularExpressions.Regex]::Replace('$(_PurviewDefaultPackageId)', '\.(?:$(_PurviewNamespaceRemovePattern))(?=\.|$)', ''))</_PurviewDefaultPackageId>
+		<PackageId
+			Condition="('$(PackageId)' == '' OR '$(PackageId)' == '$(MSBuildProjectName)') AND '$(_PurviewDefaultPackageId)' != ''"
+			>$(_PurviewDefaultPackageId)</PackageId>
+	</PropertyGroup>
+
+	<!-- =====================================================================
 	     FIX ROOT NAMESPACE
 	     Strips known suffixes from RootNamespace. @(NamespaceRemoveSuffix) only
 	     expands inside a Target (after static item evaluation), so the regex
@@ -303,7 +324,10 @@
 		<ItemGroup>
 			<!-- InternalsVisibleTo for each TestType -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-				<_Parameter1>$(PurviewLogicalProjectName).%(TestType.Identity)Tests</_Parameter1>
+				<_Parameter1 Condition="'$(EnableAssemblyNameGeneration)' == 'true'"
+					>$(PurviewLogicalProjectName).%(TestType.Identity)Tests</_Parameter1>
+				<_Parameter1 Condition="'$(EnableAssemblyNameGeneration)' != 'true'"
+					>$(PurviewProjectShortName).%(TestType.Identity)Tests</_Parameter1>
 			</AssemblyAttribute>
 			<!-- InternalsVisibleTo for all SharedTesting projects -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
