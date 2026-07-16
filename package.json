@@ -1,6 +1,6 @@
 {
 	"name": "changeops",
-	"version": "1.0.0-prerelease.22",
+	"version": "1.0.0-prerelease.23",
 	"devDependencies": {
 		"@changesets/cli": "^2.31.0"
 	}

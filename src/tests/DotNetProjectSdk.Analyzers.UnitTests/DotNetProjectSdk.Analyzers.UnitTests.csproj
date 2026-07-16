@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<AssemblyName>Purview.DotNetProjectSdk.Analyzers.UnitTests</AssemblyName>
+	</PropertyGroup>
 	<ItemGroup>
 		<!-- Need the Roslyn compilation API directly for analyzer tests. -->
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />

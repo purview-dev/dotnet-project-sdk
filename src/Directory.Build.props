@@ -9,7 +9,6 @@
 		<NamespacePrefix>Purview</NamespacePrefix>
 		<!-- Exclude telemetry packages from the packaging project itself -->
 		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
-		<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
 	</PropertyGroup>
 
 	<!-- Dog fooding the Sdk... -->

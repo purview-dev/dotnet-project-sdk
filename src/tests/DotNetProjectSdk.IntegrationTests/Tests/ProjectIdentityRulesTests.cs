@@ -270,6 +270,8 @@ public sealed class ProjectIdentityRulesTests
 		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.ArchitectureTests");
 		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.ContractTests");
 		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.FunctionalTests");
+		// SharedTesting projects should also be prefixed when EnableAssemblyNameGeneration=true
+		await Assert.That(friendAssemblies).Contains("ExampleProject.SharedTestingFramework");
 	}
 
 	[Test]
@@ -293,6 +295,34 @@ public sealed class ProjectIdentityRulesTests
 		await Assert.That(friendAssemblies).Contains("SourceGenerator.ArchitectureTests");
 		await Assert.That(friendAssemblies).Contains("SourceGenerator.ContractTests");
 		await Assert.That(friendAssemblies).Contains("SourceGenerator.FunctionalTests");
+		// SharedTesting projects should use short names when EnableAssemblyNameGeneration is not set
+		await Assert.That(friendAssemblies).Contains("SharedTestingFramework");
+	}
+
+	[Test]
+	public async Task InternalsVisibleTo_UsesExplicitAssemblyName(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"SourceGenerator",
+			namespacePrefix: "ExampleProject",
+			extraProps: "<AssemblyName>Custom.Assembly</AssemblyName>",
+			cancellationToken: cancellationToken
+		);
+
+		var (exitCode, stdOut, stdErr) = await h.RunMSBuildAsync(
+			"-t:InternalsVisibleToTarget -noconlog -getItem:AssemblyAttribute",
+			cancellationToken
+		);
+		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+		var friendAssemblies = ExtractItemMetadataValues(stdOut, "AssemblyAttribute", "_Parameter1");
+
+		await Assert.That(friendAssemblies).Contains("Custom.Assembly.UnitTests");
+		await Assert.That(friendAssemblies).Contains("Custom.Assembly.IntegrationTests");
+		await Assert.That(friendAssemblies).Contains("Custom.Assembly.ArchitectureTests");
+		await Assert.That(friendAssemblies).Contains("Custom.Assembly.ContractTests");
+		await Assert.That(friendAssemblies).Contains("Custom.Assembly.FunctionalTests");
+		// SharedTesting projects use raw names (no AssemblyName prefix) since they're standalone projects
+		await Assert.That(friendAssemblies).Contains("SharedTestingFramework");
 	}
 
 	[Test]

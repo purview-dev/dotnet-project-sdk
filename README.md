@@ -2,10 +2,13 @@
 
 A reusable MSBuild SDK NuGet package that delivers standardised .NET project defaults, code-style enforcement, test-framework wiring, and Central Package Management integration. Install it once per repo — every project beneath the repo root inherits everything automatically.
 
+> [!NOTE]
+> This SDK package imposes convention over configuration, enforcing certain styles and automations based on project file names, etc.
+
 ## What's included
 
 | Feature | Detail |
-|---|---|
+| -- | -- |
 | **Project type detection** | `IsCSharpProject`, `IsTestProject`, `IsSharedTestingProject`, `IsContainerProject`, `IsWebSdkProject`, `IsAspireHostProject`, … |
 | **C# defaults** | `net10.0` TFM (overridable), `LangVersion=preview`, `Nullable=enable`, `ImplicitUsings=enable`, deterministic builds |
 | **Code style** | `.editorconfig` baked into the package, applied via `EditorConfigFilePath`, and auto-bootstrapped to repo root if missing; `EnforceCodeStyleInBuild=true` |
@@ -14,7 +17,7 @@ A reusable MSBuild SDK NuGet package that delivers standardised .NET project def
 | **SourceLink** | `Microsoft.SourceLink.GitHub` added to all packable projects (configurable via `SourceLinkPackageName`) |
 | **Purview Telemetry** | `Purview.Telemetry.SourceGenerator` + `Microsoft.Extensions.Telemetry.Abstractions` added by default (opt-out) |
 | **Assembly info** | Auto-generated `static class AssemblyInfo` with `RootNamespace`, `Version`, `Company`, etc., plus an embedded `Microsoft.CodeAnalysis.EmbeddedAttribute` (can be excluded via `PURVIEW_SDK_EXCLUDE_EMBEDDED`). |
-| **InternalsVisibleTo** | Generated for all defined `TestType` variants automatically |
+| **InternalsVisibleTo** | Generated for all `TestType` variants and shared testing projects, using the resolved `$(AssemblyName)` so explicit, generated, and default naming are all handled |
 | **Namespace management** | `NamespacePrefix.ProjectName` pattern with suffix stripping (`.Core`, `.Shared`, `.EF`, …) |
 | **Testing framework** | `TestingFramework`: **TUnit** (default), `Xunit`, or `None` |
 | **Mocking provider** | `SubstituteFramework`: **TUnitMocks** (default), `NSubstitute`, or `None` |
@@ -68,12 +71,116 @@ Copy `templates/Directory.Packages.props` from this package to your repo root. A
 
 ---
 
+## Project naming guide
+
+The SDK applies several conventions automatically based on the `.csproj` filename and `NamespacePrefix`.
+
+### Defaults (no extra configuration)
+
+By default (`EnableAssemblyNameGeneration=false`), `AssemblyName` follows standard .NET behavior — it's just the `.csproj` filename. `RootNamespace` is always derived from `$(NamespacePrefix).$(ProjectName)`:
+
+| `.csproj` filename | `AssemblyName` | `RootNamespace` | Detected as |
+| -- | -- | -- | -- |
+| `Api.csproj` | `Api` | `Acme.Api` | Source project |
+| `Api.UnitTests.csproj` | `Api.UnitTests` | `Acme.Api` | `IsTestProject=true`, `TestingType=Unit` |
+| `Api.IntegrationTests.csproj` | `Api.IntegrationTests` | `Acme.Api` | `IsTestProject=true`, `TestingType=Integration` |
+| `SharedTestingFramework.csproj` | `SharedTestingFramework` | `Acme.SharedTestingFramework` | `IsSharedTestingProject=true` |
+
+> **Note:** `InternalsVisibleTo` follows `$(AssemblyName)` — so for `Api.csproj` the SDK generates `Api.UnitTests`, `Api.IntegrationTests`, etc.
+
+### With `EnableAssemblyNameGeneration=true`
+
+When enabled, the SDK derives `AssemblyName` and `PackageId` from `$(PurviewLogicalProjectName)` — the full `$(NamespacePrefix).$(ProjectName)` with deduplication:
+
+| `.csproj` filename | `AssemblyName` | `RootNamespace` |
+| -- | -- | -- |
+| `Api.csproj` | `Acme.Api` | `Acme.Api` |
+| `Api.UnitTests.csproj` | `Acme.Api.UnitTests` | `Acme.Api` |
+| `Core.Infrastructure.csproj` | `Acme.Core.Infrastructure` | `Acme.Core.Infrastructure` |
+
+Use short `.csproj` names in both modes — the SDK handles the prefixing:
+
+```text
+✅  Api.csproj                        → short name, SDK resolves the rest
+❌  Acme.Api.csproj                   → redundant prefix, avoid
+```
+
+A build-time check (`PurviewProjectFileNameMismatch`) enforces that the `.csproj` filename matches its parent directory name, preventing inconsistent naming. Set `DisableProjectFileNamingConventionCheck=true` to opt out.
+
+### Recommended structure: `src/` + `tests/`
+
+For larger repos, separate source and test projects into `src/` and `tests/` folders:
+
+```text
+MyRepo/
+├── Directory.Build.props          ← NamespacePrefix=Acme
+├── Directory.Build.targets
+├── Directory.Packages.props
+├── global.json
+├── src/
+│   ├── Api/
+│   │   └── Api.csproj
+│   ├── Core/
+│   │   └── Core.csproj
+│   └── SourceGenerator/
+│       └── SourceGenerator.csproj
+├── tests/
+│   ├── Api.UnitTests/
+│   │   └── Api.UnitTests.csproj    → IsTestProject=true, TestingType=Unit
+│   ├── Api.IntegrationTests/
+│   │   └── Api.IntegrationTests.csproj
+│   └── SharedTestingFramework/
+│       └── SharedTestingFramework.csproj  → IsSharedTestingProject=true
+└── package.json
+```
+
+### Flat structure: everything together
+
+For smaller repos, source and test projects can live side-by-side:
+
+```text
+MyRepo/
+├── Directory.Build.props
+├── Directory.Build.targets
+├── Directory.Packages.props
+├── global.json
+├── Api/
+│   └── Api.csproj
+├── Api.UnitTests/
+│   └── Api.UnitTests.csproj
+├── Core/
+│   └── Core.csproj
+├── Core.IntegrationTests/
+│   └── Core.IntegrationTests.csproj
+└── package.json
+```
+
+Both layouts work identically — the SDK detects test projects by name suffix, not folder location.
+
+### Quick reference
+
+```sh
+# Create a source project
+mkdir src/Api && cd src/Api
+dotnet new classlib -n Api
+
+# Create its unit tests
+mkdir ../../tests/Api.UnitTests && cd ../../tests/Api.UnitTests
+dotnet new classlib -n Api.UnitTests   # SDK wires TUnit automatically
+
+# Or flat:
+mkdir Api.UnitTests && cd Api.UnitTests
+dotnet new classlib -n Api.UnitTests
+```
+
+---
+
 ## Template files
 
 The `templates/` folder contains ready-to-copy starter files for new repos:
 
 | File | Purpose |
-|---|---|
+| -- | -- |
 | `Directory.Build.props` | Bootstrapper — copy to repo root and set `NamespacePrefix` |
 | `Directory.Build.targets` | Bootstrapper — copy to repo root |
 | `Directory.Packages.props` | All default package versions with `*` floating to latest |
@@ -91,7 +198,7 @@ Set any of these properties **before** the `<Import>` in your `Directory.Build.p
 ### Version detection
 
 | Property | Default | Description |
-|---|---|---|
+| -- | -- | -- |
 | `UsePackageJsonVersion` | `true` | `true` enables version detection, `false` disables it, and `Strict` requires version detection to succeed (build fails if no version source can be resolved). |
 | `RootPackageJson` | *(auto-discovered)* | Explicit path to a `package.json`. Relative paths are resolved from the project directory. |
 
@@ -119,23 +226,24 @@ The extracted `version` field is applied to both `Version` and `PackageVersion`.
 ### General
 
 | Property | Default | Description |
-|---|---|---|
+| -- | -- | -- |
 | `NamespacePrefix` | *(required)* | Root namespace prefix, e.g. `Acme`. Results in `Acme.MyProject`. |
 | `DisableNamespacePrefixCheck` | `false` | Set to `true` to suppress the build error for missing `NamespacePrefix`. |
 | `TargetFramework` | `net10.0` | Override the default TFM per-project or globally. |
 | `SourceLinkPackageName` | `Microsoft.SourceLink.GitHub` | SourceLink provider. Set to `Microsoft.SourceLink.AzureDevOps.Git` for ADO repos. |
+| `EnableAssemblyNameGeneration` | `false` | When `true`, the SDK derives `AssemblyName` (and `PackageId`) from `$(PurviewLogicalProjectName)` — i.e. `$(NamespacePrefix).$(ProjectName)` with deduplication logic. When `false` (default), standard .NET behavior applies (`$(MSBuildProjectName)`). Explicit `<AssemblyName>` in a `.csproj` always takes precedence. |
 
 ### Telemetry
 
 | Property | Default | Description |
-|---|---|---|
-| `ExcludePurviewTelemetry` | `false` | Set to `true` to remove `Purview.Telemetry.SourceGenerator` from all projects. |
-| `ExcludeMSTelemetryExtension` | `false` | Set to `true` to remove `Microsoft.Extensions.Telemetry.Abstractions`. |
+| -- | -- | -- |
+| `ExcludePurviewTelemetry` | `false` | Set to `true` to exclude `Purview.Telemetry.SourceGenerator` from all projects. |
+| `ExcludeMSTelemetryExtension` | `false` | Set to `true` to exclude `Microsoft.Extensions.Telemetry.Abstractions`. Note, when `ExcludePurviewTelemetry` is `false` this is excluded anyway. |
 
 ### Testing
 
 | Property | Default | Description |
-|---|---|---|
+| -- | -- | -- |
 | `TestingFramework` | `TUnit` | Testing framework. Supported values: `TUnit`, `Xunit`, `None`. |
 | `SubstituteFramework` | `TUnitMocks` | Mocking provider. Supported values: `TUnitMocks`, `NSubstitute`, `None`. |
 | `TestDataFramework` | `Bogus` | Test data provider. Supported values: `Bogus`, `None`. |
@@ -147,7 +255,7 @@ The extracted `version` field is applied to both `Version` and `PackageVersion`.
 The SDK now exports its properties via `CompilerVisibleProperty`, so analyzers and source generators can read them through `build_property.<PropertyName>`.
 
 | Property | Description |
-|---|---|
+| -- | -- |
 | `UsePackageJsonVersion` | Whether version detection from `package.json` is active. |
 | `RootPackageJson` | Resolved path to the `package.json` used for version detection. |
 | `RepoRoot` | Repo root directory found via `.git` auto-discovery. |
@@ -163,6 +271,7 @@ The SDK now exports its properties via `CompilerVisibleProperty`, so analyzers a
 | `ExcludePurviewTelemetry` | Opt-out for `Purview.Telemetry.SourceGenerator`. |
 | `ExcludeMSTelemetryExtension` | Opt-out for `Microsoft.Extensions.Telemetry.Abstractions`. |
 | `DisableGenerateAssemblyInfoClass` | Disables generated `AssemblyInfo` helper source. |
+| `EnableAssemblyNameGeneration` | When `true`, the SDK derives `AssemblyName` from the logical project name. |
 | `DisableAutoInternalsVisibleTo` | Disables automatic `InternalsVisibleTo` generation. |
 | `AutoIncludeUsings` | Controls SDK-added global usings. |
 | `IsCSharpProject` | True when the project is a `.csproj`. |
@@ -208,7 +317,7 @@ The SDK now exports its properties via `CompilerVisibleProperty`, so analyzers a
 
 Test projects are automatically detected by their suffix. Supported patterns:
 
-```
+```text
 MyProject.UnitTests       → IsTestProject=true, TestingType=Unit
 MyProject.IntegrationTests→ IsTestProject=true, TestingType=Integration
 MyProject.E2ETests        → IsTestProject=true, TestingType=E2E
@@ -224,9 +333,16 @@ Projects named `SharedTestingFramework`, `SharedTestingInfrastructure`, `SharedT
 
 ## InternalsVisibleTo
 
-The SDK automatically generates `[assembly: InternalsVisibleTo("MyProject.UnitTests")]` (and all other TestType variants) for every non-test project. This allows test projects to access internal members. No manual attributes required.
+The SDK automatically generates `[assembly: InternalsVisibleTo("…")]` attributes for every non-test C# project. The friend assembly name is derived from the source project's resolved `$(AssemblyName)`, so all naming modes are handled correctly:
 
-Additionally, all SharedTesting projects (like `SharedTestingFramework`, `SharedTestingInfrastructure`, etc.) are also granted access to internals, so shared testing infrastructure has full visibility into the projects being tested.
+- **Explicit `<AssemblyName>`** — if a project sets `<AssemblyName>Custom.Assembly</AssemblyName>`, the generated attributes use `Custom.Assembly.UnitTests`, `Custom.Assembly.IntegrationTests`, etc.
+- **`EnableAssemblyNameGeneration=true`** — the SDK-derived fully-qualified name is used (e.g. `Acme.MyProject.UnitTests`).
+- **Default** — standard .NET behavior: `$(MSBuildProjectName)` (e.g. `MyProject.UnitTests`).
+
+Two categories of friend assemblies are generated:
+
+1. **TestType variants** — one `InternalsVisibleTo` per defined `TestType` (`Unit`, `Integration`, `Architecture`, `Contract`, `Functional`, …), formatted as `$(AssemblyName).{TestType}Tests`.
+2. **SharedTesting projects** — one per known shared testing project name (`SharedTestingFramework`, `SharedTestingInfrastructure`, etc.). When `EnableAssemblyNameGeneration=true` and a `NamespacePrefix` is set, these are prefixed (e.g. `Acme.SharedTestingFramework`); otherwise the raw name is used.
 
 ### Disabling automatic InternalsVisibleTo
 
@@ -268,6 +384,32 @@ Define `PURVIEW_SDK_EXCLUDE_EMBEDDED` only when your build already provides `Mic
 Certain suffixes are automatically stripped from `RootNamespace` to avoid awkward namespace names like `Acme.MyProject.Core.Something`:
 
 Stripped suffixes: `Core`, `EF`, `Shared`, `ClientShared`, `ServiceDefaults`, and all shared testing project names.
+
+---
+
+## Assembly name generation
+
+By default (`EnableAssemblyNameGeneration=false`), the SDK follows standard .NET behavior: `AssemblyName` is `$(MSBuildProjectName)`. Set `EnableAssemblyNameGeneration=true` (in `Directory.Build.props` or individual `.csproj`) to have the SDK derive `AssemblyName` from `$(PurviewLogicalProjectName)`:
+
+```xml
+<PropertyGroup>
+  <NamespacePrefix>Acme</NamespacePrefix>
+  <EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>
+</PropertyGroup>
+```
+
+With this enabled:
+
+| Project name | `NamespacePrefix` | Resolved `AssemblyName` |
+| -- | -- | -- |
+| `Api` | `Acme` | `Acme.Api` |
+| `Acme.Api` | `Acme` | `Acme.Api` (no double-prefix) |
+| `Core.Infrastructure` | `Acme` | `Acme.Core.Infrastructure` |
+| `Acme` | `Acme` | `Acme` |
+
+`PackageId` follows `AssemblyName` (with namespace-remove patterns applied). An explicit `<AssemblyName>` in a `.csproj` always takes precedence over generation.
+
+> **Note:** `RootNamespace` is derived from `$(PurviewLogicalProjectName)` regardless of this setting — it always reflects `$(NamespacePrefix).$(ProjectName)` with suffix stripping applied. `EnableAssemblyNameGeneration` only controls whether `AssemblyName`/`PackageId` follow suit.
 
 ---
 

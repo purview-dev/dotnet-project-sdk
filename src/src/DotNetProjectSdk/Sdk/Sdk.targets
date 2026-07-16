@@ -324,14 +324,14 @@
 		<ItemGroup>
 			<!-- InternalsVisibleTo for each TestType -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-				<_Parameter1 Condition="'$(EnableAssemblyNameGeneration)' == 'true'"
-					>$(PurviewLogicalProjectName).%(TestType.Identity)Tests</_Parameter1>
-				<_Parameter1 Condition="'$(EnableAssemblyNameGeneration)' != 'true'"
-					>$(PurviewProjectShortName).%(TestType.Identity)Tests</_Parameter1>
+				<_Parameter1>$(AssemblyName).%(TestType.Identity)Tests</_Parameter1>
 			</AssemblyAttribute>
 			<!-- InternalsVisibleTo for all SharedTesting projects -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-				<_Parameter1>%(SharedTestingProjectName.Identity)</_Parameter1>
+				<_Parameter1 Condition="'$(EnableAssemblyNameGeneration)' == 'true' AND '$(PurviewNamespacePrefix)' != ''"
+					>$(PurviewNamespacePrefix).%(SharedTestingProjectName.Identity)</_Parameter1>
+				<_Parameter1 Condition="'$(EnableAssemblyNameGeneration)' != 'true' OR '$(PurviewNamespacePrefix)' == ''"
+					>%(SharedTestingProjectName.Identity)</_Parameter1>
 			</AssemblyAttribute>
 		</ItemGroup>
 	</Target>
