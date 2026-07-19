@@ -95,4 +95,23 @@ public sealed class InternalsVisibleToTests
 		// Should always have InternalsVisibleToAttribute.
 		await Assert.That(assemblyAttrs).Contains("System.Runtime.CompilerServices.InternalsVisibleToAttribute");
 	}
+
+	//[Test]
+	//public async Task InternalsVisibleTo_WhenAssemblyNameSet_UsesAssemblyNameForTestProjects(CancellationToken cancellationToken)
+	//{
+	//	await using var appUnitTestHarness = await ProjectHarness
+	//		.For("App.UnitTests")
+	//		.BuildAsync(cancellationToken);
+
+	//	await using var appHarness = await ProjectHarness
+	//		.For("App")
+	//		.WithSolutionDirectory(appUnitTestHarness.SolutionDirectory)
+	//		.BuildAsync(cancellationToken);
+
+	//	var values = await appHarness.GetItemMetadataValuesAsync("AssemblyAttribute", "_Parameter1", typeof(InternalsVisibleToAttribute).FullName, cancellationToken);
+
+	//	var x = await appHarness.GetPreprocessProjectAsync(cancellationToken);
+
+	//	await Assert.That(values).IsNotNull();
+	//}
 }

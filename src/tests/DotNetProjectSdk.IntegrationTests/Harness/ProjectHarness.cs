@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace Purview.DotNetProjectSdk.Harness;
 
@@ -98,17 +99,22 @@ partial class ProjectHarness : IAsyncDisposable
 
 	internal async Task WriteBoilerplateAsync(
 		string namespacePrefix,
+		string projectName,
 		string? preImportProps,
 		CancellationToken cancellationToken
 	)
 	{
+		Directory.CreateDirectory(SolutionDirectory);
 		Directory.CreateDirectory(ProjectDirectory);
 
 		var preImportBlock = preImportProps is null
 			? ""
 			: $"\n\t<PropertyGroup>\n\t\t{preImportProps}\n\t</PropertyGroup>";
 
-		var directoryBuildPropsPath = Path.Combine(ProjectDirectory, "Directory.Build.props");
+		var solutionPath = Path.Combine(SolutionDirectory, "TestingSolution.slnx");
+		await CreateOrUpdateSolution(solutionPath, projectName, cancellationToken);
+
+		var directoryBuildPropsPath = Path.Combine(SolutionDirectory, "Directory.Build.props");
 		if (!File.Exists(directoryBuildPropsPath))
 		{
 			await File.WriteAllTextAsync(
@@ -125,7 +131,7 @@ partial class ProjectHarness : IAsyncDisposable
 			);
 		}
 
-		var directoryBuildTargetsPath = Path.Combine(ProjectDirectory, "Directory.Build.targets");
+		var directoryBuildTargetsPath = Path.Combine(SolutionDirectory, "Directory.Build.targets");
 		if (!File.Exists(directoryBuildTargetsPath))
 		{
 			await File.WriteAllTextAsync(
@@ -139,7 +145,7 @@ partial class ProjectHarness : IAsyncDisposable
 			);
 		}
 
-		var directoryPackagesPropsPath = Path.Combine(ProjectDirectory, "Directory.Packages.props");
+		var directoryPackagesPropsPath = Path.Combine(SolutionDirectory, "Directory.Packages.props");
 		if (!File.Exists(directoryPackagesPropsPath))
 		{
 			await File.WriteAllTextAsync(
@@ -151,6 +157,58 @@ partial class ProjectHarness : IAsyncDisposable
 					</PropertyGroup>
 				</Project>
 				""",
+				cancellationToken
+			);
+		}
+	}
+
+	async Task CreateOrUpdateSolution(string solutionPath, string projectName, CancellationToken cancellationToken)
+	{
+		var projectPath = $"{projectName}/{projectName}.csproj";
+
+		if (File.Exists(solutionPath))
+		{
+			var document = XDocument.Load(solutionPath);
+			var solution = document.Root
+				?? throw new InvalidOperationException(
+					$"The solution file '{solutionPath}' has no root element."
+				);
+
+			var alreadyExists = solution
+				.Elements("File")
+				.Any(element =>
+					string.Equals(
+						element.Attribute("Path")?.Value,
+						projectPath,
+						StringComparison.OrdinalIgnoreCase
+					)
+				);
+
+			if (!alreadyExists)
+			{
+				solution.Add(
+					new XText(Environment.NewLine + "\t"),
+					new XElement("File", new XAttribute("Path", projectPath)),
+					new XText(Environment.NewLine)
+				);
+
+				await using var stream = File.Create(solutionPath);
+				await document.SaveAsync(
+					stream,
+					SaveOptions.DisableFormatting,
+					cancellationToken
+				);
+			}
+		}
+		else
+		{
+			await File.WriteAllTextAsync(
+				solutionPath,
+				$"""
+		<Solution>
+			<File Path="{projectPath}" />
+		</Solution>
+		""",
 				cancellationToken
 			);
 		}
@@ -171,32 +229,38 @@ partial class ProjectHarness : IAsyncDisposable
 		var propList = string.Join(",", propertyNames);
 		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getProperty:{propList}";
 
-		var (_, stdout, _) = await RunAsync("dotnet", args, cancellationToken);
+		var (exitCode, stdOut, stdErr) = await RunAsync("dotnet", args, cancellationToken);
 
-		stdout = stdout.Trim();
+		await Assert.That(exitCode).IsZero().Because(stdErr ?? "No error returned");
+
+		stdOut = stdOut.Trim();
 
 		// -getProperty outputs plain text for a single property, JSON for multiple.
-		var jsonStart = stdout.IndexOf('{', StringComparison.Ordinal);
+		var jsonStart = stdOut.IndexOf('{', StringComparison.Ordinal);
 		if (jsonStart < 0)
 		{
 			// Single property — plain text value.
 			return propertyNames.Length == 1
-				? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [propertyNames[0]] = stdout }
+				? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [propertyNames[0]] = stdOut }
 				: propertyNames.ToDictionary(p => p, _ => "", StringComparer.OrdinalIgnoreCase);
 		}
 
 		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		try
 		{
-			using var doc = JsonDocument.Parse(stdout[jsonStart..]);
+			using var doc = JsonDocument.Parse(stdOut[jsonStart..]);
 			if (doc.RootElement.TryGetProperty("Properties", out var propsEl))
 			{
 				foreach (var prop in propsEl.EnumerateObject())
-					result[prop.Name] = prop.Value.GetString() ?? string.Empty;
+				{
+					var value = prop.Value.GetString();
+					result[prop.Name] = value ?? string.Empty;
+				}
 			}
 		}
 		catch (JsonException)
 		{ /* return what we have */
+			throw;
 		}
 
 		return result;
@@ -245,39 +309,64 @@ partial class ProjectHarness : IAsyncDisposable
 		return await GetItemValuesAsync(itemType, metadataName, cancellationToken);
 	}
 
+	public async Task<IReadOnlyList<string>> GetItemMetadataValuesAsync(
+		string itemType,
+		string metadataName,
+		string? identity,
+		CancellationToken cancellationToken = default
+	)
+	{
+		return await GetItemValuesAsync(itemType, metadataName, identity, cancellationToken);
+	}
+
+	Task<IReadOnlyList<string>> GetItemValuesAsync(
+	string itemType,
+	string metadataName,
+	CancellationToken cancellationToken
+)
+	=> GetItemValuesAsync(itemType, metadataName, null, cancellationToken);
+
 	async Task<IReadOnlyList<string>> GetItemValuesAsync(
 		string itemType,
 		string metadataName,
+		string? identity,
 		CancellationToken cancellationToken
 	)
 	{
 		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getItem:{itemType}";
-		var (_, stdout, _) = await RunAsync("dotnet", args, cancellationToken);
+		var (exitCode, stdOut, stdErr) = await RunAsync("dotnet", args, cancellationToken);
 
-		var jsonStart = stdout.Trim().IndexOf('{', StringComparison.Ordinal);
+		await Assert.That(exitCode).IsZero().Because(stdErr ?? "No error returned");
+
+		var jsonStart = stdOut.Trim().IndexOf('{', StringComparison.Ordinal);
 		if (jsonStart < 0)
 			return [];
 
-		try
+		using var doc = JsonDocument.Parse(stdOut[jsonStart..]);
+		if (
+			doc.RootElement.TryGetProperty("Items", out var itemsEl)
+			&& itemsEl.TryGetProperty(itemType, out var typeEl)
+		)
 		{
-			using var doc = JsonDocument.Parse(stdout[jsonStart..]);
-			if (
-				doc.RootElement.TryGetProperty("Items", out var itemsEl)
-				&& itemsEl.TryGetProperty(itemType, out var typeEl)
-			)
+			var values = new List<string>();
+			foreach (var item in typeEl.EnumerateArray())
 			{
-				var values = new List<string>();
-				foreach (var item in typeEl.EnumerateArray())
+				if (identity != null)
 				{
-					if (item.TryGetProperty(metadataName, out var metadataValue))
-						values.Add(metadataValue.GetString() ?? string.Empty);
+					if (item.TryGetProperty("Identity", out var identityValue))
+					{
+						if (identity != identityValue.GetString())
+							continue;
+					}
+					else
+						continue;
 				}
 
-				return values;
+				if (item.TryGetProperty(metadataName, out var metadataValue))
+					values.Add(metadataValue.GetString() ?? string.Empty);
 			}
-		}
-		catch (JsonException)
-		{ /* fall through */
+
+			return values;
 		}
 
 		return [];
@@ -343,6 +432,16 @@ partial class ProjectHarness : IAsyncDisposable
 		await process.WaitForExitAsync(cancellationToken);
 
 		return (process.ExitCode, await stdoutTask, await stderrTask);
+	}
+
+	public async Task<XDocument> GetPreprocessProjectAsync(CancellationToken cancellationToken)
+	{
+		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -preprocess:EvaluatedProject.xml";
+		var (exitCode, stdOut, stdErr) = await RunAsync("dotnet", args, cancellationToken);
+
+		await Assert.That(exitCode).IsZero().Because(stdErr ?? "No error returned");
+
+		return XDocument.Load(Path.Combine(ProjectDirectory, "EvaluatedProject.xml"));
 	}
 
 	public async ValueTask DisposeAsync()

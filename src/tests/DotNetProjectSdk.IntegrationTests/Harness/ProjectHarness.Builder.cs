@@ -142,7 +142,7 @@ sealed class ProjectHarnessBuilder
 			ownsWorkDir
 		);
 
-		await harness.WriteBoilerplateAsync(_namespacePrefix, _preImportPropsRaw, cancellationToken);
+		await harness.WriteBoilerplateAsync(_namespacePrefix, _projectName, _preImportPropsRaw, cancellationToken);
 
 		if (!string.IsNullOrWhiteSpace(_projectFileContent))
 		{

@@ -160,29 +160,15 @@
 	     - TestDataFramework: Bogus (supported: Bogus, None)
 	     ===================================================================== -->
 	<PropertyGroup Label="Testing Framework Selection">
-		<!--<_TestingFrameworkRaw>$(TestingFramework)</_TestingFrameworkRaw>-->
 		<_TestingFrameworkNormalized>$([System.String]::Copy('$(TestingFramework)').Trim().ToLowerInvariant())</_TestingFrameworkNormalized>
-
-		<!--<TestingFramework Condition="'$(_TestingFrameworkNormalized)' == '' OR '$(_TestingFrameworkNormalized)' == 'tunit'">TUnit</TestingFramework>
-		<TestingFramework Condition="'$(_TestingFrameworkNormalized)' == 'xunit'">Xunit</TestingFramework>
-		<TestingFramework Condition="'$(_TestingFrameworkNormalized)' == 'none'">None</TestingFramework>-->
 	</PropertyGroup>
 
 	<PropertyGroup Label="Substitution Framework Selection">
-		<!--<_SubstituteFrameworkRaw>$(SubstituteFramework)</_SubstituteFrameworkRaw>-->
 		<_SubstituteFrameworkNormalized>$([System.String]::Copy('$(SubstituteFramework)').Trim().ToLowerInvariant())</_SubstituteFrameworkNormalized>
-
-		<!--<SubstituteFramework Condition="'$(_SubstituteFrameworkNormalized)' == '' OR '$(_SubstituteFrameworkNormalized)' == 'tunit.mocks'">TUnitMocks</SubstituteFramework>
-		<SubstituteFramework Condition="'$(_SubstituteFrameworkNormalized)' == 'nsubstitute'">NSubstitute</SubstituteFramework>
-		<SubstituteFramework Condition="'$(_SubstituteFrameworkNormalized)' == 'none'">None</SubstituteFramework>-->
 	</PropertyGroup>
 
 	<PropertyGroup Label="Testing Framework Data Selection">
-		<!--<_TestDataFrameworkRaw>$(TestDataFramework)</_TestDataFrameworkRaw>-->
 		<_TestDataFrameworkNormalized>$([System.String]::Copy('$(TestDataFramework)').Trim().ToLowerInvariant())</_TestDataFrameworkNormalized>
-
-		<!--<TestDataFramework Condition="'$(_TestDataFrameworkNormalized)' == '' OR '$(_TestDataFrameworkNormalized)' == 'bogus'">Bogus</TestDataFramework>
-		<TestDataFramework Condition="'$(_TestDataFrameworkNormalized)' == 'none'">None</TestDataFramework>-->
 	</PropertyGroup>
 
 	<!-- =====================================================================

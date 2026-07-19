@@ -323,8 +323,17 @@
 	>
 		<ItemGroup>
 			<!-- InternalsVisibleTo for each TestType -->
+			<!-- Assembly Type... -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 				<_Parameter1>$(AssemblyName).%(TestType.Identity)Tests</_Parameter1>
+			</AssemblyAttribute>
+			<!-- Project Type -->
+			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+				<_Parameter1>$(TargetProjectName).%(TestType.Identity)Tests</_Parameter1>
+			</AssemblyAttribute>
+			<!-- MSBuild project name -->
+			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+				<_Parameter1>$(MSBuildProjectName).%(TestType.Identity)Tests</_Parameter1>
 			</AssemblyAttribute>
 			<!-- InternalsVisibleTo for all SharedTesting projects -->
 			<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
