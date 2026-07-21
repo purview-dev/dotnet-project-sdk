@@ -77,7 +77,7 @@ The SDK applies several conventions automatically based on the `.csproj` filenam
 
 ### Defaults (no extra configuration)
 
-By default (`EnableAssemblyNameGeneration=false`), `AssemblyName` follows standard .NET behavior — it's just the `.csproj` filename. `RootNamespace` is always derived from `$(NamespacePrefix).$(ProjectName)`:
+By default (`EnableAssemblyNameGeneration=false`), `AssemblyName` follows standard .NET behaviour — it's just the `.csproj` filename. `RootNamespace` is always derived from `$(NamespacePrefix).$(ProjectName)`:
 
 | `.csproj` filename | `AssemblyName` | `RootNamespace` | Detected as |
 | -- | -- | -- | -- |
@@ -231,7 +231,7 @@ The extracted `version` field is applied to both `Version` and `PackageVersion`.
 | `DisableNamespacePrefixCheck` | `false` | Set to `true` to suppress the build error for missing `NamespacePrefix`. |
 | `TargetFramework` | `net10.0` | Override the default TFM per-project or globally. |
 | `SourceLinkPackageName` | `Microsoft.SourceLink.GitHub` | SourceLink provider. Set to `Microsoft.SourceLink.AzureDevOps.Git` for ADO repos. |
-| `EnableAssemblyNameGeneration` | `false` | When `true`, the SDK derives `AssemblyName` (and `PackageId`) from `$(PurviewLogicalProjectName)` — i.e. `$(NamespacePrefix).$(ProjectName)` with deduplication logic. When `false` (default), standard .NET behavior applies (`$(MSBuildProjectName)`). Explicit `<AssemblyName>` in a `.csproj` always takes precedence. |
+| `EnableAssemblyNameGeneration` | `false` | When `true`, the SDK derives `AssemblyName` (and `PackageId`) from `$(PurviewLogicalProjectName)` — i.e. `$(NamespacePrefix).$(ProjectName)` with deduplication logic. When `false` (default), standard .NET behaviour applies (`$(MSBuildProjectName)`). Explicit `<AssemblyName>` in a `.csproj` always takes precedence. |
 
 ### Telemetry
 
@@ -282,7 +282,7 @@ The SDK now exports its properties via `CompilerVisibleProperty`, so analyzers a
 | `IsContainerProject` | True when Dockerfile markers indicate container defaults. |
 | `IsSdkProject` | True when an SDK value is detected from project/import declaration. |
 | `SdkProjectName` | Detected SDK name (e.g. `Microsoft.NET.Sdk.Web`). |
-| `IsWebProject` | Marker used in SDK web-project behavior. |
+| `IsWebProject` | Marker used in SDK web-project behaviour. |
 | `IsWebSdkProject` | True when `SdkProjectName` is `Microsoft.NET.Sdk.Web`. |
 | `IsWorkerSdkProject` | True when `SdkProjectName` is `Microsoft.NET.Sdk.Worker`. |
 | `IsAspireHostProject` | True when SDK starts with `Aspire.Sdk.Host`. |
@@ -337,7 +337,7 @@ The SDK automatically generates `[assembly: InternalsVisibleTo("…")]` attribut
 
 - **Explicit `<AssemblyName>`** — if a project sets `<AssemblyName>Custom.Assembly</AssemblyName>`, the generated attributes use `Custom.Assembly.UnitTests`, `Custom.Assembly.IntegrationTests`, etc.
 - **`EnableAssemblyNameGeneration=true`** — the SDK-derived fully-qualified name is used (e.g. `Acme.MyProject.UnitTests`).
-- **Default** — standard .NET behavior: `$(MSBuildProjectName)` (e.g. `MyProject.UnitTests`).
+- **Default** — standard .NET behaviour: `$(MSBuildProjectName)` (e.g. `MyProject.UnitTests`).
 
 Two categories of friend assemblies are generated:
 
@@ -385,11 +385,31 @@ Certain suffixes are automatically stripped from `RootNamespace` to avoid awkwar
 
 Stripped suffixes: `Core`, `EF`, `Shared`, `ClientShared`, `ServiceDefaults`, and all shared testing project names.
 
+### Extensions namespace rule (`PDS0002`)
+
+When a file is placed under a project-root `Extensions/` folder, the analyzer intentionally treats
+that folder as a namespace reset point.
+
+- Scope: only files where the first project-relative segment is exactly `Extensions`
+- Expected namespace: derived from subfolders under `Extensions/` (file name is ignored)
+- `RootNamespace` is deliberately ignored for these files
+
+Examples:
+
+| Project-relative file path | Expected namespace |
+| -- | -- |
+| `Extensions/System/StringExtensions.cs` | `System` |
+| `Extensions/Microsoft/Extensions/Configuration/ConfigurationExtensions.cs` | `Microsoft.Extensions.Configuration` |
+| `Extensions/TopLevel.cs` | *(global namespace)* |
+
+To avoid conflicting guidance, `IDE0130` is suppressed for files in this root `Extensions/` scope.
+Outside this scope, normal `IDE0130` behaviour remains unchanged.
+
 ---
 
 ## Assembly name generation
 
-By default (`EnableAssemblyNameGeneration=false`), the SDK follows standard .NET behavior: `AssemblyName` is `$(MSBuildProjectName)`. Set `EnableAssemblyNameGeneration=true` (in `Directory.Build.props` or individual `.csproj`) to have the SDK derive `AssemblyName` from `$(PurviewLogicalProjectName)`:
+By default (`EnableAssemblyNameGeneration=false`), the SDK follows standard .NET behaviour: `AssemblyName` is `$(MSBuildProjectName)`. Set `EnableAssemblyNameGeneration=true` (in `Directory.Build.props` or individual `.csproj`) to have the SDK derive `AssemblyName` from `$(PurviewLogicalProjectName)`:
 
 ```xml
 <PropertyGroup>

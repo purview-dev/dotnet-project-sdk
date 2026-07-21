@@ -13,6 +13,10 @@ license: MIT
 
 # Running TUnit tests with `dotnet test`
 
+Use this skill for execution, filtering, and troubleshooting.
+
+For test creation/refactoring conventions (AAA pattern, naming, cancellation tokens), use `../dotnet-tunit/SKILL.md`.
+
 ## The one rule that matters most
 
 TUnit runs on **Microsoft.Testing.Platform (MTP)**, not VSTest. The reflexive
@@ -106,23 +110,3 @@ Check, in order:
 - TUnit — CI/CD pipelines: https://tunit.dev/docs/examples/tunit-ci-pipeline/
 - TUnit — Explicit tests: https://tunit.dev/docs/writing-tests/explicit/
 - MTP graph-query filtering spec: https://github.com/microsoft/testfx/blob/main/docs/mstest-runner-graphqueryfiltering/graph-query-filtering.md
-
-## Available skills in this repository
-
-Use this catalog to compose the right workflow:
-
-- `changesets-prerelease` — prerelease bump and changeset/changelog quality.
-- `dotnet-tunit` — TUnit test-authoring conventions and assertion style.
-- `tunit-test-runner` (this file) — deep TUnit/MTP execution and troubleshooting guidance.
-- `tunit-filtering` — concise `--treenode-filter` syntax and examples for this repo.
-- `git-conventional-commits` — commit hygiene and commit message conventions.
-- `lefthook-integration` — local Git hook strategy and setup guidance.
-
-Paths:
-
-- `../changesets-prerelease/SKILL.md`
-- `../dotnet-tunit/SKILL.md`
-- `../tunit-test-runner/SKILL.md`
-- `../tunit-filtering/SKILL.md`
-- `../git-conventional-commits/SKILL.md`
-- `../lefthook-integration/SKILL.md`

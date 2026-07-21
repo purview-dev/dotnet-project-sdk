@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<NoWarn>$(NoWarn);RS1038;RS1041;RS1036;RS2008</NoWarn>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- Roslyn APIs required for analyzer/code-fix integration coverage. -->
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Features" />
+	</ItemGroup>
+</Project>

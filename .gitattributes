@@ -1,4 +1,4 @@
-# Set default behaviors to automatically normalize line endings
+# Set default behaviours to automatically normalize line endings
 * text=auto
 
 # Handle line endings for specific file types

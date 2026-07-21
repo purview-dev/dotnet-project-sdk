@@ -2,15 +2,15 @@
 
 Create or update an integration test in `src/tests/DotNetProjectSdk.IntegrationTests/Tests/` using `ProjectHarness`.
 
-## Required behavior
+## Required behaviour
 
-1. Keep scope to one behavior (single focused scenario).
+1. Keep scope to one behaviour (single focused scenario).
 2. Use `ProjectHarness` (`Harness/ProjectHarness.cs`) to construct a throwaway project for the scenario.
 3. Prefer evaluation helpers before build-log parsing:
    - `GetPropertyAsync` / `GetPropertiesAsync`
    - `GetItemIdentitiesAsync` / `GetProjectReferencesAsync`
    - `GetPreprocessProjectAsync` when import/evaluation order matters
-4. Use `BuildAsync(restore: true)` only when the scenario requires restore/build behavior.
+4. Use `BuildAsync(restore: true)` only when the scenario requires restore/build behaviour.
 5. Follow TUnit conventions used in this repo:
    - `[Test]` method attributes
    - awaited assertions (e.g., `await Assert.That(actual).IsEqualTo(expected);`)
@@ -22,4 +22,4 @@ Create or update an integration test in `src/tests/DotNetProjectSdk.IntegrationT
 - Include a short test comment describing **Given / When / Then** intent.
 - Validate by running targeted tests first, then broader tests if needed.
 
-If multiple test ideas are possible, pick the one with the smallest diff that still validates the intended SDK behavior.
+If multiple test ideas are possible, pick the one with the smallest diff that still validates the intended SDK behaviour.

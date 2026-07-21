@@ -9,11 +9,12 @@
 		<File Path="Directory.Build.targets" />
 	</Folder>
 	<Folder Name="/src/">
-		<Project Path="src/DotNetProjectSdk.Analyzers/DotNetProjectSdk.Analyzers.csproj" />
+		<Project Path="src/Analyzers/Analyzers.csproj" />
 		<Project Path="src/DotNetProjectSdk/DotNetProjectSdk.csproj" />
 	</Folder>
 	<Folder Name="/tests/">
-		<Project Path="tests/DotNetProjectSdk.Analyzers.UnitTests/DotNetProjectSdk.Analyzers.UnitTests.csproj" />
+		<Project Path="tests/Analyzers.IntegrationTests/Analyzers.IntegrationTests.csproj" />
+		<Project Path="tests/Analyzers.UnitTests/Analyzers.UnitTests.csproj" />
 		<Project Path="tests/DotNetProjectSdk.IntegrationTests/DotNetProjectSdk.IntegrationTests.csproj" />
 	</Folder>
 </Solution>

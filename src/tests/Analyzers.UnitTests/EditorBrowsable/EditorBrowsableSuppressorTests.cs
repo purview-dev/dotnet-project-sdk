@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Purview.DotNetProjectSdk.Analyzers.Tests;
+namespace Purview.DotNetProjectSdk.Analyzers.EditorBrowsable;
 
 /// <summary>
 /// Unit-tests for <see cref="EditorBrowsableSuppressor"/> using the Roslyn compilation API

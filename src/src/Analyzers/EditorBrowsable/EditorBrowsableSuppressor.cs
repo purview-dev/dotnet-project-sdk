@@ -3,7 +3,7 @@ using System.ComponentModel;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Purview.DotNetProjectSdk.Analyzers;
+namespace Purview.DotNetProjectSdk.Analyzers.EditorBrowsable;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 sealed class EditorBrowsableSuppressor : DiagnosticSuppressor

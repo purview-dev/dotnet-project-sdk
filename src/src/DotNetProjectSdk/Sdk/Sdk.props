@@ -177,6 +177,13 @@
 	     AnalyzerConfigOptions as build_property.<PropertyName>.
 	     ===================================================================== -->
 	<ItemGroup Label="Compiler Visible SDK Properties" Condition="'$(IsCSharpProject)' == 'true'">
+		<!-- Required by Purview analyzers that derive namespace expectations from project-relative paths. -->
+		<CompilerVisibleProperty Include="ProjectDir">
+			<Description>Absolute project directory path (with trailing separator) used by analyzers for project-relative file calculations.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="RootNamespace">
+			<Description>Effective project root namespace used by analyzers that validate or customize namespace conventions.</Description>
+		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="NamespacePrefix">
 			<Description>Required namespace prefix used to derive RootNamespace for projects.</Description>
 		</CompilerVisibleProperty>
@@ -208,7 +215,7 @@
 			<Description>Disables generation of the AssemblyInfo helper class in intermediate output.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="EnableAssemblyNameGeneration">
-			<Description>When true, enables SDK generation of AssemblyName from the logical project name. When false (default), AssemblyName uses the standard .NET behavior (project name).</Description>
+			<Description>When true, enables SDK generation of AssemblyName from the logical project name. When false (default), AssemblyName uses the standard .NET behaviour (project name).</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="DisableAutoInternalsVisibleTo">
 			<Description>Disables automatic InternalsVisibleTo generation for test and shared testing projects.</Description>
@@ -241,7 +248,7 @@
 			<Description>Detected SDK name from the project/import declaration (for example Microsoft.NET.Sdk.Web).</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="IsWebProject">
-			<Description>Marker used to distinguish API/web project behavior in SDK logic.</Description>
+			<Description>Marker used to distinguish API/web project behaviour in SDK logic.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="IsWebSdkProject">
 			<Description>True when SdkProjectName is Microsoft.NET.Sdk.Web.</Description>

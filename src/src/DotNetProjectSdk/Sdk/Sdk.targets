@@ -5,7 +5,7 @@
 	     ASSEMBLY NAME AND PACKAGE ID GENERATION
 	     Evaluated after the project body so EnableAssemblyNameGeneration (set
 	     in .csproj or Directory.Build.props) is visible. When disabled (default),
-	     AssemblyName uses standard .NET behavior (MSBuildProjectName).
+	     AssemblyName uses standard .NET behaviour (MSBuildProjectName).
 	     ===================================================================== -->
 	<PropertyGroup
 		Condition="'$(IsCSharpProject)' == 'true'"

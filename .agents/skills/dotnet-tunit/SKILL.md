@@ -1,6 +1,6 @@
 ---
 name: dotnet-tunit
-description: Use .NET with TUnit-specific test conventions.
+description: Use when creating or refactoring .NET tests with TUnit conventions (AAA pattern, naming, async assertions, and CancellationToken usage).
 category: dotnet
 roles:
   - dotnet
@@ -15,34 +15,42 @@ tags:
 
 # dotnet-tunit Skill
 
-Use this skill for .NET repositories that use TUnit.
+Use this skill when creating or refactoring tests in a .NET codebase that uses TUnit.
 
-## Rules
+## Authoring and refactoring rules (mandatory)
 
-- Use `TUnit.Core`.
-- Use `TUnit.Assertions`.
+- Always use TUnit (`TUnit.Core`, `TUnit.Assertions`).
+- Do not introduce xUnit, NUnit, MSTest, or FluentAssertions unless explicitly requested.
 - Test methods must have `[Test]`.
 - Assertion calls must be awaited.
 - Prefer `await Assert.That(actual).IsEqualTo(expected);`.
-- Do not use xUnit, NUnit, MSTest, or FluentAssertions unless explicitly requested.
-- Run the relevant `dotnet test` command before completion.
 
-## Available skills in this repository
+### Arrange / Act / Assert structure
 
-Use this catalog to compose the right workflow:
+- Always use Arrange / Act / Assert.
+- Always include explicit section comments in the test body:
+  - `// Arrange`
+  - `// Act`
+  - `// Assert`
 
-- `changesets-prerelease` — prerelease bump and changeset/changelog quality.
-- `dotnet-tunit` (this file) — TUnit test-authoring conventions and assertion style.
-- `tunit-test-runner` — deep TUnit/MTP execution and troubleshooting guidance.
-- `tunit-filtering` — concise `--treenode-filter` syntax and examples for this repo.
-- `git-conventional-commits` — commit hygiene and commit message conventions.
-- `lefthook-integration` — local Git hook strategy and setup guidance.
+### Naming conventions
 
-Paths:
+- Test classes must be named `{ModuleOrClassBeingTested}Tests`.
+- Test classes must be in the same namespace as the module/class being tested (identical namespace).
+- Test methods must follow `{SubjectUnderTest}_{Scenario}_{Expectation}`.
+  - `SubjectUnderTest` is usually the method name.
+  - Use `ctor` for constructor-focused tests when appropriate.
 
-- `../changesets-prerelease/SKILL.md`
-- `../dotnet-tunit/SKILL.md`
-- `../tunit-test-runner/SKILL.md`
-- `../tunit-filtering/SKILL.md`
-- `../git-conventional-commits/SKILL.md`
-- `../lefthook-integration/SKILL.md`
+### CancellationToken rule
+
+- Always include `CancellationToken cancellationToken` as the last parameter when any called method in the test body supports a `CancellationToken` parameter.
+- Pass that token through in the call under test (for example: `var result = await sut.ProcessAsync(cancellationToken);`).
+
+## Refactoring expectation
+
+- When refactoring existing tests, bring them into compliance with all rules above (structure, naming, and cancellation-token usage), while preserving test intent.
+
+## Execution reminder
+
+- Run relevant tests before completion.
+- For execution/filtering details, use `../tunit-test-runner/SKILL.md`.

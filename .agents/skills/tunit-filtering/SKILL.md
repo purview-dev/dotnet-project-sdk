@@ -1,36 +1,29 @@
 ---
 name: tunit-filtering
-description: "Use when running, filtering, or troubleshooting TUnit tests in this repository with Microsoft.Testing.Platform; includes --treenode-filter patterns, -- separator usage, and harness-focused validation flows."
+description: "Use for quick TUnit --treenode-filter patterns."
 ---
 
-# TUnit Filtering (Repo-specific)
+# TUnit Filtering (quick reference)
 
-Use this skill for fast and correct test execution in this repo.
+Use this skill when you already know you need filtering syntax and want concise examples.
 
-This summary is aligned with TUnit filtering docs and repo conventions.
+For full execution and troubleshooting guidance, use `../tunit-test-runner/SKILL.md`.
 
 ## Defaults
 
-- Prefer `just test` for full-suite runs.
 - Test runner is Microsoft.Testing.Platform (MTP), not VSTest.
 - Use `--treenode-filter` for narrowing tests (do not use `--filter`).
+- Prefer your repository's standard full-suite test command for broad runs.
 
 ## `--treenode-filter`
 
-Use `--treenode-filter` to select tests by the tree path:
+Select tests by tree path:
 
 `/<Assembly>/<Namespace>/<Class name>/<Test name>`
 
-TUnit supports filtering by:
-
-- Assembly
-- Namespace
-- Class name
-- Test name
-
 ## Tree segments
 
-Each `/.../` segment matches one level in the test tree:
+Each segment maps to one level:
 
 - 1st segment: Assembly
 - 2nd segment: Namespace
@@ -51,7 +44,7 @@ Matches any value in a segment, or part of a value.
 
 Examples:
 
-- `LoginTests*`
+- `/*/*/LoginTests*/*`
 - `/*/*/MyProject.Tests.Api*/*`
 
 ### `=` equality
@@ -60,7 +53,7 @@ Matches an exact property value.
 
 Example:
 
-- `[Category=Smoke]`
+- `/*/*/*/*[Category=Unit]`
 
 ### `!=` not equal
 
@@ -76,8 +69,8 @@ Combines multiple conditions in the same segment or property group.
 
 Examples:
 
-- `/*/*/(ClassA*)&(Smoke)/*`
-- `/*/*/*/*[(Category=Smoke)&(Priority=High)]`
+- `/**[(Category=Unit)&(Priority=High)]`
+- `/*/*/*/*[(Category=Unit)&(Priority=High)]`
 
 ### `|` OR
 
@@ -86,7 +79,7 @@ Matches either condition, inside a single parenthesized group.
 Examples:
 
 - `/*/*/(LoginTests)|(SignupTests)/*`
-- `/**[(Category=Smoke)|(Priority=High)]`
+- `/**[(Category=Unit)|(Priority=High)]`
 
 ### `**` match-all
 
@@ -103,7 +96,7 @@ You can filter on custom properties in the last segment using `[...]`.
 
 Examples:
 
-- `/*/*/*/*[Category=Smoke]`
+- `/*/*/*/*[Category=Unit]`
 - `/*/*/*/*[Owner=*Team-Backend*]`
 - `/*/*/*/*[Category!=Slow]`
 
@@ -117,29 +110,25 @@ Examples:
 ## Common examples
 
 - All tests: `/*/*/*/*`
-- All smoke tests: `/*/*/*/*[Category=Smoke]`
-- High-priority smoke tests: `/*/*/*/*[(Category=Smoke)&(Priority=High)]`
+- All unit tests: `/*/*/*/*[Category=Unit]`
+- High-priority unit tests: `/*/*/*/*[(Category=Unit)&(Priority=High)]`
 - Integration tests with priority: `/*/MyProject.Tests.Integration/*/*[Priority=Critical]`
 
-## Note on `dotnet test`
+## `dotnet test` note
 
 TUnit does not use the usual VSTest `--filter` syntax. Use `--treenode-filter` instead.
 
-Preferred:
+Preferred: `dotnet test --treenode-filter "..."`
 
-- `dotnet test --treenode-filter "..."`
+Compatibility form (older SDKs): `dotnet test -- --treenode-filter "..."`
 
-Compatibility note for older SDKs:
+## Quick starts
 
-- `dotnet test -- --treenode-filter "..."`
+Use path-like tree-node filters for common flows:
 
-## Repo filter quick starts
-
-Use path-like tree-node filters for common flows in this repository:
-
-- `/*/*/*/*/` — all tests (repo default)
-- `/*/*/*/ProjectClassificationTests/*` — class-scoped
-- `/*/*/*/*/InternalsVisibleTo*` — name pattern
+- `/*/*/*/*/` — all tests
+- `/*/*/*/MyFeatureTests/*` — class-scoped
+- `/*/*/*/*/MyScenario*` — name pattern
 
 ## Zero-tests troubleshooting
 
@@ -151,42 +140,7 @@ If zero tests run:
 4. Confirm target project contains `[Test]` methods.
 5. Confirm property predicates are in one bracket group (e.g. `[(A=1)&(B=2)]`).
 
-## Harness-aware validation flow
-
-For SDK behavior that depends on MSBuild evaluation/import order:
-
-1. Prefer integration tests under `src/tests/DotNetProjectSdk.IntegrationTests/`.
-2. Use `ProjectHarness` (`Harness/ProjectHarness.cs`) to create throwaway projects.
-3. Assert using:
-   - `GetPropertyAsync` / `GetPropertiesAsync` for property evaluation
-   - `GetItemIdentitiesAsync` for item projections
-   - `BuildAsync(restore: true)` when package restore/build behavior is under test
-4. Keep test setup minimal and deterministic:
-   - set pre-import properties when behavior depends on `Sdk.props` import timing
-   - avoid unrelated package references unless required by the scenario
-
 ## See also
 
 - `../tunit-test-runner/SKILL.md`
 - `../dotnet-tunit/SKILL.md`
-- `../../../AGENTS.md`
-
-## Available skills in this repository
-
-Use this catalog to compose the right workflow:
-
-- `changesets-prerelease` — prerelease bump and changeset/changelog quality.
-- `dotnet-tunit` — TUnit test-authoring conventions and assertion style.
-- `tunit-test-runner` — deep TUnit/MTP execution and troubleshooting guidance.
-- `tunit-filtering` (this file) — concise `--treenode-filter` syntax and examples for this repo.
-- `git-conventional-commits` — commit hygiene and commit message conventions.
-- `lefthook-integration` — local Git hook strategy and setup guidance.
-
-Paths:
-
-- `../changesets-prerelease/SKILL.md`
-- `../dotnet-tunit/SKILL.md`
-- `../tunit-test-runner/SKILL.md`
-- `../tunit-filtering/SKILL.md`
-- `../git-conventional-commits/SKILL.md`
-- `../lefthook-integration/SKILL.md`

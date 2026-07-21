@@ -6,7 +6,7 @@
 		pattern instead (see README.md).
 	-->
 	<PropertyGroup>
-		<NamespacePrefix>Purview</NamespacePrefix>
+		<NamespacePrefix>Purview.DotNetProjectSdk</NamespacePrefix>
 		<!-- Exclude telemetry packages from the packaging project itself -->
 		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
 	</PropertyGroup>

@@ -29,9 +29,9 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<ProjectSdkSourceGeneratorProject>$(MSBuildThisFileDirectory)..\DotNetProjectSdk.Analyzers\DotNetProjectSdk.Analyzers.csproj</ProjectSdkSourceGeneratorProject>
+		<ProjectSdkSourceGeneratorProject>$(MSBuildThisFileDirectory)..\Analyzers\Analyzers.csproj</ProjectSdkSourceGeneratorProject>
 		<ProjectSdkSourceGeneratorTargetFramework>netstandard2.0</ProjectSdkSourceGeneratorTargetFramework>
-		<ProjectSdkSourceGeneratorAssembly>$(MSBuildThisFileDirectory)..\DotNetProjectSdk.Analyzers\bin\$(Configuration)\$(ProjectSdkSourceGeneratorTargetFramework)\Purview.DotNetProjectSdk.Analyzers.dll</ProjectSdkSourceGeneratorAssembly>
+		<ProjectSdkSourceGeneratorAssembly>$(MSBuildThisFileDirectory)..\Analyzers\bin\$(Configuration)\$(ProjectSdkSourceGeneratorTargetFramework)\Purview.DotNetProjectSdk.Analyzers.dll</ProjectSdkSourceGeneratorAssembly>
 		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeProjectSdkSourceGenerator</TargetsForTfmSpecificContentInPackage>
 	</PropertyGroup>
 
