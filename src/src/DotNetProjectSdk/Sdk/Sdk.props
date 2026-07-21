@@ -652,7 +652,7 @@
      ===================================================================== -->
 	<ItemGroup
 		Label="Automatic ProjectReference for Projects"
-		Condition="'$(IsTestProject)' != 'true' AND '$(IsSharedProject)' != 'true'"
+		Condition="'$(IsTestProject)' != 'true' AND '$(IsSharedProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'"
 	>
 		<!-- Shared project alongside this one (wildcards silently match 0 files) -->
 		<ProjectReference

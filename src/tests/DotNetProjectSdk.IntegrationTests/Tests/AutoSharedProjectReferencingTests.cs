@@ -407,4 +407,135 @@ public sealed class AutoSharedProjectReferencingTests
 			await Assert.That(normalized).Contains($"../{sharedProjectName}/{sharedProjectName}.csproj");
 		}
 	}
+
+	[Test]
+	public async Task SharedTestingProject_DoesNotAutoReference_SharedPrefixedTestProject(
+		CancellationToken cancellationToken
+	)
+	{
+		// Reproduces the cyclic ProjectReference bug (MSB4006): a SharedTestingFramework
+		// project placed next to a Shared.UnitTests project must NOT gain an automatic
+		// ProjectReference to Shared.UnitTests. Shared-testing projects manage their own
+		// explicit ProjectReferences and must never participate in the ../Shared*/Shared*.csproj
+		// library glob, otherwise SharedTestingFramework -> Shared.UnitTests and
+		// Shared.UnitTests -> SharedTestingFramework form a cycle.
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
+			"SharedTestingFramework",
+			async workDir =>
+			{
+				var sharedUnitTestsDir = Path.Combine(workDir, "Shared.UnitTests");
+				Directory.CreateDirectory(sharedUnitTestsDir);
+				await File.WriteAllTextAsync(
+					Path.Combine(sharedUnitTestsDir, "Shared.UnitTests.csproj"),
+					"""
+					<Project Sdk="Microsoft.NET.Sdk">
+						<PropertyGroup>
+							<TargetFramework>net10.0</TargetFramework>
+						</PropertyGroup>
+					</Project>
+					""",
+					cancellationToken
+				);
+			},
+			null,
+			cancellationToken
+		);
+
+		await using (harness)
+		{
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
+			// SharedTestingFramework must NOT auto-reference the Shared.UnitTests sibling
+			// (the ../Shared*/Shared*.csproj glob must not fire for shared-testing projects).
+			await Assert
+				.That(normalized)
+				.DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
+		}
+	}
+
+	[Test]
+	public async Task SharedTestingProject_WithForcedIsTestProjectFalse_DoesNotReferenceSharedTestProject(
+		CancellationToken cancellationToken
+	)
+	{
+		// Mirrors the restore-phase proof from the bug report. During NuGet restore's
+		// _GenerateRestoreProjectPathWalk, IsTestProject is false for SharedTestingFramework
+		// (dynamic test-package detection does not run), so the ../Shared*/Shared*.csproj
+		// glob would otherwise pull in the Shared.UnitTests sibling. Force that condition
+		// with -p:IsTestProject=false and confirm the glob still does not fire.
+		var (harness, _) = await TestHelpers.CreateProjectStructureAsync(
+			"SharedTestingFramework",
+			async workDir =>
+			{
+				var sharedUnitTestsDir = Path.Combine(workDir, "Shared.UnitTests");
+				Directory.CreateDirectory(sharedUnitTestsDir);
+				await File.WriteAllTextAsync(
+					Path.Combine(sharedUnitTestsDir, "Shared.UnitTests.csproj"),
+					"""
+					<Project Sdk="Microsoft.NET.Sdk">
+						<PropertyGroup>
+							<TargetFramework>net10.0</TargetFramework>
+						</PropertyGroup>
+					</Project>
+					""",
+					cancellationToken
+				);
+			},
+			null,
+			cancellationToken
+		);
+
+		await using (harness)
+		{
+			var references = await harness.GetItemIdentitiesAsync(
+				"ProjectReference",
+				"-p:IsTestProject=false",
+				cancellationToken
+			);
+			var normalized = references.Select(TestHelpers.NormalizePath).ToList();
+			await Assert
+				.That(normalized)
+				.DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
+		}
+	}
+
+	[Test]
+	public async Task SharedPrefixedTestProject_StillAutoReferences_SharedTestingProject(
+		CancellationToken cancellationToken
+	)
+	{
+		// Non-regression: a Shared-prefixed test project (Shared.UnitTests) must still
+		// auto-reference its sibling SharedTestingFramework via the test-project glob,
+		// so the fix removes only the reverse edge of the cycle, not the legitimate one.
+		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
+			"Shared.UnitTests",
+			async workDir =>
+			{
+				var sharedTestingDir = Path.Combine(workDir, "SharedTestingFramework");
+				Directory.CreateDirectory(sharedTestingDir);
+				await File.WriteAllTextAsync(
+					Path.Combine(sharedTestingDir, "SharedTestingFramework.csproj"),
+					"""
+					<Project Sdk="Microsoft.NET.Sdk">
+						<PropertyGroup>
+							<TargetFramework>net10.0</TargetFramework>
+						</PropertyGroup>
+					</Project>
+					""",
+					cancellationToken
+				);
+			},
+			null,
+			cancellationToken
+		);
+
+		await using (harness)
+		{
+			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
+			// Test projects SHOULD auto-reference SharedTesting* projects, even when the
+			// test project itself is Shared-prefixed (Shared.UnitTests).
+			await Assert
+				.That(normalized)
+				.Contains("../SharedTestingFramework/SharedTestingFramework.csproj");
+		}
+	}
 }

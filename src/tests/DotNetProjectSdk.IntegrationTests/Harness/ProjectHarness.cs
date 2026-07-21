@@ -285,6 +285,18 @@ partial class ProjectHarness : IAsyncDisposable
 		return await GetItemValuesAsync(itemType, "Identity", cancellationToken);
 	}
 
+	/// <summary>
+	/// Evaluates item identities via <c>dotnet msbuild -getItem</c> with additional MSBuild
+	/// arguments, for example <c>-p:IsTestProject=false</c> to reproduce the restore-phase
+	/// evaluation where dynamic test-package detection has not yet set IsTestProject.
+	/// </summary>
+	public Task<IReadOnlyList<string>> GetItemIdentitiesAsync(
+		string itemType,
+		string extraMsBuildArguments,
+		CancellationToken cancellationToken = default
+	)
+		=> GetItemValuesAsync(itemType, "Identity", null, extraMsBuildArguments, cancellationToken);
+
 	public Task<IReadOnlyList<string>> GetProjectReferencesAsync(CancellationToken cancellationToken = default) =>
 		GetItemIdentitiesAsync("ProjectReference", cancellationToken);
 
@@ -316,7 +328,7 @@ partial class ProjectHarness : IAsyncDisposable
 		CancellationToken cancellationToken = default
 	)
 	{
-		return await GetItemValuesAsync(itemType, metadataName, identity, cancellationToken);
+		return await GetItemValuesAsync(itemType, metadataName, identity, null, cancellationToken);
 	}
 
 	Task<IReadOnlyList<string>> GetItemValuesAsync(
@@ -324,16 +336,20 @@ partial class ProjectHarness : IAsyncDisposable
 	string metadataName,
 	CancellationToken cancellationToken
 )
-	=> GetItemValuesAsync(itemType, metadataName, null, cancellationToken);
+	=> GetItemValuesAsync(itemType, metadataName, null, null, cancellationToken);
 
 	async Task<IReadOnlyList<string>> GetItemValuesAsync(
 		string itemType,
 		string metadataName,
 		string? identity,
+		string? extraMsBuildArguments,
 		CancellationToken cancellationToken
 	)
 	{
-		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -getItem:{itemType}";
+		var extra = string.IsNullOrWhiteSpace(extraMsBuildArguments)
+			? string.Empty
+			: $" {extraMsBuildArguments.Trim()}";
+		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog{extra} -getItem:{itemType}";
 		var (exitCode, stdOut, stdErr) = await RunAsync("dotnet", args, cancellationToken);
 
 		await Assert.That(exitCode).IsZero().Because(stdErr ?? "No error returned");
