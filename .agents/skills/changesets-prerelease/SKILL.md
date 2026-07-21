@@ -34,3 +34,23 @@ Use this skill when preparing the next prerelease version in this repository.
 - Repository currently runs prerelease mode with `tag: prerelease` (`.changeset/pre.json`).
 - Releasing is done from `package.json` version in the `release.yml` workflow.
 - In prerelease mode, `changeset version` can record a changeset in `.changeset/pre.json` even if the new file was created with placeholder/empty content first. If that happens, correct the `.md` frontmatter/body before finalizing the release notes so the next shipped prerelease entry is accurate.
+
+## Available skills in this repository
+
+Use this catalog to compose the right workflow:
+
+- `changesets-prerelease` (this file) — prerelease bump and changeset/changelog quality.
+- `dotnet-tunit` — TUnit test-authoring conventions and assertion style.
+- `tunit-test-runner` — deep TUnit/MTP execution and troubleshooting guidance.
+- `tunit-filtering` — concise `--treenode-filter` syntax and examples for this repo.
+- `git-conventional-commits` — commit hygiene and commit message conventions.
+- `lefthook-integration` — local Git hook strategy and setup guidance.
+
+Paths:
+
+- `../changesets-prerelease/SKILL.md`
+- `../dotnet-tunit/SKILL.md`
+- `../tunit-test-runner/SKILL.md`
+- `../tunit-filtering/SKILL.md`
+- `../git-conventional-commits/SKILL.md`
+- `../lefthook-integration/SKILL.md`
