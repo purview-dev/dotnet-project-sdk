@@ -6,6 +6,7 @@
 		<!-- SourceLink is auto-added by the SDK to IsPackable projects -->
 		<PackageVersion Include="Microsoft.SourceLink.GitHub" Version="*" />
 		<PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="*" />
+		<PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="*" />
 		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="*" />
 		<PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="*" />
 		<PackageVersion Include="TUnit" Version="*" />

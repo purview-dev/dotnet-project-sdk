@@ -169,19 +169,14 @@ partial class ProjectHarness : IAsyncDisposable
 		if (File.Exists(solutionPath))
 		{
 			var document = XDocument.Load(solutionPath);
-			var solution = document.Root
-				?? throw new InvalidOperationException(
-					$"The solution file '{solutionPath}' has no root element."
-				);
+			var solution =
+				document.Root
+				?? throw new InvalidOperationException($"The solution file '{solutionPath}' has no root element.");
 
 			var alreadyExists = solution
 				.Elements("File")
 				.Any(element =>
-					string.Equals(
-						element.Attribute("Path")?.Value,
-						projectPath,
-						StringComparison.OrdinalIgnoreCase
-					)
+					string.Equals(element.Attribute("Path")?.Value, projectPath, StringComparison.OrdinalIgnoreCase)
 				);
 
 			if (!alreadyExists)
@@ -193,11 +188,7 @@ partial class ProjectHarness : IAsyncDisposable
 				);
 
 				await using var stream = File.Create(solutionPath);
-				await document.SaveAsync(
-					stream,
-					SaveOptions.DisableFormatting,
-					cancellationToken
-				);
+				await document.SaveAsync(stream, SaveOptions.DisableFormatting, cancellationToken);
 			}
 		}
 		else
@@ -205,10 +196,10 @@ partial class ProjectHarness : IAsyncDisposable
 			await File.WriteAllTextAsync(
 				solutionPath,
 				$"""
-		<Solution>
-			<File Path="{projectPath}" />
-		</Solution>
-		""",
+				<Solution>
+					<File Path="{projectPath}" />
+				</Solution>
+				""",
 				cancellationToken
 			);
 		}
@@ -294,8 +285,7 @@ partial class ProjectHarness : IAsyncDisposable
 		string itemType,
 		string extraMsBuildArguments,
 		CancellationToken cancellationToken = default
-	)
-		=> GetItemValuesAsync(itemType, "Identity", null, extraMsBuildArguments, cancellationToken);
+	) => GetItemValuesAsync(itemType, "Identity", null, extraMsBuildArguments, cancellationToken);
 
 	public Task<IReadOnlyList<string>> GetProjectReferencesAsync(CancellationToken cancellationToken = default) =>
 		GetItemIdentitiesAsync("ProjectReference", cancellationToken);
@@ -332,11 +322,10 @@ partial class ProjectHarness : IAsyncDisposable
 	}
 
 	Task<IReadOnlyList<string>> GetItemValuesAsync(
-	string itemType,
-	string metadataName,
-	CancellationToken cancellationToken
-)
-	=> GetItemValuesAsync(itemType, metadataName, null, null, cancellationToken);
+		string itemType,
+		string metadataName,
+		CancellationToken cancellationToken
+	) => GetItemValuesAsync(itemType, metadataName, null, null, cancellationToken);
 
 	async Task<IReadOnlyList<string>> GetItemValuesAsync(
 		string itemType,
@@ -360,8 +349,7 @@ partial class ProjectHarness : IAsyncDisposable
 
 		using var doc = JsonDocument.Parse(stdOut[jsonStart..]);
 		if (
-			doc.RootElement.TryGetProperty("Items", out var itemsEl)
-			&& itemsEl.TryGetProperty(itemType, out var typeEl)
+			doc.RootElement.TryGetProperty("Items", out var itemsEl) && itemsEl.TryGetProperty(itemType, out var typeEl)
 		)
 		{
 			var values = new List<string>();

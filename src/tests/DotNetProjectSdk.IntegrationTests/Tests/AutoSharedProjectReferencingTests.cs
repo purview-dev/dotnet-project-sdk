@@ -446,9 +446,7 @@ public sealed class AutoSharedProjectReferencingTests
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// SharedTestingFramework must NOT auto-reference the Shared.UnitTests sibling
 			// (the ../Shared*/Shared*.csproj glob must not fire for shared-testing projects).
-			await Assert
-				.That(normalized)
-				.DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
+			await Assert.That(normalized).DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
 		}
 	}
 
@@ -492,9 +490,7 @@ public sealed class AutoSharedProjectReferencingTests
 				cancellationToken
 			);
 			var normalized = references.Select(TestHelpers.NormalizePath).ToList();
-			await Assert
-				.That(normalized)
-				.DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
+			await Assert.That(normalized).DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
 		}
 	}
 
@@ -533,9 +529,7 @@ public sealed class AutoSharedProjectReferencingTests
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Test projects SHOULD auto-reference SharedTesting* projects, even when the
 			// test project itself is Shared-prefixed (Shared.UnitTests).
-			await Assert
-				.That(normalized)
-				.Contains("../SharedTestingFramework/SharedTestingFramework.csproj");
+			await Assert.That(normalized).Contains("../SharedTestingFramework/SharedTestingFramework.csproj");
 		}
 	}
 }

@@ -28,24 +28,38 @@
 		<AutoIncludeUsings>false</AutoIncludeUsings>
 	</PropertyGroup>
 
-	<!-- Pack the Sdk/ folder to the Sdk/ path in the NuGet package.
-	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
+	<PropertyGroup>
+		<ProjectSdkSourceGeneratorProject>$(MSBuildThisFileDirectory)..\DotNetProjectSdk.Analyzers\DotNetProjectSdk.Analyzers.csproj</ProjectSdkSourceGeneratorProject>
+		<ProjectSdkSourceGeneratorTargetFramework>netstandard2.0</ProjectSdkSourceGeneratorTargetFramework>
+		<ProjectSdkSourceGeneratorAssembly>$(MSBuildThisFileDirectory)..\DotNetProjectSdk.Analyzers\bin\$(Configuration)\$(ProjectSdkSourceGeneratorTargetFramework)\Purview.DotNetProjectSdk.Analyzers.dll</ProjectSdkSourceGeneratorAssembly>
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeProjectSdkSourceGenerator</TargetsForTfmSpecificContentInPackage>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference
-			Include="../DotNetProjectSdk.Analyzers/DotNetProjectSdk.Analyzers.csproj"
+			Include="$(ProjectSdkSourceGeneratorProject)"
 			PrivateAssets="all"
 			ReferenceOutputAssembly="false"
 			OutputItemType="Analyzer"
 		/>
+	</ItemGroup>
 
-		<None
-			Include="../DotNetProjectSdk.Analyzers/bin/$(Configuration)/netstandard2.0/Purview.DotNetProjectSdk.Analyzers.dll"
-			Condition="Exists('../DotNetProjectSdk.Analyzers/bin/$(Configuration)/netstandard2.0/Purview.DotNetProjectSdk.Analyzers.dll')"
-			Pack="true"
-			PackagePath="analyzers/dotnet/cs"
-			Visible="false"
+	<Target Name="IncludeProjectSdkSourceGenerator" DependsOnTargets="Build">
+		<Error
+			Condition="!Exists('$(ProjectSdkSourceGeneratorAssembly)')"
+			Text="The Project SDK source generator was not found at '$(ProjectSdkSourceGeneratorAssembly)'."
 		/>
 
+		<ItemGroup>
+			<TfmSpecificPackageFile Include="$(ProjectSdkSourceGeneratorAssembly)">
+				<PackagePath>analyzers/dotnet/cs/</PackagePath>
+			</TfmSpecificPackageFile>
+		</ItemGroup>
+	</Target>
+
+	<!-- Pack the Sdk/ folder to the Sdk/ path in the NuGet package.
+	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
+	<ItemGroup>
 		<None Include="Sdk/**/*" Pack="true" PackagePath="Sdk/" />
 
 		<None Include="$(MSBuildThisFileDirectory)../../../README.md" Pack="true" PackagePath="/" />
