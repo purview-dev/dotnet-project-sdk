@@ -11,6 +11,9 @@
 		<_VersionDetectionLogSessionId
 			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_VersionDetectionLogSessionId)' == '' and '$(BuildSessionId)' != ''"
 			>$(BuildSessionId)</_VersionDetectionLogSessionId>
+		<_VersionDetectionLogSessionId
+			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_VersionDetectionLogSessionId)' == '' and '$(DOTNET_CLI_CONTEXT_SESSIONID)' != ''"
+			>$(DOTNET_CLI_CONTEXT_SESSIONID)</_VersionDetectionLogSessionId>
 
 		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' != ''"
 			>true</_RootPackageJsonWasSpecified>

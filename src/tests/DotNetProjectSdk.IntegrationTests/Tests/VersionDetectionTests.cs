@@ -395,6 +395,70 @@ public sealed class VersionDetectionTests
 	}
 
 	[Test]
+	public async Task Build_LogsDetectedVersion_ExactlyOnce_DuringBuildOperation(CancellationToken cancellationToken)
+	{
+		// Arrange
+		const string dotnetCliSessionId = "it-dotnet-cli-session-001";
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			targetFramework: "net10.0",
+			extraProps: "<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry><ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension><DisableSourceLink>true</DisableSourceLink>",
+			preImportProps: "<RootPackageJson>package.json</RootPackageJson>",
+			extraEnv: new Dictionary<string, string>
+			{
+				["DOTNET_CLI_CONTEXT_SESSIONID"] = dotnetCliSessionId,
+			},
+			cancellationToken: cancellationToken
+		);
+
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "package.json"),
+			"""{"name": "my-lib", "version": "6.6.6"}""",
+			cancellationToken
+		);
+
+		var stampFile = await h.GetPropertyAsync("VersionDetectionLogStampFile", cancellationToken);
+		if (!string.IsNullOrWhiteSpace(stampFile) && File.Exists(stampFile))
+			File.Delete(stampFile);
+
+		// Act
+		using var process = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"build \"{h.ProjectFilePath}\" -nologo -v:minimal -t:Build;Build",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		process.StartInfo.Environment["DOTNET_CLI_CONTEXT_SESSIONID"] = dotnetCliSessionId;
+
+		process.Start();
+		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+		await process.WaitForExitAsync(cancellationToken);
+
+		var output = await stdoutTask;
+		var errors = await stderrTask;
+
+		// Assert
+		await Assert.That(process.ExitCode).IsEqualTo(0).Because(output + errors);
+
+		var combinedOutput = output + errors;
+		var messageCount = System.Text.RegularExpressions.Regex.Count(
+			combinedOutput,
+			"Detected package version '6.6.6' from"
+		);
+
+		await Assert.That(messageCount).IsEqualTo(1).Because(combinedOutput);
+	}
+
+	[Test]
 	public async Task Build_Errors_WhenUsePackageJsonVersionStrict_AndNoPackageJsonSourceIsFound(
 		CancellationToken cancellationToken
 	)
