@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Purview.DotNetProjectSdk.Analyzers.EditorBrowsable;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
+public sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 {
 	static readonly SuppressionDescriptor SuppressMissingXmlDocs = new(
 		"PDS0001",

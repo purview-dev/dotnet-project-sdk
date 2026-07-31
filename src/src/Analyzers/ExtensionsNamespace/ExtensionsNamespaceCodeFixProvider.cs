@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Composition;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -8,7 +9,9 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Purview.DotNetProjectSdk.Analyzers.ExtensionsNamespace;
 
-sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
+[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ExtensionsNamespaceCodeFixProvider))]
+[Shared]
+public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 {
 	const string ProjectDirPropertyKey = "build_property.ProjectDir";
 

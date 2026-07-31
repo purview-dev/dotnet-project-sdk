@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Purview.DotNetProjectSdk.Analyzers.ExtensionsNamespace;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
+public sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 {
 	internal const string DiagnosticId = "PDS0002";
 
@@ -27,6 +27,9 @@ sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 
 	public override void Initialize(AnalysisContext context)
 	{
+		if (context is null)
+			throw new ArgumentNullException(nameof(context));
+
 		context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 		context.EnableConcurrentExecution();
 

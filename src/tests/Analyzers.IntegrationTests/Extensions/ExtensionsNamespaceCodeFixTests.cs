@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Composition;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -78,6 +79,23 @@ public sealed class ExtensionsNamespaceCodeFixTests
 		Document fixedDocument = applyChanges.ChangedSolution.GetDocument(documentId)!;
 		SourceText fixedText = (await fixedDocument.GetTextAsync(cancellationToken))!;
 		return fixedText.ToString();
+	}
+
+	[Test]
+	public async Task CodeFixProvider_IsExported_ForVisualStudioDiscovery(CancellationToken cancellationToken)
+	{
+		_ = cancellationToken;
+
+		await Assert.That(typeof(ExtensionsNamespaceAnalyzer).IsPublic).IsTrue();
+		await Assert.That(typeof(ExtensionsNamespaceSuppressor).IsPublic).IsTrue();
+		await Assert.That(typeof(ExtensionsNamespaceCodeFixProvider).IsPublic).IsTrue();
+
+		Attribute[] attributes = Attribute.GetCustomAttributes(
+			typeof(ExtensionsNamespaceCodeFixProvider),
+			inherit: false
+		);
+		await Assert.That(attributes.OfType<ExportCodeFixProviderAttribute>().Any()).IsTrue();
+		await Assert.That(attributes.OfType<SharedAttribute>().Any()).IsTrue();
 	}
 
 	[Test]

@@ -122,6 +122,52 @@
 		/>
 	</Target>
 
+	<Target
+		Name="EnsureEmbeddedAgentSkillsTarget"
+		BeforeTargets="PrepareForBuild"
+		DependsOnTargets="InitializeSourceControlInformation"
+		Condition="'$(EnableEmbeddedAgentSkills)' != 'false' AND Exists('$(MSBuildThisFileDirectory)..\skills')"
+		Label="Copies bundled agent skills into the consuming repository for agent discovery."
+	>
+		<ItemGroup>
+			<_PurviewSkillSourceRoot Include="@(SourceRoot -> WithMetadataValue('SourceControl', 'git'))" />
+		</ItemGroup>
+		<PropertyGroup>
+			<_PurviewEmbeddedSkillRepoRoot>@(_PurviewSkillSourceRoot)</_PurviewEmbeddedSkillRepoRoot>
+			<_PurviewEmbeddedSkillRepoRoot
+				Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == '' and '$(SolutionDir)' != '' and '$(SolutionDir)' != '*Undefined*'"
+				>$(SolutionDir)</_PurviewEmbeddedSkillRepoRoot>
+			<_PurviewEmbeddedSkillAgentsMd Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == ''"
+				>$([MSBuild]::GetPathOfFileAbove('AGENTS.md', '$(MSBuildProjectDirectory)'))</_PurviewEmbeddedSkillAgentsMd>
+			<_PurviewEmbeddedSkillRepoRoot
+				Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == '' and '$(_PurviewEmbeddedSkillAgentsMd)' != ''"
+				>$([System.IO.Path]::GetDirectoryName('$(_PurviewEmbeddedSkillAgentsMd)'))\</_PurviewEmbeddedSkillRepoRoot>
+			<_PurviewEmbeddedSkillDestinationRoot Condition="'$(_PurviewEmbeddedSkillRepoRoot)' != ''"
+				>$([MSBuild]::NormalizePath('$(_PurviewEmbeddedSkillRepoRoot)', '.agents', 'skills'))</_PurviewEmbeddedSkillDestinationRoot>
+		</PropertyGroup>
+		<ItemGroup Condition="'$(_PurviewEmbeddedSkillDestinationRoot)' != ''">
+			<_PurviewEmbeddedSkillFiles Include="$(MSBuildThisFileDirectory)..\skills\**\*" />
+			<_PurviewEmbeddedSkillDirectories Include="@(_PurviewEmbeddedSkillFiles -> '$(_PurviewEmbeddedSkillDestinationRoot)\%(RecursiveDir)')" />
+		</ItemGroup>
+		<MakeDir
+			Directories="$(_PurviewEmbeddedSkillDestinationRoot)"
+			Condition="'$(_PurviewEmbeddedSkillDestinationRoot)' != ''"
+			ContinueOnError="true"
+		/>
+		<MakeDir
+			Directories="@(_PurviewEmbeddedSkillDirectories)"
+			Condition="'$(_PurviewEmbeddedSkillDestinationRoot)' != ''"
+			ContinueOnError="true"
+		/>
+		<Copy
+			SourceFiles="@(_PurviewEmbeddedSkillFiles)"
+			DestinationFolder="$(_PurviewEmbeddedSkillDestinationRoot)\%(RecursiveDir)"
+			SkipUnchangedFiles="true"
+			Condition="'$(_PurviewEmbeddedSkillDestinationRoot)' != ''"
+			ContinueOnError="true"
+		/>
+	</Target>
+
 	<!-- 
 		VALIDATE Testing Framework.
 	-->
@@ -156,9 +202,9 @@
 	<Target Name="ValidateTestingDataFramework" BeforeTargets="Build;Restore;Pack">
 		<Error
 			Condition="
-				'$(_TestingDataFrameworkNormalized)' != '' AND
-				'$(_TestingDataFrameworkNormalized)' != 'none' AND
-				'$(_TestingDataFrameworkNormalized)' != 'bogus'"
+				'$(_TestDataFrameworkNormalized)' != '' AND
+				'$(_TestDataFrameworkNormalized)' != 'none' AND
+				'$(_TestDataFrameworkNormalized)' != 'bogus'"
 			Text="Invalid TestingDataFramework value '$(TestingDataFramework)'. Supported values are: None, and Bogus (default)."
 		/>
 	</Target>

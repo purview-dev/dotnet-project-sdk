@@ -40,6 +40,8 @@
 		<EditorConfigFilePath Condition="'$(EditorConfigFilePath)' == ''"></EditorConfigFilePath>
 		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''"
 			>false</EmbedUntrackedSources>
+		<EnableEmbeddedAgentSkills Condition="'$(EnableEmbeddedAgentSkills)' == ''"
+			>true</EnableEmbeddedAgentSkills>
 		<EnableDynamicNativeInstrumentation Condition="'$(EnableDynamicNativeInstrumentation)' == ''"
 			>false</EnableDynamicNativeInstrumentation>
 		<EnableMicrosoftTestingPlatform Condition="'$(EnableMicrosoftTestingPlatform)' == ''"

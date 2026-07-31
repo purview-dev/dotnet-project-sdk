@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Purview.DotNetProjectSdk.Analyzers.ExtensionsNamespace;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-sealed class ExtensionsNamespaceSuppressor : DiagnosticSuppressor
+public sealed class ExtensionsNamespaceSuppressor : DiagnosticSuppressor
 {
 	const string ProjectDirPropertyKey = "build_property.ProjectDir";
 

@@ -18,6 +18,8 @@ This repo builds and tests `Purview.DotNetProjectSdk`, a reusable MSBuild SDK pa
 
 For full product behaviour and configuration, read [`README.md`](./README.md). Keep edits minimal, targeted, and convention-driven.
 
+Repo-specific agent skills live under `src/src/skills/` and are packed into the NuGet package via the `skills/**` wildcard. Add new skills there so they automatically flow into consuming repositories without hardcoding individual skill names.
+
 ## Repository map
 
 - `src/src/DotNetProjectSdk/` — packable MSBuild SDK package (`Purview.DotNetProjectSdk`)

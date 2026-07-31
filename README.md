@@ -189,6 +189,8 @@ The `templates/` folder contains ready-to-copy starter files for new repos:
 | `.gitattributes` | Line-ending normalisation for .cs, .json, .yml, etc. |
 | `.config/dotnet-tools.json` | CSharpier tool manifest |
 
+The package also ships bundled agent skills under `skills/**`. During build, the SDK copies them into the consuming repository's `.agents/skills/` folder by default so compatible coding agents can discover repository-aware guidance automatically.
+
 ---
 
 ## Configuration reference
@@ -201,6 +203,7 @@ Set any of these properties **before** the `<Import>` in your `Directory.Build.p
 | -- | -- | -- |
 | `UsePackageJsonVersion` | `true` | `true` enables version detection, `false` disables it, and `Strict` requires version detection to succeed (build fails if no version source can be resolved). |
 | `RootPackageJson` | *(auto-discovered)* | Explicit path to a `package.json`. Relative paths are resolved from the project directory. |
+| `EnableVersionDetectionCache` | `true` | Enables local caching of auto-discovered package.json version results. |
 
 When `UsePackageJsonVersion=true` (the default) or `UsePackageJsonVersion=Strict`, the SDK:
 
@@ -231,7 +234,36 @@ The extracted `version` field is applied to both `Version` and `PackageVersion`.
 | `DisableNamespacePrefixCheck` | `false` | Set to `true` to suppress the build error for missing `NamespacePrefix`. |
 | `TargetFramework` | `net10.0` | Override the default TFM per-project or globally. |
 | `SourceLinkPackageName` | `Microsoft.SourceLink.GitHub` | SourceLink provider. Set to `Microsoft.SourceLink.AzureDevOps.Git` for ADO repos. |
+| `DisableSourceLink` | `false` | Set to `true` to stop the SDK from adding the configured SourceLink package automatically. |
 | `EnableAssemblyNameGeneration` | `false` | When `true`, the SDK derives `AssemblyName` (and `PackageId`) from `$(PurviewLogicalProjectName)` — i.e. `$(NamespacePrefix).$(ProjectName)` with deduplication logic. When `false` (default), standard .NET behaviour applies (`$(MSBuildProjectName)`). Explicit `<AssemblyName>` in a `.csproj` always takes precedence. |
+| `DisableProjectFileNamingConventionCheck` | `false` | Set to `true` to disable the validation that requires `MyProject\MyProject.csproj` naming alignment. |
+| `DisableGenerateAssemblyInfoClass` | `false` | Set to `true` to disable the generated `AssemblyInfo` helper source. |
+| `AutoIncludeUsings` | `true` | Controls SDK-added global usings for `NamespacePrefix` and `RootNamespace`. |
+
+### Repo bootstrap
+
+| Property | Default | Description |
+| -- | -- | -- |
+| `DisableAutoCopySdkFiles` | `false` | Master switch that disables repo-level SDK file bootstrapping. |
+| `BootstrapEditorConfigToRepoRoot` | `true` | Copies the SDK `.editorconfig` to the repository root when missing. |
+| `RepositoryEditorConfigFilePath` | *(auto-detected)* | Override the destination path for the bootstrapped `.editorconfig`. |
+| `BootstrapGlobalJsonToRepoRoot` | `true` | Creates a `global.json` at the repository root when missing. |
+| `RepositoryGlobalJsonFilePath` | *(auto-detected)* | Override the destination path for the bootstrapped `global.json`. |
+| `PurviewDotNetProjectSdkVersionForGlobalJson` | *(auto-detected or `1.0.0` fallback)* | Version written to the `msbuild-sdks.Purview.DotNetProjectSdk` entry in a bootstrapped `global.json`. |
+
+### Agent skills
+
+| Property | Default | Description |
+| -- | -- | -- |
+| `EnableEmbeddedAgentSkills` | `true` | Copies all bundled skills from `skills/**` into the consuming repository's `.agents/skills/` folder before build. |
+
+To disable bundled skill copying in a consuming repo, set the opt-out property before importing the SDK:
+
+```xml
+<PropertyGroup>
+  <EnableEmbeddedAgentSkills>false</EnableEmbeddedAgentSkills>
+</PropertyGroup>
+```
 
 ### Telemetry
 

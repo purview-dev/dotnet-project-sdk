@@ -14,6 +14,9 @@
 		<_VersionDetectionLogSessionId
 			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_VersionDetectionLogSessionId)' == '' and '$(DOTNET_CLI_CONTEXT_SESSIONID)' != ''"
 			>$(DOTNET_CLI_CONTEXT_SESSIONID)</_VersionDetectionLogSessionId>
+		<_VersionDetectionLogSessionId
+			Condition="'$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_VersionDetectionLogSessionId)' == ''"
+			>msbuild-minute-$([System.DateTime]::UtcNow.ToString('yyyyMMddHHmm'))</_VersionDetectionLogSessionId>
 
 		<_RootPackageJsonWasSpecified Condition="'$(RootPackageJson)' != ''"
 			>true</_RootPackageJsonWasSpecified>

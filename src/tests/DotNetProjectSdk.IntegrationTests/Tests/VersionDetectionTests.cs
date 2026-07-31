@@ -395,6 +395,34 @@ public sealed class VersionDetectionTests
 	}
 
 	[Test]
+	public async Task VersionDetectionLogStampFile_IsSet_WhenNoExternalSessionIdIsProvided(
+		CancellationToken cancellationToken
+	)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraEnv: new Dictionary<string, string> { ["DOTNET_CLI_CONTEXT_SESSIONID"] = string.Empty },
+			cancellationToken: cancellationToken
+		);
+
+		await File.WriteAllTextAsync(Path.Combine(h.ProjectDirectory, ".git"), string.Empty, cancellationToken);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "package.json"),
+			"""{"name": "my-lib", "version": "4.4.4"}""",
+			cancellationToken
+		);
+
+		var properties = await h.GetPropertiesAsync(
+			cancellationToken,
+			"RootPackageJson",
+			"VersionDetectionLogStampFile"
+		);
+
+		await Assert.That(properties["RootPackageJson"]).IsNotEqualTo(string.Empty);
+		await Assert.That(properties["VersionDetectionLogStampFile"]).IsNotEqualTo(string.Empty);
+	}
+
+	[Test]
 	public async Task Build_LogsDetectedVersion_ExactlyOnce_DuringBuildOperation(CancellationToken cancellationToken)
 	{
 		// Arrange
@@ -404,10 +432,7 @@ public sealed class VersionDetectionTests
 			targetFramework: "net10.0",
 			extraProps: "<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry><ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension><DisableSourceLink>true</DisableSourceLink>",
 			preImportProps: "<RootPackageJson>package.json</RootPackageJson>",
-			extraEnv: new Dictionary<string, string>
-			{
-				["DOTNET_CLI_CONTEXT_SESSIONID"] = dotnetCliSessionId,
-			},
+			extraEnv: new Dictionary<string, string> { ["DOTNET_CLI_CONTEXT_SESSIONID"] = dotnetCliSessionId },
 			cancellationToken: cancellationToken
 		);
 

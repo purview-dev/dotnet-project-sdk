@@ -61,6 +61,11 @@
 	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
 	<ItemGroup>
 		<None Include="Sdk/**/*" Pack="true" PackagePath="Sdk/" />
+		<None
+			Include="$(MSBuildThisFileDirectory)..\skills\**\*"
+			Pack="true"
+			PackagePath="skills/"
+		/>
 
 		<None Include="$(MSBuildThisFileDirectory)../../../README.md" Pack="true" PackagePath="/" />
 		<None
