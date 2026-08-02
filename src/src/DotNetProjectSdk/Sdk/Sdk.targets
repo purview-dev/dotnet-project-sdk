@@ -126,27 +126,25 @@
 		Name="EnsureEmbeddedAgentSkillsTarget"
 		BeforeTargets="PrepareForBuild"
 		DependsOnTargets="InitializeSourceControlInformation"
-		Condition="'$(EnableEmbeddedAgentSkills)' != 'false' AND Exists('$(MSBuildThisFileDirectory)..\skills')"
+		Condition="'$(EnableEmbeddedAgentSkills)' != 'false' AND Exists('$(MSBuildThisFileDirectory)..\agents\skills')"
 		Label="Copies bundled agent skills into the consuming repository for agent discovery."
 	>
 		<ItemGroup>
 			<_PurviewSkillSourceRoot Include="@(SourceRoot -> WithMetadataValue('SourceControl', 'git'))" />
 		</ItemGroup>
 		<PropertyGroup>
-			<_PurviewEmbeddedSkillRepoRoot>@(_PurviewSkillSourceRoot)</_PurviewEmbeddedSkillRepoRoot>
+			<_PurviewEmbeddedSkillRepoRoot Condition="'$(RepoRoot)' != ''">$(RepoRoot)</_PurviewEmbeddedSkillRepoRoot>
+			<_PurviewEmbeddedSkillAgentsMd Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == ''">$([MSBuild]::GetPathOfFileAbove('AGENTS.md', '$(MSBuildProjectDirectory)'))</_PurviewEmbeddedSkillAgentsMd>
 			<_PurviewEmbeddedSkillRepoRoot
-				Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == '' and '$(SolutionDir)' != '' and '$(SolutionDir)' != '*Undefined*'"
-				>$(SolutionDir)</_PurviewEmbeddedSkillRepoRoot>
-			<_PurviewEmbeddedSkillAgentsMd Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == ''"
-				>$([MSBuild]::GetPathOfFileAbove('AGENTS.md', '$(MSBuildProjectDirectory)'))</_PurviewEmbeddedSkillAgentsMd>
-			<_PurviewEmbeddedSkillRepoRoot
-				Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == '' and '$(_PurviewEmbeddedSkillAgentsMd)' != ''"
+				Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == '' AND '$(_PurviewEmbeddedSkillAgentsMd)' != ''"
 				>$([System.IO.Path]::GetDirectoryName('$(_PurviewEmbeddedSkillAgentsMd)'))\</_PurviewEmbeddedSkillRepoRoot>
+			<_PurviewEmbeddedSkillRepoRoot Condition="'$(_PurviewEmbeddedSkillRepoRoot)' == ''"
+				>@(_PurviewSkillSourceRoot)</_PurviewEmbeddedSkillRepoRoot>
 			<_PurviewEmbeddedSkillDestinationRoot Condition="'$(_PurviewEmbeddedSkillRepoRoot)' != ''"
-				>$([MSBuild]::NormalizePath('$(_PurviewEmbeddedSkillRepoRoot)', '.agents', 'skills'))</_PurviewEmbeddedSkillDestinationRoot>
+				>$([MSBuild]::NormalizePath('$(_PurviewEmbeddedSkillRepoRoot)', '$(ProjectAgentDestinationFolder)', 'skills'))</_PurviewEmbeddedSkillDestinationRoot>
 		</PropertyGroup>
 		<ItemGroup Condition="'$(_PurviewEmbeddedSkillDestinationRoot)' != ''">
-			<_PurviewEmbeddedSkillFiles Include="$(MSBuildThisFileDirectory)..\skills\**\*" />
+			<_PurviewEmbeddedSkillFiles Include="$(MSBuildThisFileDirectory)..\agents\skills\**\*" />
 			<_PurviewEmbeddedSkillDirectories Include="@(_PurviewEmbeddedSkillFiles -> '$(_PurviewEmbeddedSkillDestinationRoot)\%(RecursiveDir)')" />
 		</ItemGroup>
 		<MakeDir
@@ -167,6 +165,43 @@
 			ContinueOnError="true"
 		/>
 	</Target>
+
+	<Target
+		Name="IncludeProjectAgentFolderInPackage"
+		DependsOnTargets="InitializeSourceControlInformation"
+		Condition="'$(EnabledAgentFolderInPackage)' == 'true'"
+		Label="Packs the repo's ProjectAgent/skills folder into the NuGet package."
+	>
+		<PropertyGroup>
+			<_PurviewAgentRepoRoot Condition="'$(RepoRoot)' != ''">$(RepoRoot)</_PurviewAgentRepoRoot>
+			<_PurviewAgentRepoRoot Condition="'$(_PurviewAgentRepoRoot)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'AGENTS.md'))</_PurviewAgentRepoRoot>
+			<_PurviewAgentRepoRoot Condition="'$(_PurviewAgentRepoRoot)' == '' AND '$(SolutionDir)' != '' AND '$(SolutionDir)' != '*Undefined*'">$(SolutionDir)</_PurviewAgentRepoRoot>
+			<_PurviewProjectAgentRoot Condition="'$(_PurviewAgentRepoRoot)' != ''">$([MSBuild]::NormalizePath('$(_PurviewAgentRepoRoot)', '$(ProjectAgentFolder)'))</_PurviewProjectAgentRoot>
+			<_PurviewProjectAgentSkillsRoot Condition="'$(_PurviewProjectAgentRoot)' != ''">$([MSBuild]::NormalizePath('$(_PurviewProjectAgentRoot)', 'skills'))</_PurviewProjectAgentSkillsRoot>
+		</PropertyGroup>
+		<Error
+			Condition="'$(_PurviewProjectAgentSkillsRoot)' == '' OR !Exists('$(_PurviewProjectAgentSkillsRoot)')"
+			Text="EnabledAgentFolderInPackage is true, but the ProjectAgent skills folder was not found at '$(_PurviewProjectAgentSkillsRoot)'. Set ProjectAgentFolder to the repo-relative ProjectAgent root that contains a skills/ folder, or disable EnabledAgentFolderInPackage."
+		/>
+		<ItemGroup Condition="'$(_PurviewProjectAgentSkillsRoot)' != ''">
+			<TfmSpecificPackageFile Include="$(_PurviewProjectAgentRoot)\**\*">
+				<PackagePath>agents/%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+			</TfmSpecificPackageFile>
+		</ItemGroup>
+	</Target>
+
+	<PropertyGroup Label="ProjectAgent Source Visibility" Condition="'$(EnabledAgentFolderInPackage)' == 'true'">
+		<_PurviewProjectAgentTreeRepoRoot Condition="'$(RepoRoot)' != ''">$(RepoRoot)</_PurviewProjectAgentTreeRepoRoot>
+		<_PurviewProjectAgentTreeRepoRoot Condition="'$(_PurviewProjectAgentTreeRepoRoot)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'AGENTS.md'))</_PurviewProjectAgentTreeRepoRoot>
+		<_PurviewProjectAgentTreeRepoRoot Condition="'$(_PurviewProjectAgentTreeRepoRoot)' == '' AND '$(SolutionDir)' != '' AND '$(SolutionDir)' != '*Undefined*'">$(SolutionDir)</_PurviewProjectAgentTreeRepoRoot>
+		<_PurviewProjectAgentTreeRoot Condition="'$(_PurviewProjectAgentTreeRepoRoot)' != ''">$([MSBuild]::NormalizePath('$(_PurviewProjectAgentTreeRepoRoot)', '$(ProjectAgentFolder)'))</_PurviewProjectAgentTreeRoot>
+	</PropertyGroup>
+
+	<ItemGroup Label="ProjectAgent Source Visibility" Condition="'$(_PurviewProjectAgentTreeRoot)' != '' AND Exists('$(_PurviewProjectAgentTreeRoot)')">
+		<None Include="$(_PurviewProjectAgentTreeRoot)\**\*">
+			<Link>ProjectAgent\%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</None>
+	</ItemGroup>
 
 	<!-- 
 		VALIDATE Testing Framework.

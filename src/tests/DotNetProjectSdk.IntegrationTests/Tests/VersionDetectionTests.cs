@@ -6,7 +6,7 @@ namespace Purview.DotNetProjectSdk.Tests;
 /// Verifies SDK version detection from package.json: property defaults, explicit and
 /// auto-discovered package.json paths, opt-out behaviour, and build-time validation errors.
 /// </summary>
-public sealed class VersionDetectionTests
+public sealed partial class VersionDetectionTests
 {
 	[Test]
 	public async Task UsePackageJsonVersion_DefaultsToTrue(CancellationToken cancellationToken)
@@ -475,10 +475,7 @@ public sealed class VersionDetectionTests
 		await Assert.That(process.ExitCode).IsEqualTo(0).Because(output + errors);
 
 		var combinedOutput = output + errors;
-		var messageCount = System.Text.RegularExpressions.Regex.Count(
-			combinedOutput,
-			"Detected package version '6.6.6' from"
-		);
+		var messageCount = DetectVersion().Count(combinedOutput);
 
 		await Assert.That(messageCount).IsEqualTo(1).Because(combinedOutput);
 	}
@@ -566,4 +563,8 @@ public sealed class VersionDetectionTests
 		await Assert.That(process.ExitCode).IsEqualTo(0);
 		await Assert.That(output).Contains("Detected package version '8.8.8' from");
 	}
+
+	[System.Text.RegularExpressions.GeneratedRegex("Detected package version '6.6.6' from"
+	)]
+	private static partial System.Text.RegularExpressions.Regex DetectVersion();
 }

@@ -69,7 +69,7 @@ static class ExtensionsNamespaceHelper
 		}
 
 		string[] relativeSegments = relativePath.Split(DirectorySeparators, StringSplitOptions.RemoveEmptyEntries);
-		relativeSegments = relativeSegments.Select(static s => s.Trim()).Where(static s => s.Length > 0).ToArray();
+		relativeSegments = [.. relativeSegments.Select(static s => s.Trim()).Where(static s => s.Length > 0)];
 
 		if (relativeSegments.Length < 2)
 		{
@@ -87,6 +87,7 @@ static class ExtensionsNamespaceHelper
 			return string.Empty;
 		}
 
+		// The expected namespace is derived from the segments of the relative path that are between the "Extensions" folder and the file name.
 		return string.Join(".", relativeSegments.Skip(1).Take(folderSegmentsCount));
 	}
 
@@ -111,6 +112,7 @@ static class ExtensionsNamespaceHelper
 			return path;
 		}
 
+		// Append the platform-specific directory separator character to the end of the path.
 		return path + Path.DirectorySeparatorChar;
 	}
 }

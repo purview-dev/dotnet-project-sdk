@@ -211,6 +211,15 @@
 		<CompilerVisibleProperty Include="ExcludeMSTelemetryExtension">
 			<Description>Opt-out flag that removes Microsoft.Extensions.Telemetry.Abstractions.</Description>
 		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="EnabledAgentFolderInPackage">
+			<Description>Opt-in flag that packs ProjectAgent/skills content into the SDK package as skills/**.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="ProjectAgentFolder">
+			<Description>Repo-relative root folder that contains the ProjectAgent skills folder.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="ProjectAgentDestinationFolder">
+			<Description>Repo-relative destination folder for copied agent skills. Defaults to .agents.</Description>
+		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="DisableGenerateAssemblyInfoClass">
 			<Description>Disables generation of the AssemblyInfo helper class in intermediate output.</Description>
 		</CompilerVisibleProperty>

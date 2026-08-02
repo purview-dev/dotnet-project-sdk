@@ -189,7 +189,7 @@ The `templates/` folder contains ready-to-copy starter files for new repos:
 | `.gitattributes` | Line-ending normalisation for .cs, .json, .yml, etc. |
 | `.config/dotnet-tools.json` | CSharpier tool manifest |
 
-The package also ships bundled agent skills under `skills/**`. During build, the SDK copies them into the consuming repository's `.agents/skills/` folder by default so compatible coding agents can discover repository-aware guidance automatically.
+The package also ships bundled agent skills under `agents/skills/**`. During build, the SDK copies them into the consuming repository's `.agents/skills/` folder by default so compatible coding agents can discover repository-aware guidance automatically.
 
 ---
 
@@ -255,7 +255,7 @@ The extracted `version` field is applied to both `Version` and `PackageVersion`.
 
 | Property | Default | Description |
 | -- | -- | -- |
-| `EnableEmbeddedAgentSkills` | `true` | Copies all bundled skills from `skills/**` into the consuming repository's `.agents/skills/` folder before build. |
+| `EnableEmbeddedAgentSkills` | `true` | Copies all bundled skills from `agents/skills/**` into the consuming repository's `.agents/skills/` folder before build. |
 
 To disable bundled skill copying in a consuming repo, set the opt-out property before importing the SDK:
 

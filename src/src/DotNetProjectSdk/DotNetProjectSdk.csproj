@@ -20,6 +20,9 @@
 		<!-- No telemetry packages for this meta-project -->
 		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
 		<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
+		<!-- Include the agents file for this SDK. -->
+		<EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>
+		<ProjectAgentFolder>src/ProjectAgent</ProjectAgentFolder>
 		<!-- NU5128: expected for MSBuildSdk packages — no lib/ref assemblies by design -->
 		<NoWarn>$(NoWarn);NU5128</NoWarn>
 		<!-- Allow dotfiles (e.g., .editorconfig) to be packed -->
@@ -61,11 +64,6 @@
 	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
 	<ItemGroup>
 		<None Include="Sdk/**/*" Pack="true" PackagePath="Sdk/" />
-		<None
-			Include="$(MSBuildThisFileDirectory)..\skills\**\*"
-			Pack="true"
-			PackagePath="skills/"
-		/>
 
 		<None Include="$(MSBuildThisFileDirectory)../../../README.md" Pack="true" PackagePath="/" />
 		<None

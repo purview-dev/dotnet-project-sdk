@@ -11,7 +11,6 @@ namespace Purview.DotNetProjectSdk.Harness;
 /// </summary>
 partial class ProjectHarness : IAsyncDisposable
 {
-	readonly string _workDir;
 	readonly bool _ownsWorkDir;
 
 	readonly IReadOnlyDictionary<string, string> _extraEnv;
@@ -22,7 +21,7 @@ partial class ProjectHarness : IAsyncDisposable
 
 	public string ProjectFilePath { get; }
 
-	public string SolutionDirectory => _workDir;
+	public string SolutionDirectory { get; }
 
 	internal ProjectHarness(
 		string workDir,
@@ -31,7 +30,7 @@ partial class ProjectHarness : IAsyncDisposable
 		bool ownsWorkDir = true
 	)
 	{
-		_workDir = workDir;
+		SolutionDirectory = workDir;
 		_ownsWorkDir = ownsWorkDir;
 		ProjectName = projectName;
 		ProjectDirectory = Path.Combine(workDir, projectName);
@@ -441,7 +440,7 @@ partial class ProjectHarness : IAsyncDisposable
 	public async Task<XDocument> GetPreprocessProjectAsync(CancellationToken cancellationToken)
 	{
 		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -preprocess:EvaluatedProject.xml";
-		var (exitCode, stdOut, stdErr) = await RunAsync("dotnet", args, cancellationToken);
+		var (exitCode, _, stdErr) = await RunAsync("dotnet", args, cancellationToken);
 
 		await Assert.That(exitCode).IsZero().Because(stdErr ?? "No error returned");
 
@@ -452,8 +451,8 @@ partial class ProjectHarness : IAsyncDisposable
 	{
 		try
 		{
-			if (_ownsWorkDir && Directory.Exists(_workDir))
-				Directory.Delete(_workDir, recursive: true);
+			if (_ownsWorkDir && Directory.Exists(SolutionDirectory))
+				Directory.Delete(SolutionDirectory, recursive: true);
 		}
 		catch (IOException)
 		{
