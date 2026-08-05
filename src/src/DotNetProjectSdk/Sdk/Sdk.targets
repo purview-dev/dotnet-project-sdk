@@ -534,10 +534,10 @@
 
 namespace Microsoft.CodeAnalysis
 {
-	[global::System.AttributeUsage(
-        global::System.AttributeTargets.All,
-        Inherited = false,
-        AllowMultiple = false)]
+	//[global::System.AttributeUsage(
+    //    global::System.AttributeTargets.All,
+    //    Inherited = false,
+    //    AllowMultiple = false)]
 	[global::Microsoft.CodeAnalysis.Embedded]
 	[global::System.Runtime.CompilerServices.CompilerGenerated]
 	[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
