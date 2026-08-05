@@ -538,6 +538,7 @@ namespace Microsoft.CodeAnalysis
         global::System.AttributeTargets.All,
         Inherited = false,
         AllowMultiple = false)]
+	[global::Microsoft.CodeAnalysis.Embedded]
 	[global::System.Runtime.CompilerServices.CompilerGenerated]
 	[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 	[global::System.CodeDom.Compiler.GeneratedCode(&quot;Purview.DotNetProjectSdk&quot;, &quot;$(PackageVersion)&quot;)]
