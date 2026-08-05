@@ -11,7 +11,8 @@ A reusable MSBuild SDK NuGet package that delivers standardised .NET project def
 | -- | -- |
 | **Project type detection** | `IsCSharpProject`, `IsTestProject`, `IsSharedTestingProject`, `IsContainerProject`, `IsWebSdkProject`, `IsAspireHostProject`, … |
 | **C# defaults** | `net10.0` TFM (overridable), `LangVersion=preview`, `Nullable=enable`, `ImplicitUsings=enable`, deterministic builds |
-| **Code style** | `.editorconfig` baked into the package, applied via `EditorConfigFilePath`, and auto-bootstrapped to repo root if missing; `EnforceCodeStyleInBuild=true` |
+| **Code style** | `.editorconfig` baked into the package, applied via `EditorConfigFilePath`, and auto-bootstrapped to repo root if missing; `EnforceCodeStyleInBuild=true`, `EnableNETAnalyzers=true`, `AnalysisLevel=latest`, `AnalysisMode=All` |
+| **NuGet packaging** | `PublishRepositoryUrl=true`, `IncludeSymbols=true`, `SymbolPackageFormat=snupkg`, `EmbedUntrackedSources=true` for packable projects |
 | **Repo bootstrap** | Missing repo-root `.editorconfig` and `global.json` are auto-copied/created by default (disable via `DisableAutoCopySdkFiles=true`) |
 | **CI detection** | `ContinuousIntegrationBuild` set automatically when `CI`, `GITHUB_ACTIONS`, or `TF_BUILD` env vars are present |
 | **SourceLink** | `Microsoft.SourceLink.GitHub` added to all packable projects (configurable via `SourceLinkPackageName`) |
@@ -189,7 +190,7 @@ The `templates/` folder contains ready-to-copy starter files for new repos:
 | `.gitattributes` | Line-ending normalisation for .cs, .json, .yml, etc. |
 | `.config/dotnet-tools.json` | CSharpier tool manifest |
 
-The package also ships bundled agent skills under `agents/skills/**`. During build, the SDK copies them into the consuming repository's `.agents/skills/` folder by default so compatible coding agents can discover repository-aware guidance automatically.
+The package also ships bundled agent content under `agents/**`. During build, the SDK copies it into the consuming repository's `.agents/` folder by default so compatible coding agents can discover repository-aware guidance automatically. The SDK also injects a `.gitignore` file into each second-level agent folder with the content `# Ignore all files\n*\n# Don't ignore directories, so Git can traverse them\n!*/\n# Keep this file\n!.gitignore`, so the copied folder is ignored by Git while keeping the folder structure discoverable.
 
 ---
 
@@ -204,6 +205,7 @@ Set any of these properties **before** the `<Import>` in your `Directory.Build.p
 | `UsePackageJsonVersion` | `true` | `true` enables version detection, `false` disables it, and `Strict` requires version detection to succeed (build fails if no version source can be resolved). |
 | `RootPackageJson` | *(auto-discovered)* | Explicit path to a `package.json`. Relative paths are resolved from the project directory. |
 | `EnableVersionDetectionCache` | `true` | Enables local caching of auto-discovered package.json version results. |
+| `VersionDetectionLogEnabled` | `false` | Emits a high-importance message showing the detected package version. Set to `true` to enable logging.
 
 When `UsePackageJsonVersion=true` (the default) or `UsePackageJsonVersion=Strict`, the SDK:
 
@@ -211,6 +213,8 @@ When `UsePackageJsonVersion=true` (the default) or `UsePackageJsonVersion=Strict
 2. **Auto-discovery** — otherwise, walks up from the project directory looking for a `.git` marker to locate the repo root, then reads `package.json` from there.
 
 The extracted `version` field is applied to both `Version` and `PackageVersion`. A build error is raised if the file can't be found or contains no `version` field. With `UsePackageJsonVersion=Strict`, the build also fails when no package.json source can be discovered (for example, no explicit `RootPackageJson` and no discoverable `.git` marker).
+
+Version detection logging is disabled by default. Set `VersionDetectionLogEnabled` to `true` to emit a high-importance message showing the detected package version.
 
 > **Important — set before the import:** Both `UsePackageJsonVersion` and `RootPackageJson` must be set **before** the `<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.props" />` line in your `Directory.Build.props`. The version logic runs during that import and cannot see properties set afterwards (e.g. in individual `.csproj` files).
 >
@@ -251,19 +255,24 @@ The extracted `version` field is applied to both `Version` and `PackageVersion`.
 | `RepositoryGlobalJsonFilePath` | *(auto-detected)* | Override the destination path for the bootstrapped `global.json`. |
 | `PurviewDotNetProjectSdkVersionForGlobalJson` | *(auto-detected or `1.0.0` fallback)* | Version written to the `msbuild-sdks.Purview.DotNetProjectSdk` entry in a bootstrapped `global.json`. |
 
-### Agent skills
+### Agent folder
 
 | Property | Default | Description |
 | -- | -- | -- |
-| `EnableEmbeddedAgentSkills` | `true` | Copies all bundled skills from `agents/skills/**` into the consuming repository's `.agents/skills/` folder before build. |
+| `EnableAgentFolderInPackage` | `true` | Copies the bundled `agents/**` folder from the SDK NuGet package into the consuming repository's `.agents/` folder (or `$(ProjectAgentDestinationFolder)/`) before build. |
+| `EnabledAgentFolderInPackage` | `false` | When `true`, packs the entire `$(ProjectAgentFolder)` tree into the NuGet package under `agents/**`. Enable this on the SDK package project to ship agent content with the SDK. |
+| `ProjectAgentFolder` | `ProjectAgent` | Repo-relative root folder that contains the agent content to pack. Only used when `EnabledAgentFolderInPackage` is `true`. |
+| `ProjectAgentDestinationFolder` | `.agents` | Repo-relative destination folder that receives the copied agent folder contents when `EnableAgentFolderInPackage` is `true`. |
 
-To disable bundled skill copying in a consuming repo, set the opt-out property before importing the SDK:
+To disable bundled agent folder copying in a consuming repo, set the opt-out property before importing the SDK:
 
 ```xml
 <PropertyGroup>
-  <EnableEmbeddedAgentSkills>false</EnableEmbeddedAgentSkills>
+  <EnableAgentFolderInPackage>false</EnableAgentFolderInPackage>
 </PropertyGroup>
 ```
+
+When `EnabledAgentFolderInPackage` is `true`, the SDK automatically adds a `.gitignore` file into each second-level packed agent folder with the content `# Ignore all files\n*\n# Don't ignore directories, so Git can traverse them\n!*/\n# Keep this file\n!.gitignore`. This ensures the copied folder structure remains discoverable in consuming repositories while the content itself is ignored by Git.
 
 ### Telemetry
 

@@ -20,6 +20,8 @@
 		<!-- No telemetry packages for this meta-project -->
 		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
 		<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
+		<!-- No compiled output, so no symbol package is produced -->
+		<IncludeSymbols>false</IncludeSymbols>
 		<!-- Include the agents file for this SDK. -->
 		<EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>
 		<ProjectAgentFolder>src/ProjectAgent</ProjectAgentFolder>

@@ -211,14 +211,17 @@
 		<CompilerVisibleProperty Include="ExcludeMSTelemetryExtension">
 			<Description>Opt-out flag that removes Microsoft.Extensions.Telemetry.Abstractions.</Description>
 		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="EnableAgentFolderInPackage">
+			<Description>When true, copies the bundled agents folder from the SDK NuGet package into the consuming repository. Defaults to true.</Description>
+		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="EnabledAgentFolderInPackage">
-			<Description>Opt-in flag that packs ProjectAgent/skills content into the SDK package as skills/**.</Description>
+			<Description>Opt-in flag that packs the ProjectAgent folder into the SDK package as agents/**.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="ProjectAgentFolder">
-			<Description>Repo-relative root folder that contains the ProjectAgent skills folder.</Description>
+			<Description>Repo-relative root folder that contains the agent content to pack.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="ProjectAgentDestinationFolder">
-			<Description>Repo-relative destination folder for copied agent skills. Defaults to .agents.</Description>
+			<Description>Repo-relative destination folder for copied agent content. Defaults to .agents.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="DisableGenerateAssemblyInfoClass">
 			<Description>Disables generation of the AssemblyInfo helper class in intermediate output.</Description>
@@ -309,17 +312,10 @@
 	<PropertyGroup Label="C# Project Property Groups" Condition="'$(IsCSharpProject)' == 'true'">
 		<TargetFramework Condition="'$(TargetFramework)' == '' AND '$(TargetFrameworks)' == ''"
 			>net10.0</TargetFramework>
-		<LangVersion>preview</LangVersion>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-		<Deterministic>true</Deterministic>
 		<!-- Auto-detect CI environment from common env vars -->
 		<ContinuousIntegrationBuild
 			Condition="'$(CI)' == 'true' OR '$(GITHUB_ACTIONS)' == 'true' OR '$(TF_BUILD)' == 'true' OR '$(IsPackable)' == 'true'"
 			>true</ContinuousIntegrationBuild>
-		<EmbedUntrackedSources>true</EmbedUntrackedSources>
-		<AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
 		<!-- EditorConfig from the NuGet package Sdk/ folder — used for build-time code-style enforcement -->
 		<EditorConfigFilePath>$(MSBuildThisFileDirectory).editorconfig</EditorConfigFilePath>
 		<!-- Also bootstrap a physical repo-level .editorconfig for tools (for example CSharpier) that don't read @(EditorConfigFiles). -->
@@ -350,10 +346,6 @@
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
 		<IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
-		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<AnalysisMode>All</AnalysisMode>
-		<AnalysisLevel>Latest</AnalysisLevel>
 		<NoWarn>AD0001;$(NoWarn)</NoWarn>
 		<NoWarn>IDE2001;$(NoWarn)</NoWarn>
 		<NoWarn>CA1014;CA1848;CA2007;CA2201;CA2225;CA2254;$(NoWarn)</NoWarn>

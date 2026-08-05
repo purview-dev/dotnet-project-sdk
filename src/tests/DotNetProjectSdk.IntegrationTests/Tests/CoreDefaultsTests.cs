@@ -125,4 +125,75 @@ public sealed class CoreDefaultsTests
 		);
 		await Assert.That(await h.GetPropertyAsync("TargetFramework", cancellationToken)).IsEqualTo(expected);
 	}
+
+	[Test]
+	public async Task PublishRepositoryUrl_True_ByDefault(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("PublishRepositoryUrl", cancellationToken)).IsEqualTo("true");
+	}
+
+	[Test]
+	public async Task IncludeSymbols_True_ByDefault(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("IncludeSymbols", cancellationToken)).IsEqualTo("true");
+	}
+
+	[Test]
+	public async Task SymbolPackageFormat_Snupkg_ByDefault(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("SymbolPackageFormat", cancellationToken)).IsEqualTo("snupkg");
+	}
+
+	[Test]
+	public async Task AnalysisLevel_Latest_ByDefault(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("AnalysisLevel", cancellationToken)).IsEqualTo("latest");
+	}
+
+	[Test]
+	public async Task AnalysisMode_All_ByDefault(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("AnalysisMode", cancellationToken)).IsEqualTo("All");
+	}
+
+	[Test]
+	public async Task EnableNetAnalyzers_True_ByDefault(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("EnableNETAnalyzers", cancellationToken)).IsEqualTo("true");
+	}
+
+	[Test]
+	public async Task EnforceCodeStyleInBuild_True_ByDefault(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("EnforceCodeStyleInBuild", cancellationToken)).IsEqualTo("true");
+	}
+
+	[Test]
+	public async Task Nullable_CanBeOverriddenInProjectFile(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraProps: "<Nullable>disable</Nullable>",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("Nullable", cancellationToken)).IsEqualTo("disable");
+	}
+
+	[Test]
+	public async Task Nullable_CanBeOverriddenInDirectoryBuildProps(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			preImportProps: "<Nullable>disable</Nullable>",
+			cancellationToken: cancellationToken
+		);
+		await Assert.That(await h.GetPropertyAsync("Nullable", cancellationToken)).IsEqualTo("disable");
+	}
 }

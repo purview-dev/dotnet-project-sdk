@@ -283,8 +283,10 @@ public sealed partial class VersionDetectionTests
 		await Assert.That(output + errors).Contains("no version property could be read");
 	}
 
+	// ---------- version detection logging ----------
+
 	[Test]
-	public async Task Build_LogsDetectedVersion_WithSourceFileAndVersion(CancellationToken cancellationToken)
+	public async Task Build_DoesNotLogDetectedVersion_ByDefault(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
@@ -320,139 +322,31 @@ public sealed partial class VersionDetectionTests
 		var output = (await stdoutTask) + (await stderrTask);
 
 		await Assert.That(process.ExitCode).IsEqualTo(0);
-		await Assert.That(output).Contains("Detected package version '5.4.3' from");
-		await Assert.That(output).Contains("package.json");
+		await Assert.That(output).DoesNotContain("Detected package version '5.4.3' from");
 	}
 
 	[Test]
-	public async Task Build_LogsDetectedVersion_OnlyOncePerSessionId(CancellationToken cancellationToken)
-	{
-		const string sessionId = "it-session-123";
-
-		await using var h = await ProjectHarness.CreateAsync(
-			"MyLibrary",
-			preImportProps: $"<RootPackageJson>package.json</RootPackageJson><VersionDetectionLogSessionId>{sessionId}</VersionDetectionLogSessionId>",
-			cancellationToken: cancellationToken
-		);
-
-		await File.WriteAllTextAsync(
-			Path.Combine(h.ProjectDirectory, "package.json"),
-			"""{"name": "my-lib", "version": "5.5.5"}""",
-			cancellationToken
-		);
-
-		var stampFile = await h.GetPropertyAsync("VersionDetectionLogStampFile", cancellationToken);
-		if (!string.IsNullOrWhiteSpace(stampFile) && File.Exists(stampFile))
-			File.Delete(stampFile);
-
-		using var firstProcess = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
-				WorkingDirectory = h.ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
-
-		firstProcess.Start();
-		var firstStdOutTask = firstProcess.StandardOutput.ReadToEndAsync(cancellationToken);
-		var firstStdErrTask = firstProcess.StandardError.ReadToEndAsync(cancellationToken);
-		await firstProcess.WaitForExitAsync(cancellationToken);
-
-		var firstOutput = (await firstStdOutTask) + (await firstStdErrTask);
-
-		await Assert.That(firstProcess.ExitCode).IsEqualTo(0);
-		await Assert.That(firstOutput).Contains("Detected package version '5.5.5' from");
-
-		using var secondProcess = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
-				WorkingDirectory = h.ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
-
-		secondProcess.Start();
-		var secondStdOutTask = secondProcess.StandardOutput.ReadToEndAsync(cancellationToken);
-		var secondStdErrTask = secondProcess.StandardError.ReadToEndAsync(cancellationToken);
-		await secondProcess.WaitForExitAsync(cancellationToken);
-
-		var secondOutput = (await secondStdOutTask) + (await secondStdErrTask);
-
-		await Assert.That(secondProcess.ExitCode).IsEqualTo(0);
-		await Assert.That(secondOutput).DoesNotContain("Detected package version '5.5.5' from");
-	}
-
-	[Test]
-	public async Task VersionDetectionLogStampFile_IsSet_WhenNoExternalSessionIdIsProvided(
-		CancellationToken cancellationToken
-	)
+	public async Task Build_DoesNotLogDetectedVersion_WhenConfigurationIsRelease(CancellationToken cancellationToken)
 	{
 		await using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
-			extraEnv: new Dictionary<string, string> { ["DOTNET_CLI_CONTEXT_SESSIONID"] = string.Empty },
-			cancellationToken: cancellationToken
-		);
-
-		await File.WriteAllTextAsync(Path.Combine(h.ProjectDirectory, ".git"), string.Empty, cancellationToken);
-		await File.WriteAllTextAsync(
-			Path.Combine(h.ProjectDirectory, "package.json"),
-			"""{"name": "my-lib", "version": "4.4.4"}""",
-			cancellationToken
-		);
-
-		var properties = await h.GetPropertiesAsync(
-			cancellationToken,
-			"RootPackageJson",
-			"VersionDetectionLogStampFile"
-		);
-
-		await Assert.That(properties["RootPackageJson"]).IsNotEqualTo(string.Empty);
-		await Assert.That(properties["VersionDetectionLogStampFile"]).IsNotEqualTo(string.Empty);
-	}
-
-	[Test]
-	public async Task Build_LogsDetectedVersion_ExactlyOnce_DuringBuildOperation(CancellationToken cancellationToken)
-	{
-		// Arrange
-		const string dotnetCliSessionId = "it-dotnet-cli-session-001";
-		await using var h = await ProjectHarness.CreateAsync(
-			"MyLibrary",
-			targetFramework: "net10.0",
-			extraProps: "<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry><ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension><DisableSourceLink>true</DisableSourceLink>",
 			preImportProps: "<RootPackageJson>package.json</RootPackageJson>",
-			extraEnv: new Dictionary<string, string> { ["DOTNET_CLI_CONTEXT_SESSIONID"] = dotnetCliSessionId },
+			extraProps: "<Configuration>Release</Configuration>",
 			cancellationToken: cancellationToken
 		);
 
 		await File.WriteAllTextAsync(
 			Path.Combine(h.ProjectDirectory, "package.json"),
-			"""{"name": "my-lib", "version": "6.6.6"}""",
+			"""{"name": "my-lib", "version": "5.4.3"}""",
 			cancellationToken
 		);
 
-		var stampFile = await h.GetPropertyAsync("VersionDetectionLogStampFile", cancellationToken);
-		if (!string.IsNullOrWhiteSpace(stampFile) && File.Exists(stampFile))
-			File.Delete(stampFile);
-
-		// Act
 		using var process = new System.Diagnostics.Process
 		{
 			StartInfo = new System.Diagnostics.ProcessStartInfo
 			{
 				FileName = "dotnet",
-				Arguments = $"build \"{h.ProjectFilePath}\" -nologo -v:minimal -t:Build;Build",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
 				WorkingDirectory = h.ProjectDirectory,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
@@ -460,24 +354,97 @@ public sealed partial class VersionDetectionTests
 				CreateNoWindow = true,
 			},
 		};
-
-		process.StartInfo.Environment["DOTNET_CLI_CONTEXT_SESSIONID"] = dotnetCliSessionId;
 
 		process.Start();
 		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
 		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
 		await process.WaitForExitAsync(cancellationToken);
 
-		var output = await stdoutTask;
-		var errors = await stderrTask;
+		var output = (await stdoutTask) + (await stderrTask);
 
-		// Assert
-		await Assert.That(process.ExitCode).IsEqualTo(0).Because(output + errors);
+		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(output).DoesNotContain("Detected package version '5.4.3' from");
+	}
 
-		var combinedOutput = output + errors;
-		var messageCount = DetectVersion().Count(combinedOutput);
+	[Test]
+	public async Task Build_DoesNotLogDetectedVersion_WhenIsPackable(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			preImportProps: "<RootPackageJson>package.json</RootPackageJson>",
+			extraProps: "<IsPackable>true</IsPackable>",
+			cancellationToken: cancellationToken
+		);
 
-		await Assert.That(messageCount).IsEqualTo(1).Because(combinedOutput);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "package.json"),
+			"""{"name": "my-lib", "version": "5.4.3"}""",
+			cancellationToken
+		);
+
+		using var process = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		process.Start();
+		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+		await process.WaitForExitAsync(cancellationToken);
+
+		var output = (await stdoutTask) + (await stderrTask);
+
+		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(output).DoesNotContain("Detected package version '5.4.3' from");
+	}
+
+	[Test]
+	public async Task Build_LogsDetectedVersion_WhenExplicitlyEnabled(CancellationToken cancellationToken)
+	{
+		await using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			preImportProps: "<RootPackageJson>package.json</RootPackageJson><VersionDetectionLogEnabled>true</VersionDetectionLogEnabled>",
+			cancellationToken: cancellationToken
+		);
+
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "package.json"),
+			"""{"name": "my-lib", "version": "5.4.3"}""",
+			cancellationToken
+		);
+
+		using var process = new System.Diagnostics.Process
+		{
+			StartInfo = new System.Diagnostics.ProcessStartInfo
+			{
+				FileName = "dotnet",
+				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
+				WorkingDirectory = h.ProjectDirectory,
+				RedirectStandardOutput = true,
+				RedirectStandardError = true,
+				UseShellExecute = false,
+				CreateNoWindow = true,
+			},
+		};
+
+		process.Start();
+		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+		await process.WaitForExitAsync(cancellationToken);
+
+		var output = (await stdoutTask) + (await stderrTask);
+
+		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(output).Contains("Detected package version '5.4.3' from");
 	}
 
 	[Test]
@@ -558,13 +525,6 @@ public sealed partial class VersionDetectionTests
 		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
 		await process.WaitForExitAsync(cancellationToken);
 
-		var output = (await stdoutTask) + (await stderrTask);
-
 		await Assert.That(process.ExitCode).IsEqualTo(0);
-		await Assert.That(output).Contains("Detected package version '8.8.8' from");
 	}
-
-	[System.Text.RegularExpressions.GeneratedRegex("Detected package version '6.6.6' from"
-	)]
-	private static partial System.Text.RegularExpressions.Regex DetectVersion();
 }
