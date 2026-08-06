@@ -47,29 +47,28 @@ public sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 			return;
 		}
 
-		string? filePath = context.Node.SyntaxTree.FilePath;
+		var filePath = context.Node.SyntaxTree.FilePath;
 		if (string.IsNullOrWhiteSpace(filePath))
-		{
 			return;
-		}
 
-		if (!TryGetBuildProperty(context, ProjectDirPropertyKey, out string projectDir))
-		{
+		if (!TryGetBuildProperty(context, ProjectDirPropertyKey, out var projectDir))
 			return;
-		}
 
 		// The RootNamespace build property is intentionally read from AnalyzerConfigOptions
 		// as the authoritative source for non-Extensions files, even though this analyzer
 		// only reports diagnostics for files scoped to the root Extensions directory.
-		_ = TryGetBuildProperty(context, RootNamespacePropertyKey, out _);
+		TryGetBuildProperty(context, RootNamespacePropertyKey, out _);
 
-		string? expectedNamespace = ExtensionsNamespaceHelper.ComputeExpectedNamespace(projectDir, filePath);
+		var expectedNamespace = ExtensionsNamespaceHelper.ComputeExpectedNamespace(
+			projectDir,
+			filePath
+		);
 		if (expectedNamespace is null)
 		{
 			return;
 		}
 
-		string actualNamespace = namespaceDeclaration.Name.ToString();
+		var actualNamespace = namespaceDeclaration.Name.ToString();
 		if (string.Equals(actualNamespace, expectedNamespace, StringComparison.Ordinal))
 		{
 			return;
@@ -87,11 +86,14 @@ public sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 
 	static bool TryGetBuildProperty(SyntaxNodeAnalysisContext context, string key, out string value)
 	{
-		AnalyzerConfigOptions options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(
+		var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(
 			context.Node.SyntaxTree
 		);
 
-		if (options.TryGetValue(key, out string? configuredValue) && !string.IsNullOrWhiteSpace(configuredValue))
+		if (
+			options.TryGetValue(key, out var configuredValue)
+			&& !string.IsNullOrWhiteSpace(configuredValue)
+		)
 		{
 			value = configuredValue;
 			return true;

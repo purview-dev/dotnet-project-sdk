@@ -40,11 +40,16 @@ public sealed class IsCLIProjectTests
 	}
 
 	[Test]
-	public async Task ProjectEndingWithCLI_Uppercase_IsCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithCLI_Uppercase_IsCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyCLI", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyCLI",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsTrue();
 		}
@@ -73,7 +78,11 @@ public sealed class IsCLIProjectTests
 		"appsettings.Acceptance.json",
 		"appsettings.Production.json"
 	)]
-	[Arguments("appsettings.Test.json", "appsettings.Acceptance.json", "appsettings.Production.json")]
+	[Arguments(
+		"appsettings.Test.json",
+		"appsettings.Acceptance.json",
+		"appsettings.Production.json"
+	)]
 	[Arguments("appsettings.Acceptance.json", "appsettings.Production.json")]
 	[Arguments("appsettings.Production.json")]
 	public async Task ProjectEndingWithCLI_HasAppSettings_CopiedOnBuild(
@@ -89,9 +98,12 @@ public sealed class IsCLIProjectTests
 			await File.WriteAllTextAsync(appSettingsFile, "{ }", cancellationToken);
 		}
 
-		await using (harness)
+		using (harness)
 		{
-			var (success, output, errors) = await harness.BuildAsync(true, cancellationToken: cancellationToken);
+			var (success, output, errors) = await harness.BuildAsync(
+				true,
+				cancellationToken: cancellationToken
+			);
 			await Assert.That(success).IsTrue().Because(TestHelpers.GenerateError(output, errors));
 
 			var bin = Path.Combine(harness.ProjectDirectory, "bin");
@@ -112,7 +124,7 @@ public sealed class IsCLIProjectTests
 	{
 		var (harness, _) = await CreateProjectAndEvaluateAsync("MyCLI", cancellationToken);
 
-		await using (harness)
+		using (harness)
 		{
 			var properties = await harness.GetPropertiesAsync(cancellationToken, "NoWarn");
 
@@ -122,33 +134,48 @@ public sealed class IsCLIProjectTests
 	}
 
 	[Test]
-	public async Task ProjectEndingWithDotCLI_Uppercase_IsCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithDotCLI_Uppercase_IsCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("My.CLI", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"My.CLI",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsTrue();
 		}
 	}
 
 	[Test]
-	public async Task ProjectEndingWithCLI_PartOfCompoundName_IsCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithCLI_PartOfCompoundName_IsCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyAppCLI", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyAppCLI",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsTrue();
 		}
 	}
 
 	[Test]
-	public async Task ProjectEndingWithConsole_Uppercase_IsCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithConsole_Uppercase_IsCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyConsole", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyConsole",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsTrue();
 		}
@@ -157,75 +184,108 @@ public sealed class IsCLIProjectTests
 	[Test]
 	public async Task ProjectEndingWithConsoleApp_IsCLIProject(CancellationToken cancellationToken)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyAppConsole", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyAppConsole",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsTrue();
 		}
 	}
 
 	[Test]
-	public async Task ProjectEndingWithCommandLine_Uppercase_IsCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithCommandLine_Uppercase_IsCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyCommandLine", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyCommandLine",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsTrue();
 		}
 	}
 
 	[Test]
-	public async Task ProjectEndingWithCommandLineApp_IsCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithCommandLineApp_IsCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyAppCommandLine", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyAppCommandLine",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsTrue();
 		}
 	}
 
 	[Test]
-	public async Task ProjectEndingWithcli_Lowercase_IsNotCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithcli_Lowercase_IsNotCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("Myappcli", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"Myappcli",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsFalse();
 		}
 	}
 
 	[Test]
-	public async Task ProjectEndingWithconsole_Lowercase_IsNotCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithconsole_Lowercase_IsNotCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("Myappconsole", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"Myappconsole",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsFalse();
 		}
 	}
 
 	[Test]
-	public async Task ProjectEndingWithcommandline_Lowercase_IsNotCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithcommandline_Lowercase_IsNotCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("Myappcommandline", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"Myappcommandline",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsFalse();
 		}
 	}
 
 	[Test]
-	public async Task ProjectEndingWithCommandLIne_MixedCase_IsNotCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectEndingWithCommandLIne_MixedCase_IsNotCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyappCommandLIne", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyappCommandLIne",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsFalse();
 		}
@@ -242,20 +302,28 @@ public sealed class IsCLIProjectTests
 		CancellationToken cancellationToken
 	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(projectName, cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			projectName,
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsFalse();
 		}
 	}
 
 	[Test]
-	public async Task ProjectWithCLIInMiddle_NotEndingSufficiently_IsNotCLIProject(CancellationToken cancellationToken)
+	public async Task ProjectWithCLIInMiddle_NotEndingSufficiently_IsNotCLIProject(
+		CancellationToken cancellationToken
+	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyCLITools", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyCLITools",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsFalse();
 		}
@@ -266,9 +334,12 @@ public sealed class IsCLIProjectTests
 		CancellationToken cancellationToken
 	)
 	{
-		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("MyConsoleTool", cancellationToken);
+		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync(
+			"MyConsoleTool",
+			cancellationToken
+		);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsFalse();
 		}
@@ -279,7 +350,7 @@ public sealed class IsCLIProjectTests
 	{
 		var (harness, isCLIProject) = await CreateProjectAndEvaluateAsync("CLI", cancellationToken);
 
-		await using (harness)
+		using (harness)
 		{
 			await Assert.That(isCLIProject).IsTrue();
 		}

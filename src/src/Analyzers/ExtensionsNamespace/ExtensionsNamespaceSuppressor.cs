@@ -20,33 +20,40 @@ public sealed class ExtensionsNamespaceSuppressor : DiagnosticSuppressor
 
 	public override void ReportSuppressions(SuppressionAnalysisContext context)
 	{
-		foreach (Diagnostic diagnostic in context.ReportedDiagnostics)
+		foreach (var diagnostic in context.ReportedDiagnostics)
 		{
 			if (!string.Equals(diagnostic.Id, "IDE0130", StringComparison.Ordinal))
 			{
 				continue;
 			}
 
-			Location location = diagnostic.Location;
+			var location = diagnostic.Location;
 			if (!location.IsInSource || location.SourceTree is null)
 			{
 				continue;
 			}
 
-			AnalyzerConfigOptions options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(
+			var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(
 				location.SourceTree
 			);
 			if (
-				!options.TryGetValue(ProjectDirPropertyKey, out string? projectDir)
+				!options.TryGetValue(ProjectDirPropertyKey, out var projectDir)
 				|| string.IsNullOrWhiteSpace(projectDir)
 			)
 			{
 				continue;
 			}
 
-			if (ExtensionsNamespaceHelper.IsInExtensionsRootScope(projectDir, location.SourceTree.FilePath))
+			if (
+				ExtensionsNamespaceHelper.IsInExtensionsRootScope(
+					projectDir,
+					location.SourceTree.FilePath
+				)
+			)
 			{
-				context.ReportSuppression(Suppression.Create(SuppressIde0130ForExtensionsNamespaceRule, diagnostic));
+				context.ReportSuppression(
+					Suppression.Create(SuppressIde0130ForExtensionsNamespaceRule, diagnostic)
+				);
 			}
 		}
 	}

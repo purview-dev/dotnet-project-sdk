@@ -14,22 +14,23 @@ public sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 		"EditorBrowsable(Never) members do not require XML docs."
 	);
 
-	public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions => [SuppressMissingXmlDocs];
+	public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions =>
+		[SuppressMissingXmlDocs];
 
 	public override void ReportSuppressions(SuppressionAnalysisContext context)
 	{
-		foreach (Diagnostic diagnostic in context.ReportedDiagnostics)
+		foreach (var diagnostic in context.ReportedDiagnostics)
 		{
-			Location location = diagnostic.Location;
+			var location = diagnostic.Location;
 			if (!location.IsInSource || location.SourceTree is null)
 			{
 				continue;
 			}
 
-			SemanticModel semanticModel = context.GetSemanticModel(location.SourceTree);
-			SyntaxNode rootNode = location.SourceTree.GetRoot(context.CancellationToken);
-			SyntaxNode node = rootNode.FindNode(location.SourceSpan, getInnermostNodeForTie: true);
-			ISymbol? symbol = semanticModel.GetDeclaredSymbol(node, context.CancellationToken);
+			var semanticModel = context.GetSemanticModel(location.SourceTree);
+			var rootNode = location.SourceTree.GetRoot(context.CancellationToken);
+			var node = rootNode.FindNode(location.SourceSpan, getInnermostNodeForTie: true);
+			var symbol = semanticModel.GetDeclaredSymbol(node, context.CancellationToken);
 
 			if (symbol is not null && HasEditorBrowsableNever(symbol))
 			{
@@ -40,9 +41,12 @@ public sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 
 	static bool HasEditorBrowsableNever(ISymbol symbol)
 	{
-		foreach (AttributeData attribute in symbol.GetAttributes())
+		foreach (var attribute in symbol.GetAttributes())
 		{
-			if (attribute.AttributeClass?.ToDisplayString() != typeof(EditorBrowsableAttribute).FullName)
+			if (
+				attribute.AttributeClass?.ToDisplayString()
+				!= typeof(EditorBrowsableAttribute).FullName
+			)
 			{
 				continue;
 			}

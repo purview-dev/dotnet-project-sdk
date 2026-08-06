@@ -9,10 +9,18 @@ namespace Purview.DotNetProjectSdk.Tests;
 public sealed class CompilerVisiblePropertyTests
 {
 	[Test]
-	public async Task CompilerVisibleProperties_Include_AllSdkProperties(CancellationToken cancellationToken)
+	public async Task CompilerVisibleProperties_Include_AllSdkProperties(
+		CancellationToken cancellationToken
+	)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		var compilerVisibleProperties = await h.GetItemIdentitiesAsync("CompilerVisibleProperty", cancellationToken);
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		var compilerVisibleProperties = await h.GetItemIdentitiesAsync(
+			"CompilerVisibleProperty",
+			cancellationToken
+		);
 
 		var expected = new[]
 		{

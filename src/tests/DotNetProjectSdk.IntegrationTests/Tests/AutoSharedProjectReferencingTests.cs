@@ -15,12 +15,12 @@ public sealed class AutoSharedProjectReferencingTests
 		CancellationToken cancellationToken
 	)
 	{
-		await using var sharedHarness = await ProjectHarness
+		using var sharedHarness = await ProjectHarness
 			.For("Shared")
 			.WithTargetFramework("net10.0")
 			.BuildAsync(cancellationToken);
 
-		await using var appHostHarness = await ProjectHarness
+		using var appHostHarness = await ProjectHarness
 			.For("Acme.AppHost")
 			.WithProjectFileContent(
 				$"""
@@ -81,7 +81,7 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			await Assert.That(normalized).Contains("../Shared/Shared.csproj");
@@ -89,7 +89,9 @@ public sealed class AutoSharedProjectReferencingTests
 	}
 
 	[Test]
-	public async Task NonTestProject_AutoReferences_SharedFramework_Project(CancellationToken cancellationToken)
+	public async Task NonTestProject_AutoReferences_SharedFramework_Project(
+		CancellationToken cancellationToken
+	)
 	{
 		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
@@ -113,7 +115,7 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			await Assert.That(normalized).Contains("../SharedFramework/SharedFramework.csproj");
@@ -121,7 +123,9 @@ public sealed class AutoSharedProjectReferencingTests
 	}
 
 	[Test]
-	public async Task NonTestProject_AutoReferences_Multiple_SharedProjects(CancellationToken cancellationToken)
+	public async Task NonTestProject_AutoReferences_Multiple_SharedProjects(
+		CancellationToken cancellationToken
+	)
 	{
 		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
@@ -161,7 +165,7 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			await Assert.That(normalized).Contains("../Shared/Shared.csproj");
@@ -170,7 +174,9 @@ public sealed class AutoSharedProjectReferencingTests
 	}
 
 	[Test]
-	public async Task NonTestProject_AutoReferences_SharedInfrastructure_Project(CancellationToken cancellationToken)
+	public async Task NonTestProject_AutoReferences_SharedInfrastructure_Project(
+		CancellationToken cancellationToken
+	)
 	{
 		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
@@ -194,15 +200,19 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
-			await Assert.That(normalized).Contains("../SharedInfrastructure/SharedInfrastructure.csproj");
+			await Assert
+				.That(normalized)
+				.Contains("../SharedInfrastructure/SharedInfrastructure.csproj");
 		}
 	}
 
 	[Test]
-	public async Task NonTestProject_DoesNotAutoReference_SharedTestingProject(CancellationToken cancellationToken)
+	public async Task NonTestProject_DoesNotAutoReference_SharedTestingProject(
+		CancellationToken cancellationToken
+	)
 	{
 		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary",
@@ -226,16 +236,20 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// SharedTesting* projects should be excluded from non-test projects
-			await Assert.That(normalized).DoesNotContain("../SharedTestingFramework/SharedTestingFramework.csproj");
+			await Assert
+				.That(normalized)
+				.DoesNotContain("../SharedTestingFramework/SharedTestingFramework.csproj");
 		}
 	}
 
 	[Test]
-	public async Task TestProject_DoesNotAutoReference_SharedProject(CancellationToken cancellationToken)
+	public async Task TestProject_DoesNotAutoReference_SharedProject(
+		CancellationToken cancellationToken
+	)
 	{
 		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary.UnitTests",
@@ -259,7 +273,7 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Test projects should NOT auto-reference regular Shared*.csproj projects
@@ -268,7 +282,9 @@ public sealed class AutoSharedProjectReferencingTests
 	}
 
 	[Test]
-	public async Task TestProject_AutoReferences_SharedTestingProject(CancellationToken cancellationToken)
+	public async Task TestProject_AutoReferences_SharedTestingProject(
+		CancellationToken cancellationToken
+	)
 	{
 		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary.UnitTests",
@@ -292,16 +308,20 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Test projects SHOULD auto-reference SharedTesting* projects
-			await Assert.That(normalized).Contains("../SharedTestingFramework/SharedTestingFramework.csproj");
+			await Assert
+				.That(normalized)
+				.Contains("../SharedTestingFramework/SharedTestingFramework.csproj");
 		}
 	}
 
 	[Test]
-	public async Task TestProject_AutoReferences_TargetProject_InSiblingDirectory(CancellationToken cancellationToken)
+	public async Task TestProject_AutoReferences_TargetProject_InSiblingDirectory(
+		CancellationToken cancellationToken
+	)
 	{
 		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"MyLibrary.UnitTests",
@@ -325,7 +345,7 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Test projects should auto-reference their target project (MyLibrary in this case)
@@ -334,7 +354,9 @@ public sealed class AutoSharedProjectReferencingTests
 	}
 
 	[Test]
-	public async Task SharedProject_DoesNotAutoReference_SharedProjects(CancellationToken cancellationToken)
+	public async Task SharedProject_DoesNotAutoReference_SharedProjects(
+		CancellationToken cancellationToken
+	)
 	{
 		var (harness, projectReferences) = await TestHelpers.CreateProjectStructureAsync(
 			"Shared",
@@ -358,7 +380,7 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Shared projects should NOT auto-reference other shared projects
@@ -401,10 +423,12 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
-			await Assert.That(normalized).Contains($"../{sharedProjectName}/{sharedProjectName}.csproj");
+			await Assert
+				.That(normalized)
+				.Contains($"../{sharedProjectName}/{sharedProjectName}.csproj");
 		}
 	}
 
@@ -441,12 +465,14 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// SharedTestingFramework must NOT auto-reference the Shared.UnitTests sibling
 			// (the ../Shared*/Shared*.csproj glob must not fire for shared-testing projects).
-			await Assert.That(normalized).DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
+			await Assert
+				.That(normalized)
+				.DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
 		}
 	}
 
@@ -482,7 +508,7 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var references = await harness.GetItemIdentitiesAsync(
 				"ProjectReference",
@@ -490,7 +516,9 @@ public sealed class AutoSharedProjectReferencingTests
 				cancellationToken
 			);
 			var normalized = references.Select(TestHelpers.NormalizePath).ToList();
-			await Assert.That(normalized).DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
+			await Assert
+				.That(normalized)
+				.DoesNotContain("../Shared.UnitTests/Shared.UnitTests.csproj");
 		}
 	}
 
@@ -524,12 +552,14 @@ public sealed class AutoSharedProjectReferencingTests
 			cancellationToken
 		);
 
-		await using (harness)
+		using (harness)
 		{
 			var normalized = projectReferences.Select(TestHelpers.NormalizePath).ToList();
 			// Test projects SHOULD auto-reference SharedTesting* projects, even when the
 			// test project itself is Shared-prefixed (Shared.UnitTests).
-			await Assert.That(normalized).Contains("../SharedTestingFramework/SharedTestingFramework.csproj");
+			await Assert
+				.That(normalized)
+				.Contains("../SharedTestingFramework/SharedTestingFramework.csproj");
 		}
 	}
 }

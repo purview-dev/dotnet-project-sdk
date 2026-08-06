@@ -1,48 +1,43 @@
 ﻿root = true
 
-# All files
+# Repository-wide defaults. Language-specific sections below tighten these
+# settings where a file type needs different formatting.
 [*]
 indent_style = tab
 
-# Xml files
+# XML stays space-indented because nested markup is easier to scan and diff when
+# it is not aligned with hard tabs.
 [*.xml]
 indent_size = 2
 
-# C# files
+# Core editor settings for C# source files. Keep code readable, trim noisy
+# whitespace, and normalize line endings to match the repository convention.
 [*.cs]
-
-#### Core EditorConfig Options ####
 
 max_line_length = 120
 trim_trailing_whitespace = true
 
-# Indentation and spacing
+# Use tabs for indentation, displayed at four columns in editors that honor
+# EditorConfig.
 indent_size = 4
 tab_width = 4
 
-# New line preferences
-end_of_line = lf
+# Match the existing C# file line ending convention and always keep a trailing
+# newline so diffs stay stable.
+end_of_line = crlf
 insert_final_newline = true
 
-#### .NET Coding Conventions ####
+# Shared .NET analyzer and style preferences for C# and VB. Group language-
+# agnostic Roslyn options here so they stay separate from C#-only rules below.
 [*.{cs,vb}]
-
-dotnet_naming_rule.private_members_with_underscore.symbols = private_fields
-dotnet_naming_rule.private_members_with_underscore.style = prefix_underscore
-dotnet_naming_rule.private_members_with_underscore.severity = warning
-
-dotnet_naming_symbols.private_fields.applicable_kinds = field
-dotnet_naming_symbols.private_fields.applicable_accessibilities = private
-
-dotnet_naming_style.prefix_underscore.capitalization = camel_case
-dotnet_naming_style.prefix_underscore.required_prefix = _
 
 # Organize usings
 dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = true
 file_header_template = unset
 
-# this. and Me. preferences
+# Prefer unqualified member access unless a qualifier is required for clarity or
+# correctness.
 dotnet_style_qualification_for_event = false:silent
 dotnet_style_qualification_for_field = false:silent
 dotnet_style_qualification_for_method = false:silent
@@ -60,7 +55,8 @@ dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:sil
 
 # Modifier preferences
 
-# “internal/private not necessary” is typically an IDE diagnostic; set it to error if you want it blocking
+# IDE0040 reports redundant accessibility modifiers; keep it visible without
+# making it build-blocking.
 dotnet_diagnostic.IDE0040.severity = warning
 dotnet_style_require_accessibility_modifiers = omit_if_default:warning
 
@@ -90,12 +86,22 @@ dotnet_code_quality_unused_parameters = all:suggestion
 # Suppression preferences
 dotnet_remove_unnecessary_suppression_exclusions = none
 
-#### C# Coding Conventions ####
+# Keep whitespace and namespace structure aligned with the repository layout.
+dotnet_style_allow_multiple_blank_lines_experimental = false:warning
+dotnet_style_allow_statement_immediately_after_block_experimental = false:warning
+dotnet_style_namespace_match_folder = true:suggestion
+
+# Prefer newer syntax where the resulting code remains easy to read.
+dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
+
+# C#-specific style preferences. These rules cover language features that do
+# not apply to VB and keep day-to-day code patterns consistent.
 [*.cs]
 
 # var preferences
 
-# Suppress IDE0008 - var is acceptable for method calls, otherwise `var x = Guid.Parse(...)` looks givens warning.
+# Allow `var` for method-call initializers such as `var value = Guid.Parse(...)`
+# while still nudging explicit types when the type is otherwise obvious.
 dotnet_diagnostic.IDE0008.severity = silent
 
 csharp_style_var_for_built_in_types = true:silent
@@ -144,7 +150,8 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:sil
 # 'using' directive preferences
 csharp_using_directive_placement = outside_namespace:silent
 
-#### C# Formatting Rules ####
+# C# formatting rules. Keep brace placement, indentation, spacing, and wrapping
+# predictable so formatter output stays stable across the repository.
 
 # New line preferences
 csharp_new_line_before_catch = true
@@ -212,7 +219,8 @@ csharp_prefer_static_anonymous_function = true:suggestion
 csharp_style_prefer_readonly_struct = true:suggestion
 csharp_style_prefer_readonly_struct_member = true:suggestion
 
-#### Naming styles ####
+# Naming rules for .NET symbols. Define the rule mappings first, then list the
+# shared symbol groups and naming styles they rely on.
 [*.{cs,vb}]
 
 # Naming rules
@@ -257,7 +265,7 @@ dotnet_naming_rule.public_fields_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.public_fields_should_be_pascalcase.symbols = public_fields
 dotnet_naming_rule.public_fields_should_be_pascalcase.style = pascalcase
 
-dotnet_naming_rule.private_fields_should_be__camelcase.severity = suggestion
+dotnet_naming_rule.private_fields_should_be__camelcase.severity = warning
 dotnet_naming_rule.private_fields_should_be__camelcase.symbols = private_fields
 dotnet_naming_rule.private_fields_should_be__camelcase.style = prefix_underscore
 
@@ -335,7 +343,7 @@ dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, meth
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, protected, protected_internal
 dotnet_naming_symbols.non_field_members.required_modifiers =
 
-dotnet_naming_symbols.type_parameters.applicable_kinds = namespace
+dotnet_naming_symbols.type_parameters.applicable_kinds = type_parameter
 dotnet_naming_symbols.type_parameters.applicable_accessibilities = *
 dotnet_naming_symbols.type_parameters.required_modifiers =
 
@@ -371,7 +379,7 @@ dotnet_naming_symbols.local_functions.applicable_kinds = local_function
 dotnet_naming_symbols.local_functions.applicable_accessibilities = *
 dotnet_naming_symbols.local_functions.required_modifiers =
 
-# Naming styles
+# Style definitions referenced by the naming rules above.
 
 dotnet_naming_style.pascalcase.required_prefix =
 dotnet_naming_style.pascalcase.required_suffix =
@@ -388,10 +396,10 @@ dotnet_naming_style.tpascalcase.required_suffix =
 dotnet_naming_style.tpascalcase.word_separator =
 dotnet_naming_style.tpascalcase.capitalization = pascal_case
 
-dotnet_naming_style._camelcase.required_prefix = _
-dotnet_naming_style._camelcase.required_suffix =
-dotnet_naming_style._camelcase.word_separator =
-dotnet_naming_style._camelcase.capitalization = camel_case
+dotnet_naming_style.prefix_underscore.required_prefix = _
+dotnet_naming_style.prefix_underscore.required_suffix =
+dotnet_naming_style.prefix_underscore.word_separator =
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
 
 dotnet_naming_style.camelcase.required_prefix =
 dotnet_naming_style.camelcase.required_suffix =
@@ -402,15 +410,9 @@ dotnet_naming_style.s_camelcase.required_prefix = s_
 dotnet_naming_style.s_camelcase.required_suffix =
 dotnet_naming_style.s_camelcase.word_separator =
 dotnet_naming_style.s_camelcase.capitalization = camel_case
-tab_width = 4
-indent_size = 4
-end_of_line = crlf
-dotnet_style_allow_multiple_blank_lines_experimental = false:warning
-dotnet_style_allow_statement_immediately_after_block_experimental = false:warning
-dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
-dotnet_style_namespace_match_folder = true:suggestion
 
-# Verify
+# Approval-style fixtures must preserve exact contents, including whitespace and
+# line endings, because tests compare them verbatim.
 [*.{received,verified}.{cs,txt}]
 charset = "utf-8-bom"
 end_of_line = lf
@@ -420,9 +422,10 @@ insert_final_newline = false
 tab_width = unset
 trim_trailing_whitespace = false
 
-# If it's a settings, model, dto, etc file, ignore the 'properties' cannot have arrays
-# and other annoying rules - the following section is duplicated
-[**/*{ValueObjects,Settings,Options,Model,Models,DTO,Entity,Response,Request}.{cs,vb},]
+# DTO, model, and request/response types often mirror serialized or persisted
+# shapes, so allow mutable collections and settable properties for those file
+# names.
+[**/*{ValueObjects,Settings,Options,Model,Models,DTO,Entity,Response,Request}.{cs,vb}]
 dotnet_diagnostic.CA1002.severity = none
 dotnet_diagnostic.CA1024.severity = none
 dotnet_diagnostic.CA1056.severity = none
@@ -431,6 +434,8 @@ dotnet_diagnostic.CA2227.severity = none
 dotnet_diagnostic.CS8618.severity = none
 dotnet_diagnostic.CS8767.severity = none
 
+# Apply the same relaxed rules to the conventional folders that hold the same
+# model-style types.
 [**/{ValueObjects,Migrations,Entities,Models,DTOs,Settings,Options,Configuration,Requests,Responses}/**.{cs,vb}]
 dotnet_diagnostic.CA1002.severity = none
 dotnet_diagnostic.CA1024.severity = none
@@ -440,6 +445,8 @@ dotnet_diagnostic.CA2227.severity = none
 dotnet_diagnostic.CS8618.severity = none
 dotnet_diagnostic.CS8767.severity = none
 
+# Migration files are frequently generated or heavily scaffolded, so suppress
+# style and micro-optimization rules that would create maintenance noise.
 [**/Migrations/**.{cs,vb}]
 dotnet_diagnostic.CA1062.severity = none
 dotnet_diagnostic.CA1825.severity = none
@@ -449,9 +456,13 @@ dotnet_diagnostic.IDE0300.severity = none
 dotnet_diagnostic.RCS1021.severity = none
 dotnet_diagnostic.RCS1205.severity = none
 
+# Extension folders intentionally optimize for discoverability, so do not force
+# namespace-folder alignment or nested-type guidance there.
 [**/Extensions/**.{cs,vb}]
 dotnet_diagnostic.IDE0130.severity = none
 dotnet_diagnostic.CA1034.severity = none
 
+# Generated files can legitimately trigger nullability flow warnings that do
+# not represent actionable hand-written code issues.
 [**/Generated/**/*.{cs,vb}]
 dotnet_diagnostic.CS8602.severity = none

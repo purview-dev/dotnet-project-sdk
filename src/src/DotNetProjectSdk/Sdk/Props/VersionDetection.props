@@ -1,6 +1,7 @@
 <Project>
 	<PropertyGroup>
-		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''">true</UsePackageJsonVersion>
+		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''"
+			>true</UsePackageJsonVersion>
 		<_UsePackageJsonVersionNormalized>$([System.String]::Copy('$(UsePackageJsonVersion)').ToLowerInvariant())</_UsePackageJsonVersionNormalized>
 		<_UsePackageJsonVersionEnabled
 			Condition="'$(_UsePackageJsonVersionNormalized)' == 'true' OR '$(_UsePackageJsonVersionNormalized)' == 'strict'"

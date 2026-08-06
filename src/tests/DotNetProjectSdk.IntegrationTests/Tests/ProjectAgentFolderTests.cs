@@ -14,7 +14,9 @@ public sealed class ProjectAgentFolderTests
 		CancellationToken cancellationToken
 	)
 	{
-		var sdkProjectPath = Path.GetFullPath(Path.Combine(SdkPaths.SdkDirectory, "..", "DotNetProjectSdk.csproj"));
+		var sdkProjectPath = Path.GetFullPath(
+			Path.Combine(SdkPaths.SdkDirectory, "..", "DotNetProjectSdk.csproj")
+		);
 
 		var (exitCode, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
@@ -62,15 +64,20 @@ public sealed class ProjectAgentFolderTests
 	)
 	{
 		// Arrange
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"PackableProject",
 			extraProps: "<IsPackable>true</IsPackable><EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>",
 			cancellationToken: cancellationToken
 		);
 
-		await File.WriteAllTextAsync(Path.Combine(h.SolutionDirectory, ".git"), string.Empty, cancellationToken);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.SolutionDirectory, ".git"),
+			string.Empty,
+			cancellationToken
+		);
 		await File.WriteAllTextAsync(
 			Path.Combine(h.SolutionDirectory, "package.json"),
+			/*lang=json,strict*/
 			"""{"name": "packable-project", "version": "1.0.0"}""",
 			cancellationToken
 		);
@@ -91,7 +98,12 @@ public sealed class ProjectAgentFolderTests
 			cancellationToken
 		);
 
-		var projectAgentSkillsDirectory = Path.Combine(h.SolutionDirectory, "ProjectAgent", "skills", "observability");
+		var projectAgentSkillsDirectory = Path.Combine(
+			h.SolutionDirectory,
+			"ProjectAgent",
+			"skills",
+			"observability"
+		);
 		Directory.CreateDirectory(projectAgentSkillsDirectory);
 		await File.WriteAllTextAsync(
 			Path.Combine(projectAgentSkillsDirectory, "SKILL.md"),
@@ -115,10 +127,17 @@ public sealed class ProjectAgentFolderTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		var packagePath = Directory
-			.GetFiles(feedDirectory, $"PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
+			.GetFiles(
+				feedDirectory,
+				$"PackableProject.{packageVersion}.nupkg",
+				SearchOption.TopDirectoryOnly
+			)
 			.SingleOrDefault();
 
-		await Assert.That(packagePath).IsNotNull().Because("The packed project package was not created.");
+		await Assert
+			.That(packagePath)
+			.IsNotNull()
+			.Because("The packed project package was not created.");
 
 		using var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken);
 		var entries = zip.Entries.Select(entry => entry.FullName).ToList();
@@ -128,10 +147,14 @@ public sealed class ProjectAgentFolderTests
 			.Contains("agents/skills/observability/.gitignore")
 			.Because($"{stdOut}\n{stdErr}\n--- package entries ---\n{string.Join("\n", entries)}");
 
-		var gitIgnoreEntry = zip.Entries.Single(entry => entry.FullName == "agents/skills/observability/.gitignore");
+		var gitIgnoreEntry = zip.Entries.Single(entry =>
+			entry.FullName == "agents/skills/observability/.gitignore"
+		);
 		using var gitIgnoreStream = await gitIgnoreEntry.OpenAsync(cancellationToken);
 		using var reader = new StreamReader(gitIgnoreStream);
-		var gitIgnoreContent = (await reader.ReadToEndAsync(cancellationToken)).ReplaceLineEndings("\n");
+		var gitIgnoreContent = (await reader.ReadToEndAsync(cancellationToken)).ReplaceLineEndings(
+			"\n"
+		);
 		await Assert
 			.That(gitIgnoreContent)
 			.IsEqualTo(
@@ -145,15 +168,20 @@ public sealed class ProjectAgentFolderTests
 	)
 	{
 		// Arrange
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"PackableProject",
 			extraProps: "<IsPackable>true</IsPackable><EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>",
 			cancellationToken: cancellationToken
 		);
 
-		await File.WriteAllTextAsync(Path.Combine(h.SolutionDirectory, ".git"), string.Empty, cancellationToken);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.SolutionDirectory, ".git"),
+			string.Empty,
+			cancellationToken
+		);
 		await File.WriteAllTextAsync(
 			Path.Combine(h.SolutionDirectory, "package.json"),
+			/*lang=json,strict*/
 			"""{"name": "packable-project", "version": "1.0.0"}""",
 			cancellationToken
 		);
@@ -174,7 +202,12 @@ public sealed class ProjectAgentFolderTests
 			cancellationToken
 		);
 
-		var projectAgentPromptsDirectory = Path.Combine(h.SolutionDirectory, "ProjectAgent", "prompts", "example");
+		var projectAgentPromptsDirectory = Path.Combine(
+			h.SolutionDirectory,
+			"ProjectAgent",
+			"prompts",
+			"example"
+		);
 		Directory.CreateDirectory(projectAgentPromptsDirectory);
 		await File.WriteAllTextAsync(
 			Path.Combine(projectAgentPromptsDirectory, "PROMPT.md"),
@@ -198,10 +231,17 @@ public sealed class ProjectAgentFolderTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		var packagePath = Directory
-			.GetFiles(feedDirectory, $"PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
+			.GetFiles(
+				feedDirectory,
+				$"PackableProject.{packageVersion}.nupkg",
+				SearchOption.TopDirectoryOnly
+			)
 			.SingleOrDefault();
 
-		await Assert.That(packagePath).IsNotNull().Because("The packed project package was not created.");
+		await Assert
+			.That(packagePath)
+			.IsNotNull()
+			.Because("The packed project package was not created.");
 
 		using var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken);
 		var entries = zip.Entries.Select(entry => entry.FullName).ToList();
@@ -218,15 +258,20 @@ public sealed class ProjectAgentFolderTests
 	)
 	{
 		// Arrange
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"PackableProject",
 			extraProps: "<IsPackable>true</IsPackable><EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>",
 			cancellationToken: cancellationToken
 		);
 
-		await File.WriteAllTextAsync(Path.Combine(h.SolutionDirectory, ".git"), string.Empty, cancellationToken);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.SolutionDirectory, ".git"),
+			string.Empty,
+			cancellationToken
+		);
 		await File.WriteAllTextAsync(
 			Path.Combine(h.SolutionDirectory, "package.json"),
+			/*lang=json,strict*/
 			"""{"name": "packable-project", "version": "1.0.0"}""",
 			cancellationToken
 		);

@@ -230,7 +230,8 @@
 		Label="Packs the repo's ProjectAgent folder into the NuGet package."
 	>
 		<PropertyGroup>
-			<_PurviewAgentRepoRoot Condition="'$(RepoRoot)' != ''">$(RepoRoot)</_PurviewAgentRepoRoot>
+			<_PurviewAgentRepoRoot Condition="'$(RepoRoot)' != ''"
+				>$(RepoRoot)</_PurviewAgentRepoRoot>
 			<_PurviewAgentRepoRoot Condition="'$(_PurviewAgentRepoRoot)' == ''"
 				>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'AGENTS.md'))</_PurviewAgentRepoRoot>
 			<_PurviewAgentRepoRoot
@@ -238,7 +239,8 @@
 				>$(SolutionDir)</_PurviewAgentRepoRoot>
 			<_PurviewProjectAgentRoot Condition="'$(_PurviewAgentRepoRoot)' != ''"
 				>$([MSBuild]::NormalizePath('$(_PurviewAgentRepoRoot)', '$(ProjectAgentFolder)'))</_PurviewProjectAgentRoot>
-			<_PurviewProjectAgentGitIgnoreStagingRoot Condition="'$(_PurviewProjectAgentRoot)' != ''"
+			<_PurviewProjectAgentGitIgnoreStagingRoot
+				Condition="'$(_PurviewProjectAgentRoot)' != ''"
 				>$([MSBuild]::NormalizePath('$(IntermediateOutputPath)', '_PurviewProjectAgentGitIgnores'))</_PurviewProjectAgentGitIgnoreStagingRoot>
 		</PropertyGroup>
 		<Error

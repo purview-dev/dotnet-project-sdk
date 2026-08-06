@@ -11,70 +11,105 @@ public sealed class CoreDefaultsTests
 	[Test]
 	public async Task NullableEnabled_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("Nullable", cancellationToken)).IsEqualTo("enable");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("Nullable", cancellationToken))
+			.IsEqualTo("enable");
 	}
 
 	[Test]
 	public async Task ImplicitUsings_Enabled_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("ImplicitUsings", cancellationToken)).IsEqualTo("enable");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("ImplicitUsings", cancellationToken))
+			.IsEqualTo("enable");
 	}
 
 	[Test]
 	public async Task LangVersion_Preview_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
 		// The SDK sets LangVersion to "preview" unless explicitly overridden.
-		await Assert.That(await h.GetPropertyAsync("LangVersion", cancellationToken)).IsEqualTo("preview");
+		await Assert
+			.That(await h.GetPropertyAsync("LangVersion", cancellationToken))
+			.IsEqualTo("preview");
 	}
 
 	[Test]
 	public async Task Deterministic_True_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("Deterministic", cancellationToken)).IsEqualTo("true");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("Deterministic", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
-	public async Task ManagePackageVersionsCentrally_True_ByDefault(CancellationToken cancellationToken)
+	public async Task ManagePackageVersionsCentrally_True_ByDefault(
+		CancellationToken cancellationToken
+	)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
 		await Assert
 			.That(await h.GetPropertyAsync("ManagePackageVersionsCentrally", cancellationToken))
 			.IsEqualTo("true");
 	}
 
 	[Test]
-	public async Task RootNamespace_DerivedFromNamespacePrefixAndProjectName(CancellationToken cancellationToken)
+	public async Task RootNamespace_DerivedFromNamespacePrefixAndProjectName(
+		CancellationToken cancellationToken
+	)
 	{
 		// NamespacePrefix=Test, ProjectName=MyLibrary → Test.MyLibrary
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
 			namespacePrefix: "Test",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("Test.MyLibrary");
+		await Assert
+			.That(await h.GetPropertyAsync("RootNamespace", cancellationToken))
+			.IsEqualTo("Test.MyLibrary");
 	}
 
 	[Test]
-	public async Task Ci_PropertySet_WhenEnvironmentVariablePresent(CancellationToken cancellationToken)
+	public async Task Ci_PropertySet_WhenEnvironmentVariablePresent(
+		CancellationToken cancellationToken
+	)
 	{
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
 			extraEnv: new Dictionary<string, string> { ["CI"] = "true" },
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("ContinuousIntegrationBuild", cancellationToken)).IsEqualTo("true");
+		await Assert
+			.That(await h.GetPropertyAsync("ContinuousIntegrationBuild", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
-	public async Task Ci_PropertyNotSet_WhenEnvironmentVariableAbsent(CancellationToken cancellationToken)
+	public async Task Ci_PropertyNotSet_WhenEnvironmentVariableAbsent(
+		CancellationToken cancellationToken
+	)
 	{
 		// Ensure CI env var is not set for this test (it may be set in CI environments, so
 		// we override with empty string to simulate a local dev machine).
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
 			extraEnv: new Dictionary<string, string> { ["CI"] = "" },
 			cancellationToken: cancellationToken
@@ -85,9 +120,14 @@ public sealed class CoreDefaultsTests
 	}
 
 	[Test]
-	public async Task EditorConfigFilePath_PointsToExistingSdkEditorConfig(CancellationToken cancellationToken)
+	public async Task EditorConfigFilePath_PointsToExistingSdkEditorConfig(
+		CancellationToken cancellationToken
+	)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
 		var editorConfigPath = await h.GetPropertyAsync("EditorConfigFilePath", cancellationToken);
 
 		await Assert.That(string.IsNullOrWhiteSpace(editorConfigPath)).IsFalse();
@@ -95,11 +135,19 @@ public sealed class CoreDefaultsTests
 	}
 
 	[Test]
-	public async Task EditorConfigFiles_Contains_SdkEditorConfig(CancellationToken cancellationToken)
+	public async Task EditorConfigFiles_Contains_SdkEditorConfig(
+		CancellationToken cancellationToken
+	)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
 		var editorConfigPath = await h.GetPropertyAsync("EditorConfigFilePath", cancellationToken);
-		var editorConfigFiles = await h.GetItemIdentitiesAsync("EditorConfigFiles", cancellationToken);
+		var editorConfigFiles = await h.GetItemIdentitiesAsync(
+			"EditorConfigFiles",
+			cancellationToken
+		);
 
 		var normalizedEditorConfigPath = Path.GetFullPath(editorConfigPath).TrimEnd('\\', '/');
 		var hasSdkEditorConfig = editorConfigFiles.Any(path =>
@@ -118,82 +166,125 @@ public sealed class CoreDefaultsTests
 		CancellationToken cancellationToken
 	)
 	{
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
 			targetFramework: tfm,
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("TargetFramework", cancellationToken)).IsEqualTo(expected);
+		await Assert
+			.That(await h.GetPropertyAsync("TargetFramework", cancellationToken))
+			.IsEqualTo(expected);
 	}
 
 	[Test]
 	public async Task PublishRepositoryUrl_True_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("PublishRepositoryUrl", cancellationToken)).IsEqualTo("true");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("PublishRepositoryUrl", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
 	public async Task IncludeSymbols_True_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("IncludeSymbols", cancellationToken)).IsEqualTo("true");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("IncludeSymbols", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
 	public async Task SymbolPackageFormat_Snupkg_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("SymbolPackageFormat", cancellationToken)).IsEqualTo("snupkg");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("SymbolPackageFormat", cancellationToken))
+			.IsEqualTo("snupkg");
 	}
 
 	[Test]
 	public async Task AnalysisLevel_Latest_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("AnalysisLevel", cancellationToken)).IsEqualTo("latest");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("AnalysisLevel", cancellationToken))
+			.IsEqualTo("latest");
 	}
 
 	[Test]
 	public async Task AnalysisMode_All_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("AnalysisMode", cancellationToken)).IsEqualTo("All");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("AnalysisMode", cancellationToken))
+			.IsEqualTo("All");
 	}
 
 	[Test]
 	public async Task EnableNetAnalyzers_True_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("EnableNETAnalyzers", cancellationToken)).IsEqualTo("true");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("EnableNETAnalyzers", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
 	public async Task EnforceCodeStyleInBuild_True_ByDefault(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("EnforceCodeStyleInBuild", cancellationToken)).IsEqualTo("true");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("EnforceCodeStyleInBuild", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
 	public async Task Nullable_CanBeOverriddenInProjectFile(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
 			extraProps: "<Nullable>disable</Nullable>",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("Nullable", cancellationToken)).IsEqualTo("disable");
+		await Assert
+			.That(await h.GetPropertyAsync("Nullable", cancellationToken))
+			.IsEqualTo("disable");
 	}
 
 	[Test]
-	public async Task Nullable_CanBeOverriddenInDirectoryBuildProps(CancellationToken cancellationToken)
+	public async Task Nullable_CanBeOverriddenInDirectoryBuildProps(
+		CancellationToken cancellationToken
+	)
 	{
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyLibrary",
 			preImportProps: "<Nullable>disable</Nullable>",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("Nullable", cancellationToken)).IsEqualTo("disable");
+		await Assert
+			.That(await h.GetPropertyAsync("Nullable", cancellationToken))
+			.IsEqualTo("disable");
 	}
 }

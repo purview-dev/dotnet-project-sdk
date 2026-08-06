@@ -16,11 +16,38 @@ namespace Purview.DotNetProjectSdk.Analyzers.IntegrationTests.Extensions;
 [Category("Integration")]
 public sealed class ExtensionsNamespaceCodeFixTests
 {
-	static async Task<string> ApplyCodeFixAsync(string fileName, string source, CancellationToken cancellationToken)
+	static async Task<string> ApplyCodeFixAsync(
+		string fileName,
+		string source,
+		CancellationToken cancellationToken
+	)
 	{
-		using var workspace = new AdhocWorkspace();
-		ProjectId projectId = ProjectId.CreateNewId();
-		DocumentId documentId = DocumentId.CreateNewId(projectId);
+		var (workspace, document) = CreateWorkspaceAndDocument(fileName, source);
+		try
+		{
+			document = AddAnalyzerConfigToDocument(document);
+			var diagnostic = await RunAnalyzersAndGetDiagnosticAsync(document, cancellationToken);
+			var fixedText = await ApplyCodeFixAndGetTextAsync(
+				document,
+				diagnostic,
+				cancellationToken
+			);
+			return fixedText;
+		}
+		finally
+		{
+			workspace.Dispose();
+		}
+	}
+
+	static (AdhocWorkspace workspace, Document document) CreateWorkspaceAndDocument(
+		string fileName,
+		string source
+	)
+	{
+		var workspace = new AdhocWorkspace();
+		var projectId = ProjectId.CreateNewId();
+		var documentId = DocumentId.CreateNewId(projectId);
 
 		var projectInfo = ProjectInfo
 			.Create(
@@ -30,37 +57,68 @@ public sealed class ExtensionsNamespaceCodeFixTests
 				"TestProject",
 				LanguageNames.CSharp,
 				parseOptions: CSharpParseOptions.Default,
-				compilationOptions: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+				compilationOptions: new CSharpCompilationOptions(
+					OutputKind.DynamicallyLinkedLibrary
+				)
 			)
 			.WithMetadataReferences(AnalyzerTestInfrastructure.BuildBclReferences());
 
-		Solution solution = workspace
+		var solution = workspace
 			.CurrentSolution.AddProject(projectInfo)
-			.AddDocument(documentId, Path.GetFileName(fileName), SourceText.From(source), filePath: fileName);
+			.AddDocument(
+				documentId,
+				Path.GetFileName(fileName),
+				SourceText.From(source),
+				filePath: fileName
+			);
 
-		string analyzerConfig = """
+		var document = solution.GetDocument(documentId)!;
+		return (workspace, document);
+	}
+
+	static Document AddAnalyzerConfigToDocument(Document document)
+	{
+		var analyzerConfig = """
 			is_root = true
 			[*.cs]
 			build_property.ProjectDir = C:\FakeProject\
 			build_property.RootNamespace = An.Example.Project
 			""";
-		solution = solution.AddAnalyzerConfigDocument(
-			DocumentId.CreateNewId(projectId),
+
+		var solution = document.Project.Solution.AddAnalyzerConfigDocument(
+			DocumentId.CreateNewId(document.Project.Id),
 			".editorconfig",
 			SourceText.From(analyzerConfig),
 			filePath: @"C:\FakeProject\.editorconfig"
 		);
 
-		Project project = solution.GetProject(projectId)!;
-		Document document = project.GetDocument(documentId)!;
-		Compilation compilation = (await project.GetCompilationAsync(cancellationToken))!;
+		return solution.GetDocument(document.Id)!;
+	}
 
-		var analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(new ExtensionsNamespaceAnalyzer());
-		ImmutableArray<Diagnostic> diagnostics = await compilation
+	static async Task<Diagnostic> RunAnalyzersAndGetDiagnosticAsync(
+		Document document,
+		CancellationToken cancellationToken
+	)
+	{
+		var project = document.Project;
+		var compilation = (await project.GetCompilationAsync(cancellationToken))!;
+
+		var analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(
+			new ExtensionsNamespaceAnalyzer()
+		);
+		var diagnostics = await compilation
 			.WithAnalyzers(analyzers, project.AnalyzerOptions)
 			.GetAnalyzerDiagnosticsAsync(cancellationToken);
 
-		Diagnostic diagnostic = diagnostics.Single(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId);
+		return diagnostics.Single(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId);
+	}
+
+	static async Task<string> ApplyCodeFixAndGetTextAsync(
+		Document document,
+		Diagnostic diagnostic,
+		CancellationToken cancellationToken
+	)
+	{
 		var provider = new ExtensionsNamespaceCodeFixProvider();
 		var actions = new List<CodeAction>();
 
@@ -72,17 +130,19 @@ public sealed class ExtensionsNamespaceCodeFixTests
 		);
 
 		await provider.RegisterCodeFixesAsync(context);
-		CodeAction actionToApply = actions.Single();
-		ImmutableArray<CodeActionOperation> operations = await actionToApply.GetOperationsAsync(CancellationToken.None);
+		var actionToApply = actions.Single();
+		var operations = await actionToApply.GetOperationsAsync(CancellationToken.None);
 
-		ApplyChangesOperation applyChanges = operations.OfType<ApplyChangesOperation>().Single();
-		Document fixedDocument = applyChanges.ChangedSolution.GetDocument(documentId)!;
-		SourceText fixedText = (await fixedDocument.GetTextAsync(cancellationToken))!;
+		var applyChanges = operations.OfType<ApplyChangesOperation>().Single();
+		var fixedDocument = applyChanges.ChangedSolution.GetDocument(document.Id)!;
+		var fixedText = (await fixedDocument.GetTextAsync(cancellationToken))!;
 		return fixedText.ToString();
 	}
 
 	[Test]
-	public async Task CodeFixProvider_IsExported_ForVisualStudioDiscovery(CancellationToken cancellationToken)
+	public async Task CodeFixProvider_IsExported_ForVisualStudioDiscovery(
+		CancellationToken cancellationToken
+	)
 	{
 		_ = cancellationToken;
 
@@ -90,7 +150,7 @@ public sealed class ExtensionsNamespaceCodeFixTests
 		await Assert.That(typeof(ExtensionsNamespaceSuppressor).IsPublic).IsTrue();
 		await Assert.That(typeof(ExtensionsNamespaceCodeFixProvider).IsPublic).IsTrue();
 
-		Attribute[] attributes = Attribute.GetCustomAttributes(
+		var attributes = Attribute.GetCustomAttributes(
 			typeof(ExtensionsNamespaceCodeFixProvider),
 			inherit: false
 		);
@@ -118,26 +178,28 @@ public sealed class ExtensionsNamespaceCodeFixTests
 		CancellationToken cancellationToken
 	)
 	{
-		string before = $$"""
+		var before = $$"""
 			namespace {{wrongNamespace}}
 			{
 				public static class Ext { }
 			}
 			""";
 
-		string after = $$"""
+		var after = $$"""
 			namespace {{correctNamespace}}
 			{
 				public static class Ext { }
 			}
 			""";
 
-		string fixedSource = await ApplyCodeFixAsync(fileName, before, cancellationToken);
+		var fixedSource = await ApplyCodeFixAsync(fileName, before, cancellationToken);
 		await Assert.That(fixedSource).IsEqualTo(after);
 	}
 
 	[Test]
-	public async Task CodeFix_CorrectlyHandles_FileScopedNamespace(CancellationToken cancellationToken)
+	public async Task CodeFix_CorrectlyHandles_FileScopedNamespace(
+		CancellationToken cancellationToken
+	)
 	{
 		const string before = """
 			namespace An.Example.Project.Extensions.System;
@@ -151,7 +213,7 @@ public sealed class ExtensionsNamespaceCodeFixTests
 			public static class StringExtensions { }
 			""";
 
-		string fixedSource = await ApplyCodeFixAsync(
+		var fixedSource = await ApplyCodeFixAsync(
 			@"C:\FakeProject\Extensions\System\StringExtensions.cs",
 			before,
 			cancellationToken

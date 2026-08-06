@@ -49,7 +49,7 @@ public sealed class NamespaceCalculatorTests
 		string? expectedNamespace
 	)
 	{
-		string? result = ExtensionsNamespaceHelper.ComputeExpectedNamespace(projectDir, filePath);
+		var result = ExtensionsNamespaceHelper.ComputeExpectedNamespace(projectDir, filePath);
 		await Assert.That(result).IsEqualTo(expectedNamespace);
 	}
 
@@ -66,7 +66,12 @@ public sealed class NamespaceCalculatorTests
 		true,
 		DisplayName = "Top-level file under root Extensions is in scope"
 	)]
-	[Arguments(@"C:\proj\", @"C:\proj\Program.cs", false, DisplayName = "Project root file is out of scope")]
+	[Arguments(
+		@"C:\proj\",
+		@"C:\proj\Program.cs",
+		false,
+		DisplayName = "Project root file is out of scope"
+	)]
 	[Arguments(
 		@"C:\proj\",
 		@"C:\proj\Services\Extensions\Foo.cs",
@@ -79,9 +84,13 @@ public sealed class NamespaceCalculatorTests
 		false,
 		DisplayName = "Partial segment match is out of scope"
 	)]
-	public async Task IsInExtensionsRootScope_ReturnsCorrectResult(string projectDir, string filePath, bool expected)
+	public async Task IsInExtensionsRootScope_ReturnsCorrectResult(
+		string projectDir,
+		string filePath,
+		bool expected
+	)
 	{
-		bool result = ExtensionsNamespaceHelper.IsInExtensionsRootScope(projectDir, filePath);
+		var result = ExtensionsNamespaceHelper.IsInExtensionsRootScope(projectDir, filePath);
 		await Assert.That(result).IsEqualTo(expected);
 	}
 }

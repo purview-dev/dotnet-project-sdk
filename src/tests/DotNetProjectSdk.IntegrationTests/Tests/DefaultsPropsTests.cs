@@ -5,9 +5,15 @@ namespace Purview.DotNetProjectSdk.Tests;
 public sealed class DefaultsPropsTests
 {
 	[Test]
-	public async Task NonCsprojEvaluation_DoesNotFailOnBooleanConditions(CancellationToken cancellationToken)
+	public async Task NonCsprojEvaluation_DoesNotFailOnBooleanConditions(
+		CancellationToken cancellationToken
+	)
 	{
-		var tempRoot = Path.Combine(Path.GetTempPath(), "PurviewSdkTests", Guid.NewGuid().ToString("N"));
+		var tempRoot = Path.Combine(
+			Path.GetTempPath(),
+			"PurviewSdkTests",
+			Guid.NewGuid().ToString("N")
+		);
 		Directory.CreateDirectory(tempRoot);
 
 		try

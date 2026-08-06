@@ -10,11 +10,15 @@ static class ExtensionsNamespaceHelper
 {
 	const string ExtensionsRootFolderName = "Extensions";
 
-	static readonly StringComparison PathSegmentComparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+	static readonly StringComparison PathSegmentComparison = RuntimeInformation.IsOSPlatform(
+		OSPlatform.Windows
+	)
 		? StringComparison.OrdinalIgnoreCase
 		: StringComparison.Ordinal;
 
-	static readonly StringComparison FileExtensionComparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+	static readonly StringComparison FileExtensionComparison = RuntimeInformation.IsOSPlatform(
+		OSPlatform.Windows
+	)
 		? StringComparison.OrdinalIgnoreCase
 		: StringComparison.Ordinal;
 	static readonly char[] DirectorySeparators = ['\\', '/'];
@@ -57,19 +61,28 @@ static class ExtensionsNamespaceHelper
 			return null;
 		}
 
-		string relativePath = GetRelativePath(fullProjectDir, fullFilePath);
+		var relativePath = GetRelativePath(fullProjectDir, fullFilePath);
 		if (string.IsNullOrWhiteSpace(relativePath))
 		{
 			return null;
 		}
 
-		if (relativePath.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relativePath))
+		if (
+			relativePath.StartsWith("..", StringComparison.Ordinal)
+			|| Path.IsPathRooted(relativePath)
+		)
 		{
 			return null;
 		}
 
-		string[] relativeSegments = relativePath.Split(DirectorySeparators, StringSplitOptions.RemoveEmptyEntries);
-		relativeSegments = [.. relativeSegments.Select(static s => s.Trim()).Where(static s => s.Length > 0)];
+		var relativeSegments = relativePath.Split(
+			DirectorySeparators,
+			StringSplitOptions.RemoveEmptyEntries
+		);
+		relativeSegments =
+		[
+			.. relativeSegments.Select(static s => s.Trim()).Where(static s => s.Length > 0),
+		];
 
 		if (relativeSegments.Length < 2)
 		{
@@ -81,7 +94,7 @@ static class ExtensionsNamespaceHelper
 			return null;
 		}
 
-		int folderSegmentsCount = relativeSegments.Length - 2;
+		var folderSegmentsCount = relativeSegments.Length - 2;
 		if (folderSegmentsCount <= 0)
 		{
 			return string.Empty;
@@ -95,8 +108,9 @@ static class ExtensionsNamespaceHelper
 	{
 		var baseUri = new Uri(EnsureTrailingDirectorySeparator(basePath), UriKind.Absolute);
 		var fullUri = new Uri(fullPath, UriKind.Absolute);
-		Uri relativeUri = baseUri.MakeRelativeUri(fullUri);
-		return Uri.UnescapeDataString(relativeUri.ToString()).Replace('/', Path.DirectorySeparatorChar);
+		var relativeUri = baseUri.MakeRelativeUri(fullUri);
+		return Uri.UnescapeDataString(relativeUri.ToString())
+			.Replace('/', Path.DirectorySeparatorChar);
 	}
 
 	static string EnsureTrailingDirectorySeparator(string path)
@@ -106,7 +120,7 @@ static class ExtensionsNamespaceHelper
 			return path;
 		}
 
-		char lastChar = path[path.Length - 1];
+		var lastChar = path[path.Length - 1];
 		if (lastChar == Path.DirectorySeparatorChar || lastChar == Path.AltDirectorySeparatorChar)
 		{
 			return path;

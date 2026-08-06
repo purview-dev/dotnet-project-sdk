@@ -11,8 +11,13 @@ public sealed class ProjectClassificationTests
 	[Test]
 	public async Task CSharpProject_IsCSharpProject_True(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("IsCSharpProject", cancellationToken)).IsEqualTo("true");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("IsCSharpProject", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
@@ -31,7 +36,10 @@ public sealed class ProjectClassificationTests
 		CancellationToken cancellationToken
 	)
 	{
-		await using var h = await ProjectHarness.CreateAsync(projectName, cancellationToken: cancellationToken);
+		using var h = await ProjectHarness.CreateAsync(
+			projectName,
+			cancellationToken: cancellationToken
+		);
 		var props = await h.GetPropertiesAsync(cancellationToken, "IsTestProject", "TestingType");
 
 		await Assert.That(props["IsTestProject"]).IsEqualTo(expectedIsTest ? "true" : "false");
@@ -53,7 +61,10 @@ public sealed class ProjectClassificationTests
 		CancellationToken cancellationToken
 	)
 	{
-		await using var h = await ProjectHarness.CreateAsync(projectName, cancellationToken: cancellationToken);
+		using var h = await ProjectHarness.CreateAsync(
+			projectName,
+			cancellationToken: cancellationToken
+		);
 		await Assert
 			.That(await h.GetPropertyAsync("IsSharedTestingProject", cancellationToken))
 			.IsEqualTo(expectedIsShared ? "true" : "false");
@@ -62,25 +73,34 @@ public sealed class ProjectClassificationTests
 	[Test]
 	public async Task ContainerProject_DetectedByDockerfile(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyService",
 			withDockerfile: true,
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("IsContainerProject", cancellationToken)).IsEqualTo("true");
+		await Assert
+			.That(await h.GetPropertyAsync("IsContainerProject", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
-	public async Task ContainerProject_NotDetected_WithoutDockerfile(CancellationToken cancellationToken)
+	public async Task ContainerProject_NotDetected_WithoutDockerfile(
+		CancellationToken cancellationToken
+	)
 	{
-		await using var h = await ProjectHarness.CreateAsync("MyService", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("IsContainerProject", cancellationToken)).IsEqualTo("false");
+		using var h = await ProjectHarness.CreateAsync(
+			"MyService",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("IsContainerProject", cancellationToken))
+			.IsEqualTo("false");
 	}
 
 	[Test]
 	public async Task WebSdkProject_DetectedBySdkAttribute(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyWebApp",
 			sdk: "Microsoft.NET.Sdk.Web",
 			cancellationToken: cancellationToken
@@ -100,7 +120,7 @@ public sealed class ProjectClassificationTests
 	[Test]
 	public async Task WorkerSdkProject_DetectedBySdkAttribute(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync(
+		using var h = await ProjectHarness.CreateAsync(
 			"MyWorker",
 			sdk: "Microsoft.NET.Sdk.Worker",
 			cancellationToken: cancellationToken
@@ -126,7 +146,9 @@ public sealed class ProjectClassificationTests
 	/// Directory.Build.props auto-imported by MSBuild.
 	/// </summary>
 	[Test]
-	public async Task AspireHostProject_DetectedByFileContentMarker(CancellationToken cancellationToken)
+	public async Task AspireHostProject_DetectedByFileContentMarker(
+		CancellationToken cancellationToken
+	)
 	{
 		var content = $"""
 			<Project>
@@ -142,18 +164,25 @@ public sealed class ProjectClassificationTests
 			</Project>
 			""";
 
-		await using var h = await ProjectHarness.CreateWithContentAsync(
+		using var h = await ProjectHarness.CreateWithContentAsync(
 			"Acme.AppHost",
 			content,
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("IsAspireHostProject", cancellationToken)).IsEqualTo("true");
+		await Assert
+			.That(await h.GetPropertyAsync("IsAspireHostProject", cancellationToken))
+			.IsEqualTo("true");
 	}
 
 	[Test]
 	public async Task RegularProject_IsNotAspireHostProject(CancellationToken cancellationToken)
 	{
-		await using var h = await ProjectHarness.CreateAsync("Acme.AppHost", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("IsAspireHostProject", cancellationToken)).IsEqualTo("false");
+		using var h = await ProjectHarness.CreateAsync(
+			"Acme.AppHost",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("IsAspireHostProject", cancellationToken))
+			.IsEqualTo("false");
 	}
 }

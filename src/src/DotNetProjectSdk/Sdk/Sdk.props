@@ -66,7 +66,10 @@
 	     Runs for all .csproj files to classify project types and detect the
 	     testing type from the project name suffix.
 	     ===================================================================== -->
-	<PropertyGroup Label="Define C# Properties" Condition="'$(MSBuildProjectExtension)' == '.csproj'">
+	<PropertyGroup
+		Label="Define C# Properties"
+		Condition="'$(MSBuildProjectExtension)' == '.csproj'"
+	>
 		<!-- Set some defaults -->
 		<IsCSharpProject>true</IsCSharpProject>
 		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''"
@@ -486,12 +489,16 @@
 	<!-- =====================================================================
 	     LIBRARY PROJECTS
 	     ===================================================================== -->
+	<PropertyGroup Label="Library Project Properties" Condition="'$(IsCSharpProject)' == 'true'">
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.xml</AllowedOutputExtensionsInPackageBuildOutputFolder>
+	</PropertyGroup>
+
 	<PropertyGroup
 		Label="Library Project Properties"
 		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'"
 	>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.xml</AllowedOutputExtensionsInPackageBuildOutputFolder>
+		<NoWarn>$(NoWarn);CS1591;</NoWarn>
 	</PropertyGroup>
 
 	<!-- =====================================================================
@@ -626,7 +633,10 @@
 		>
 			<_Parameter1>$(TestingType)</_Parameter1>
 		</AssemblyAttribute>
-		<AssemblyAttribute Include="TUnit.Core.Skip" Condition="'$(IsSharedTestingProject)' == 'true'">
+		<AssemblyAttribute
+			Include="TUnit.Core.Skip"
+			Condition="'$(IsSharedTestingProject)' == 'true'"
+		>
 			<_Parameter1>Skipping Shared Testing Project</_Parameter1>
 		</AssemblyAttribute>
 		<PackageReference Include="TUnit" Condition="'$(IsSharedTestingProject)' != 'true'" />

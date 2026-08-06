@@ -38,10 +38,12 @@
 		<DockerDefaultTargetOS Condition="'$(DockerDefaultTargetOS)' == ''"></DockerDefaultTargetOS>
 		<DockerfileContext Condition="'$(DockerfileContext)' == ''"></DockerfileContext>
 		<EditorConfigFilePath Condition="'$(EditorConfigFilePath)' == ''"></EditorConfigFilePath>
-		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''">true</EmbedUntrackedSources>
+		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''"
+			>true</EmbedUntrackedSources>
 		<EnableAgentFolderInPackage Condition="'$(EnableAgentFolderInPackage)' == ''"
 			>true</EnableAgentFolderInPackage>
-		<EnableDynamicNativeInstrumentation Condition="'$(EnableDynamicNativeInstrumentation)' == ''"
+		<EnableDynamicNativeInstrumentation
+			Condition="'$(EnableDynamicNativeInstrumentation)' == ''"
 			>false</EnableDynamicNativeInstrumentation>
 		<EnableMicrosoftTestingPlatform Condition="'$(EnableMicrosoftTestingPlatform)' == ''"
 			>false</EnableMicrosoftTestingPlatform>
@@ -64,14 +66,17 @@
 			>false</ExcludePurviewTelemetry>
 		<GenerateAssemblyCompanyAttribute Condition="'$(GenerateAssemblyCompanyAttribute)' == ''"
 			>false</GenerateAssemblyCompanyAttribute>
-		<GenerateAssemblyCopyrightAttribute Condition="'$(GenerateAssemblyCopyrightAttribute)' == ''"
+		<GenerateAssemblyCopyrightAttribute
+			Condition="'$(GenerateAssemblyCopyrightAttribute)' == ''"
 			>false</GenerateAssemblyCopyrightAttribute>
 		<GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''"
 			>false</GenerateDocumentationFile>
 		<ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>
 		<IncludeSource Condition="'$(IncludeSource)' == ''">false</IncludeSource>
 		<IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
-		<InterceptorsNamespaces Condition="'$(InterceptorsNamespaces)' == ''"></InterceptorsNamespaces>
+		<InterceptorsNamespaces
+			Condition="'$(InterceptorsNamespaces)' == ''"
+		></InterceptorsNamespaces>
 		<InvariantGlobalization Condition="'$(InvariantGlobalization)' == ''"
 			>false</InvariantGlobalization>
 		<IsAspireHostProject Condition="'$(IsAspireHostProject)' == ''">false</IsAspireHostProject>
@@ -98,7 +103,8 @@
 		<Packable Condition="'$(Packable)' == ''">false</Packable>
 		<PackageTags Condition="'$(PackageTags)' == ''"></PackageTags>
 		<PackageVersion Condition="'$(PackageVersion)' == ''">$(Version)</PackageVersion>
-		<ProjectAgentFolder Condition="'$(ProjectAgentFolder)' == ''">ProjectAgent</ProjectAgentFolder>
+		<ProjectAgentFolder Condition="'$(ProjectAgentFolder)' == ''"
+			>ProjectAgent</ProjectAgentFolder>
 		<TargetsForTfmSpecificContentInPackage
 			Condition="'$(TargetsForTfmSpecificContentInPackage)' == ''"
 		></TargetsForTfmSpecificContentInPackage>
@@ -106,18 +112,22 @@
 		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''"
 			>TUnit</ProjectSdkTestFramework>
 		<TestingFramework Condition="'$(TestingFramework)' == ''">TUnit</TestingFramework>
-		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''">TUnitMocks</SubstituteFramework>
+		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''"
+			>TUnitMocks</SubstituteFramework>
 		<TestDataFramework Condition="'$(TestDataFramework)' == ''">Bogus</TestDataFramework>
 		<PurviewLogicalProjectName
 			Condition="'$(PurviewLogicalProjectName)' == ''"
 		></PurviewLogicalProjectName>
-		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"></PurviewNamespacePrefix>
+		<PurviewNamespacePrefix
+			Condition="'$(PurviewNamespacePrefix)' == ''"
+		></PurviewNamespacePrefix>
 		<PurviewProjectShortName
 			Condition="'$(PurviewProjectShortName)' == ''"
 		></PurviewProjectShortName>
 		<PurviewTestType Condition="'$(PurviewTestType)' == ''"></PurviewTestType>
 		<PublishAot Condition="'$(PublishAot)' == ''">false</PublishAot>
-		<PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''">true</PublishRepositoryUrl>
+		<PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''"
+			>true</PublishRepositoryUrl>
 		<PurviewDotNetProjectSdkVersionForGlobalJson
 			Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == ''"
 			>1.0.0</PurviewDotNetProjectSdkVersionForGlobalJson>
@@ -158,7 +168,8 @@
 		></_UsePackageJsonVersionNormalized>
 		<RepoRoot Condition="'$(RepoRoot)' == ''"></RepoRoot>
 		<RootPackageJson Condition="'$(RootPackageJson)' == ''"></RootPackageJson>
-		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''">true</UsePackageJsonVersion>
+		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''"
+			>true</UsePackageJsonVersion>
 		<EnableVersionDetectionCache Condition="'$(EnableVersionDetectionCache)' == ''"
 			>true</EnableVersionDetectionCache>
 		<VersionDetectionLogEnabled Condition="'$(VersionDetectionLogEnabled)' == ''"
@@ -173,7 +184,9 @@
 			Condition="'$(_VersionDetectionCacheText)' == ''"
 		></_VersionDetectionCacheText>
 		<_CachedRepoRoot Condition="'$(_CachedRepoRoot)' == ''"></_CachedRepoRoot>
-		<_CachedRootPackageJson Condition="'$(_CachedRootPackageJson)' == ''"></_CachedRootPackageJson>
+		<_CachedRootPackageJson
+			Condition="'$(_CachedRootPackageJson)' == ''"
+		></_CachedRootPackageJson>
 		<_CachedPackageJsonVersion
 			Condition="'$(_CachedPackageJsonVersion)' == ''"
 		></_CachedPackageJsonVersion>

@@ -9,11 +9,11 @@ namespace Purview.DotNetProjectSdk.Harness;
 /// Creates throwaway consumer projects on disk that import the SDK from source,
 /// allowing integration tests to invoke MSBuild and assert on observable build behaviour.
 /// </summary>
-partial class ProjectHarness : IAsyncDisposable
+partial class ProjectHarness : IDisposable
 {
 	readonly bool _ownsWorkDir;
-
 	readonly IReadOnlyDictionary<string, string> _extraEnv;
+	bool _disposedValue;
 
 	public string ProjectName { get; }
 
@@ -144,7 +144,10 @@ partial class ProjectHarness : IAsyncDisposable
 			);
 		}
 
-		var directoryPackagesPropsPath = Path.Combine(SolutionDirectory, "Directory.Packages.props");
+		var directoryPackagesPropsPath = Path.Combine(
+			SolutionDirectory,
+			"Directory.Packages.props"
+		);
 		if (!File.Exists(directoryPackagesPropsPath))
 		{
 			await File.WriteAllTextAsync(
@@ -161,7 +164,11 @@ partial class ProjectHarness : IAsyncDisposable
 		}
 	}
 
-	async Task CreateOrUpdateSolution(string solutionPath, string projectName, CancellationToken cancellationToken)
+	async Task CreateOrUpdateSolution(
+		string solutionPath,
+		string projectName,
+		CancellationToken cancellationToken
+	)
 	{
 		var projectPath = $"{projectName}/{projectName}.csproj";
 
@@ -170,12 +177,18 @@ partial class ProjectHarness : IAsyncDisposable
 			var document = XDocument.Load(solutionPath);
 			var solution =
 				document.Root
-				?? throw new InvalidOperationException($"The solution file '{solutionPath}' has no root element.");
+				?? throw new InvalidOperationException(
+					$"The solution file '{solutionPath}' has no root element."
+				);
 
 			var alreadyExists = solution
 				.Elements("File")
 				.Any(element =>
-					string.Equals(element.Attribute("Path")?.Value, projectPath, StringComparison.OrdinalIgnoreCase)
+					string.Equals(
+						element.Attribute("Path")?.Value,
+						projectPath,
+						StringComparison.OrdinalIgnoreCase
+					)
 				);
 
 			if (!alreadyExists)
@@ -231,7 +244,10 @@ partial class ProjectHarness : IAsyncDisposable
 		{
 			// Single property — plain text value.
 			return propertyNames.Length == 1
-				? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [propertyNames[0]] = stdOut }
+				? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+				{
+					[propertyNames[0]] = stdOut,
+				}
 				: propertyNames.ToDictionary(p => p, _ => "", StringComparer.OrdinalIgnoreCase);
 		}
 
@@ -257,7 +273,10 @@ partial class ProjectHarness : IAsyncDisposable
 	}
 
 	/// <summary>Evaluates a single MSBuild property without building.</summary>
-	public async Task<string> GetPropertyAsync(string propertyName, CancellationToken cancellationToken)
+	public async Task<string> GetPropertyAsync(
+		string propertyName,
+		CancellationToken cancellationToken
+	)
 	{
 		var props = await GetPropertiesAsync(cancellationToken, propertyName);
 		return props.TryGetValue(propertyName, out var v) ? v : string.Empty;
@@ -286,8 +305,9 @@ partial class ProjectHarness : IAsyncDisposable
 		CancellationToken cancellationToken = default
 	) => GetItemValuesAsync(itemType, "Identity", null, extraMsBuildArguments, cancellationToken);
 
-	public Task<IReadOnlyList<string>> GetProjectReferencesAsync(CancellationToken cancellationToken = default) =>
-		GetItemIdentitiesAsync("ProjectReference", cancellationToken);
+	public Task<IReadOnlyList<string>> GetProjectReferencesAsync(
+		CancellationToken cancellationToken = default
+	) => GetItemIdentitiesAsync("ProjectReference", cancellationToken);
 
 	public async Task<bool> HasProjectReferenceAsync(
 		string projectReferencePath,
@@ -295,7 +315,9 @@ partial class ProjectHarness : IAsyncDisposable
 	)
 	{
 		var references = await GetProjectReferencesAsync(cancellationToken);
-		return references.Any(r => string.Equals(r, projectReferencePath, StringComparison.OrdinalIgnoreCase));
+		return references.Any(r =>
+			string.Equals(r, projectReferencePath, StringComparison.OrdinalIgnoreCase)
+		);
 	}
 
 	/// <summary>
@@ -348,7 +370,8 @@ partial class ProjectHarness : IAsyncDisposable
 
 		using var doc = JsonDocument.Parse(stdOut[jsonStart..]);
 		if (
-			doc.RootElement.TryGetProperty("Items", out var itemsEl) && itemsEl.TryGetProperty(itemType, out var typeEl)
+			doc.RootElement.TryGetProperty("Items", out var itemsEl)
+			&& itemsEl.TryGetProperty(itemType, out var typeEl)
 		)
 		{
 			var values = new List<string>();
@@ -439,7 +462,8 @@ partial class ProjectHarness : IAsyncDisposable
 
 	public async Task<XDocument> GetPreprocessProjectAsync(CancellationToken cancellationToken)
 	{
-		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog -preprocess:EvaluatedProject.xml";
+		var args =
+			$"msbuild \"{ProjectFilePath}\" -nologo -noconlog -preprocess:EvaluatedProject.xml";
 		var (exitCode, _, stdErr) = await RunAsync("dotnet", args, cancellationToken);
 
 		await Assert.That(exitCode).IsZero().Because(stdErr ?? "No error returned");
@@ -447,16 +471,31 @@ partial class ProjectHarness : IAsyncDisposable
 		return XDocument.Load(Path.Combine(ProjectDirectory, "EvaluatedProject.xml"));
 	}
 
-	public async ValueTask DisposeAsync()
+	protected virtual void Dispose(bool disposing)
 	{
-		try
+		if (!_disposedValue)
 		{
-			if (_ownsWorkDir && Directory.Exists(SolutionDirectory))
-				Directory.Delete(SolutionDirectory, recursive: true);
+			if (disposing)
+			{
+				try
+				{
+					if (_ownsWorkDir && Directory.Exists(SolutionDirectory))
+						Directory.Delete(SolutionDirectory, recursive: true);
+				}
+				catch (IOException)
+				{
+					// Best-effort cleanup; don't fail tests on leftover temp files.
+				}
+			}
+
+			_disposedValue = true;
 		}
-		catch (IOException)
-		{
-			// Best-effort cleanup; don't fail tests on leftover temp files.
-		}
+	}
+
+	public void Dispose()
+	{
+		// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
 	}
 }

@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Purview.DotNetProjectSdk.Analyzers.ExtensionsNamespace;
 
@@ -15,7 +14,8 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 {
 	const string ProjectDirPropertyKey = "build_property.ProjectDir";
 
-	public override ImmutableArray<string> FixableDiagnosticIds => [ExtensionsNamespaceAnalyzer.DiagnosticId];
+	public override ImmutableArray<string> FixableDiagnosticIds =>
+		[ExtensionsNamespaceAnalyzer.DiagnosticId];
 
 	public override FixAllProvider GetFixAllProvider()
 	{
@@ -24,16 +24,15 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 
 	public override async Task RegisterCodeFixesAsync(CodeFixContext context)
 	{
-		SyntaxNode? root = await context.Document.GetSyntaxRootAsync(context.CancellationToken);
+		var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken);
 		if (root is null)
 		{
 			return;
 		}
 
-		Diagnostic diagnostic = context.Diagnostics[0];
-		SyntaxNode? node = root.FindNode(diagnostic.Location.SourceSpan, getInnermostNodeForTie: true);
-		BaseNamespaceDeclarationSyntax? namespaceDeclaration =
-			node.FirstAncestorOrSelf<BaseNamespaceDeclarationSyntax>();
+		var diagnostic = context.Diagnostics[0];
+		var node = root.FindNode(diagnostic.Location.SourceSpan, getInnermostNodeForTie: true);
+		var namespaceDeclaration = node.FirstAncestorOrSelf<BaseNamespaceDeclarationSyntax>();
 		if (namespaceDeclaration is null)
 		{
 			return;
@@ -55,18 +54,18 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 		CancellationToken cancellationToken
 	)
 	{
-		SyntaxNode? root = await document.GetSyntaxRootAsync(cancellationToken);
+		var root = await document.GetSyntaxRootAsync(cancellationToken);
 		if (root is null)
 		{
 			return document;
 		}
 
-		if (!TryGetProjectDir(document, root.SyntaxTree, out string projectDir))
+		if (!TryGetProjectDir(document, root.SyntaxTree, out var projectDir))
 		{
 			return document;
 		}
 
-		string? expectedNamespace = ExtensionsNamespaceHelper.ComputeExpectedNamespace(
+		var expectedNamespace = ExtensionsNamespaceHelper.ComputeExpectedNamespace(
 			projectDir,
 			root.SyntaxTree.FilePath
 		);
@@ -77,7 +76,7 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 
 		if (expectedNamespace.Length == 0)
 		{
-			SyntaxNode globalNamespaceDocument = RemoveNamespaceDeclaration(root, namespaceDeclaration);
+			var globalNamespaceDocument = RemoveNamespaceDeclaration(root, namespaceDeclaration);
 			return document.WithSyntaxRoot(globalNamespaceDocument);
 		}
 
@@ -85,25 +84,27 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 			.ParseName(expectedNamespace)
 			.WithTriviaFrom(namespaceDeclaration.Name);
 
-		BaseNamespaceDeclarationSyntax rewrittenNamespace = namespaceDeclaration switch
+		var rewrittenNamespace = namespaceDeclaration switch
 		{
-			FileScopedNamespaceDeclarationSyntax fileScoped => fileScoped.WithName(expectedNamespaceName),
+			FileScopedNamespaceDeclarationSyntax fileScoped => fileScoped.WithName(
+				expectedNamespaceName
+			),
 			NamespaceDeclarationSyntax blockScoped => blockScoped.WithName(expectedNamespaceName),
 			_ => namespaceDeclaration,
 		};
 
-		SyntaxNode newRoot = root.ReplaceNode(namespaceDeclaration, rewrittenNamespace);
+		var newRoot = root.ReplaceNode(namespaceDeclaration, rewrittenNamespace);
 		return document.WithSyntaxRoot(newRoot);
 	}
 
 	static bool TryGetProjectDir(Document document, SyntaxTree syntaxTree, out string projectDir)
 	{
-		AnalyzerConfigOptions options = document.Project.AnalyzerOptions.AnalyzerConfigOptionsProvider.GetOptions(
+		var options = document.Project.AnalyzerOptions.AnalyzerConfigOptionsProvider.GetOptions(
 			syntaxTree
 		);
 
 		if (
-			options.TryGetValue(ProjectDirPropertyKey, out string? configuredValue)
+			options.TryGetValue(ProjectDirPropertyKey, out var configuredValue)
 			&& !string.IsNullOrWhiteSpace(configuredValue)
 		)
 		{
@@ -115,24 +116,31 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 		return false;
 	}
 
-	static SyntaxNode RemoveNamespaceDeclaration(SyntaxNode root, BaseNamespaceDeclarationSyntax namespaceDeclaration)
+	static SyntaxNode RemoveNamespaceDeclaration(
+		SyntaxNode root,
+		BaseNamespaceDeclarationSyntax namespaceDeclaration
+	)
 	{
 		if (namespaceDeclaration.Parent is CompilationUnitSyntax compilationUnit)
 		{
-			int index = compilationUnit.Members.IndexOf(namespaceDeclaration);
+			var index = compilationUnit.Members.IndexOf(namespaceDeclaration);
 			if (index >= 0)
 			{
-				var members = compilationUnit.Members.RemoveAt(index).InsertRange(index, namespaceDeclaration.Members);
+				var members = compilationUnit
+					.Members.RemoveAt(index)
+					.InsertRange(index, namespaceDeclaration.Members);
 				return compilationUnit.WithMembers(members);
 			}
 		}
 
 		if (namespaceDeclaration.Parent is NamespaceDeclarationSyntax parentNamespace)
 		{
-			int index = parentNamespace.Members.IndexOf(namespaceDeclaration);
+			var index = parentNamespace.Members.IndexOf(namespaceDeclaration);
 			if (index >= 0)
 			{
-				var members = parentNamespace.Members.RemoveAt(index).InsertRange(index, namespaceDeclaration.Members);
+				var members = parentNamespace
+					.Members.RemoveAt(index)
+					.InsertRange(index, namespaceDeclaration.Members);
 				var rewrittenParent = parentNamespace.WithMembers(members);
 				return root.ReplaceNode(parentNamespace, rewrittenParent);
 			}
