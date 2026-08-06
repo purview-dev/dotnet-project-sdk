@@ -34,7 +34,10 @@
 		<PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="*" />
 
 		<!-- ── Azure Container Tools ─────────────────────────────────────── -->
-		<PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="*" />
+		<PackageVersion
+			Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"
+			Version="*"
+		/>
 
 		<!-- ── Testing (TUnit — default framework) ────────────────────────  -->
 		<PackageVersion Include="TUnit" Version="*" />
