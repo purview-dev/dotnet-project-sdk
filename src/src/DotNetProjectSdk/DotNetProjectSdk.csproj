@@ -70,6 +70,7 @@
 			Include="$(MSBuildThisFileDirectory)../../../.editorconfig"
 			Pack="true"
 			PackagePath="Sdk/"
+			Visible="true"
 		/>
 
 		<None Include="$(MSBuildThisFileDirectory)../../../README.md" Pack="true" PackagePath="/" />

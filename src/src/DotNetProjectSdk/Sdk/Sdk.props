@@ -349,6 +349,9 @@
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
 		<IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
+		<WarnOnPackingNonPackableProject
+			Condition="'$(WarnOnPackingNonPackableProject)' == '' AND '$(IsPackable)' == 'false'"
+			>false</WarnOnPackingNonPackableProject>
 		<NoWarn>AD0001;$(NoWarn)</NoWarn>
 		<NoWarn>IDE2001;$(NoWarn)</NoWarn>
 		<NoWarn>CA1014;CA1848;CA2007;CA2201;CA2225;CA2254;$(NoWarn)</NoWarn>

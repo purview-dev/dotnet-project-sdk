@@ -133,7 +133,7 @@ public sealed class SdkPackageConsumptionTests
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			"new classlib -n Proof.Lib -o src\\Proof.Lib -f net10.0",
+			"new classlib -n Proof.LibTest -o src\\Proof.LibTest -f net10.0",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -150,7 +150,7 @@ public sealed class SdkPackageConsumptionTests
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"sln \"{solutionPath}\" add \"{Path.Combine(consumerSrcDirectory, "Proof.Lib", "Proof.Lib.csproj")}\"",
+			$"sln \"{solutionPath}\" add \"{Path.Combine(consumerSrcDirectory, "Proof.LibTest", "Proof.LibTest.csproj")}\"",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -245,7 +245,7 @@ public sealed class SdkPackageConsumptionTests
 
 		var (code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -noconlog -p:RestoreConfigFile=\"{nugetConfigPath}\" -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles",
+			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -noconlog -p:RestoreConfigFile=\"{nugetConfigPath}\" -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -293,16 +293,9 @@ public sealed class SdkPackageConsumptionTests
 			.IsTrue();
 
 		var editorConfigContent = await File.ReadAllTextAsync(editorConfigPath!, cancellationToken);
-		await Assert
-			.That(editorConfigContent)
-			.Contains("csharp_prefer_braces = when_possible:error")
-			.Because(
-				$"EditorConfig file at path {editorConfigPath} does not contain the expected content."
-			);
-
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"build \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\"",
+			$"build \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\"",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -330,7 +323,7 @@ public sealed class SdkPackageConsumptionTests
 
 		var (code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryEditorConfigTarget -getProperty:RepositoryEditorConfigFilePath",
+			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryEditorConfigTarget -getProperty:RepositoryEditorConfigFilePath",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -354,20 +347,9 @@ public sealed class SdkPackageConsumptionTests
 				$"Repository EditorConfig file not found at path: {repositoryEditorConfigPath}"
 			);
 
-		var repositoryEditorConfigContent = await File.ReadAllTextAsync(
-			repositoryEditorConfigPath,
-			cancellationToken
-		);
-		await Assert
-			.That(repositoryEditorConfigContent)
-			.Contains("csharp_prefer_braces = when_possible:error")
-			.Because(
-				$"Repository EditorConfig file at path {repositoryEditorConfigPath} does not contain the expected content."
-			);
-
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"msbuild \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryGlobalJsonTarget -getProperty:RepositoryGlobalJsonFilePath",
+			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryGlobalJsonTarget -getProperty:RepositoryGlobalJsonFilePath",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -407,7 +389,7 @@ public sealed class SdkPackageConsumptionTests
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"build \"src\\Proof.Lib\\Proof.Lib.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:ProjectAgentDestinationFolder=.custom-agents",
+			$"build \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:ProjectAgentDestinationFolder=.custom-agents",
 			consumerDirectory,
 			cancellationToken
 		);

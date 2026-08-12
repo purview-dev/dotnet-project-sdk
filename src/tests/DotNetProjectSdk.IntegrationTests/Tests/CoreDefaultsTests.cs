@@ -46,6 +46,22 @@ public sealed class CoreDefaultsTests
 	}
 
 	[Test]
+	public async Task WarnOnPackingNonPackableProject_WhenPackableIsFalse_DefaultsToFalse(
+		CancellationToken cancellationToken
+	)
+	{
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraProps: "<IsPackable>false</IsPackable>",
+			cancellationToken: cancellationToken
+		);
+		// The SDK sets LangVersion to "preview" unless explicitly overridden.
+		await Assert
+			.That(await h.GetPropertyAsync("WarnOnPackingNonPackableProject", cancellationToken))
+			.IsEqualTo("false");
+	}
+
+	[Test]
 	public async Task Deterministic_True_ByDefault(CancellationToken cancellationToken)
 	{
 		using var h = await ProjectHarness.CreateAsync(
