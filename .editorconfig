@@ -347,10 +347,11 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:sil
 # Set the C# language version
 csharp_language_version = latest
 
-# Prefer explicit types so target-typed object creation is available
+# Prefer var for inferred expressions such as method calls.
+# PDS0003 supplies the narrower explicit-type rule for object creation.
 csharp_style_var_elsewhere = true:warning
 csharp_style_var_for_built_in_types = true:warning
-csharp_style_var_when_type_is_apparent = false:warning
+csharp_style_var_when_type_is_apparent = true:warning
 
 # Modifier preferences
 csharp_prefer_static_anonymous_function = true
@@ -1577,7 +1578,8 @@ dotnet_diagnostic.IDE2006.severity = warning
 [*.{cs,csx,cake}]
 
 dotnet_diagnostic.IDE0007.severity = warning
-dotnet_diagnostic.IDE0008.severity = warning
+dotnet_diagnostic.IDE0008.severity = none
+dotnet_diagnostic.PDS0003.severity = warning
 
 # Usage Rules (CA1801, CA1816, CA2200-CA2267)
 # Usage rules support proper usage of .NET
