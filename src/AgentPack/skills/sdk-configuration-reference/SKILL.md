@@ -88,11 +88,24 @@ These settings control the SDK’s repo-level helper file bootstrapping:
 - `RepositoryGlobalJsonFilePath` — optional override for the destination `global.json`
 - `PurviewDotNetProjectSdkVersionForGlobalJson` — defaults to detected SDK package version, fallback `1.0.0`
 - `EnableAgentFolderInPackage` — default `true`; copies the bundled `agents/**` folder from the SDK NuGet package into the consuming repo’s `.agents/`
-- `EnabledAgentFolderInPackage` — default `false`; when `true`, packs `$(ProjectAgentFolder)` into the NuGet package under `agents/**`
-- `ProjectAgentFolder` — default `ProjectAgent`; repo-relative root folder that contains the agent content to pack
-- `ProjectAgentDestinationFolder` — default `.agents`; repo-relative destination folder that receives copied agent content as `$(ProjectAgentDestinationFolder)/**`
+- `EnabledAgentFolderInPackage` — default `false`; when `true`, packs `$(AgentPackFolder)` into the NuGet package under `agents/**`
+- `AgentPackFolder` — default `AgentPack`; repo-relative root folder that contains the agent content to pack
+- `AgentPackDestinationFolder` — default `.agents`; repo-relative destination folder that receives copied agent content as `$(AgentPackDestinationFolder)/**`
 
-When `EnabledAgentFolderInPackage` is `true`, the SDK injects a `.gitignore` file into each second-level packed agent folder during packaging with the content `# Ignore all files\n*\n# Don't ignore directories, so Git can traverse them\n!*/\n# Keep this file\n!.gitignore`. This lets consuming repos keep the agent folder structure discoverable while ignoring the copied content in Git.
+When `EnabledAgentFolderInPackage` is `true`, the SDK injects a `.gitignore` file into each second-level packed agent folder during packaging with the following content:
+
+```text[.gitignore]
+# Ignore all files
+*
+
+# Don't ignore directories, so Git can traverse them
+!*/
+
+# Keep this file
+!.gitignore
+```
+
+This lets consuming repos keep the agent folder structure discoverable while ignoring the copied content in Git.
 
 ## Important derived properties you can inspect
 

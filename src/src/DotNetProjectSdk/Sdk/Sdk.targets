@@ -9,17 +9,17 @@
 
 	<!-- =====================================================================
 	     PROJECT AGENT FOLDER GITIGNORE GENERATION
-	     Generates a .gitignore in each second-level folder of the ProjectAgent
+	     Generates a .gitignore in each second-level folder of the AgentPack
 	     folder so that copied agent content (skills, prompts, agents, etc.)
 	     ends up in the NuGet package with the correct ignore rules.
 	     ===================================================================== -->
 	<UsingTask
-		TaskName="CreateProjectAgentGitIgnoreFiles"
+		TaskName="CreateAgentPackGitIgnoreFiles"
 		TaskFactory="RoslynCodeTaskFactory"
 		AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll"
 	>
 		<ParameterGroup>
-			<ProjectAgentRoot ParameterType="System.String" Required="true" />
+			<AgentPackRoot ParameterType="System.String" Required="true" />
 			<StagingRoot ParameterType="System.String" Required="true" />
 			<GitIgnoreContent ParameterType="System.String" Required="true" />
 			<GitIgnoreFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
@@ -33,9 +33,9 @@
 			<Code Type="Fragment" Language="cs">
 				<![CDATA[
 					var files = new List<ITaskItem>();
-					if (Directory.Exists(ProjectAgentRoot))
+					if (Directory.Exists(AgentPackRoot))
 					{
-						foreach (var firstLevelDir in Directory.GetDirectories(ProjectAgentRoot))
+						foreach (var firstLevelDir in Directory.GetDirectories(AgentPackRoot))
 						{
 							var firstLevelName = Path.GetFileName(firstLevelDir);
 							foreach (var secondLevelDir in Directory.GetDirectories(firstLevelDir))
@@ -198,7 +198,7 @@
 			<_PurviewAgentFolderRepoRoot Condition="'$(_PurviewAgentFolderRepoRoot)' == ''"
 				>@(_PurviewAgentSourceRoot)</_PurviewAgentFolderRepoRoot>
 			<_PurviewAgentFolderDestinationRoot Condition="'$(_PurviewAgentFolderRepoRoot)' != ''"
-				>$([MSBuild]::NormalizePath('$(_PurviewAgentFolderRepoRoot)', '$(ProjectAgentDestinationFolder)'))</_PurviewAgentFolderDestinationRoot>
+				>$([MSBuild]::NormalizePath('$(_PurviewAgentFolderRepoRoot)', '$(AgentPackDestinationFolder)'))</_PurviewAgentFolderDestinationRoot>
 		</PropertyGroup>
 		<ItemGroup Condition="'$(_PurviewAgentFolderDestinationRoot)' != ''">
 			<_PurviewAgentFolderFiles Include="$(MSBuildThisFileDirectory)..\agents\**\*" />
@@ -224,10 +224,10 @@
 	</Target>
 
 	<Target
-		Name="IncludeProjectAgentFolderInPackage"
+		Name="IncludeAgentPackFolderInPackage"
 		DependsOnTargets="InitializeSourceControlInformation"
 		Condition="'$(EnabledAgentFolderInPackage)' == 'true'"
-		Label="Packs the repo's ProjectAgent folder into the NuGet package."
+		Label="Packs the repo's AgentPack folder into the NuGet package."
 	>
 		<PropertyGroup>
 			<_PurviewAgentRepoRoot Condition="'$(RepoRoot)' != ''"
@@ -237,59 +237,58 @@
 			<_PurviewAgentRepoRoot
 				Condition="'$(_PurviewAgentRepoRoot)' == '' AND '$(SolutionDir)' != '' AND '$(SolutionDir)' != '*Undefined*'"
 				>$(SolutionDir)</_PurviewAgentRepoRoot>
-			<_PurviewProjectAgentRoot Condition="'$(_PurviewAgentRepoRoot)' != ''"
-				>$([MSBuild]::NormalizePath('$(_PurviewAgentRepoRoot)', '$(ProjectAgentFolder)'))</_PurviewProjectAgentRoot>
-			<_PurviewProjectAgentGitIgnoreStagingRoot
-				Condition="'$(_PurviewProjectAgentRoot)' != ''"
-				>$([MSBuild]::NormalizePath('$(IntermediateOutputPath)', '_PurviewProjectAgentGitIgnores'))</_PurviewProjectAgentGitIgnoreStagingRoot>
+			<_PurviewAgentPackRoot Condition="'$(_PurviewAgentRepoRoot)' != ''"
+				>$([MSBuild]::NormalizePath('$(_PurviewAgentRepoRoot)', '$(AgentPackFolder)'))</_PurviewAgentPackRoot>
+			<_PurviewAgentPackGitIgnoreStagingRoot Condition="'$(_PurviewAgentPackRoot)' != ''"
+				>$([MSBuild]::NormalizePath('$(IntermediateOutputPath)', '_PurviewAgentPackGitIgnores'))</_PurviewAgentPackGitIgnoreStagingRoot>
 		</PropertyGroup>
 		<Error
-			Condition="'$(_PurviewProjectAgentRoot)' == '' OR !Exists('$(_PurviewProjectAgentRoot)')"
-			Text="EnabledAgentFolderInPackage is true, but the ProjectAgent folder was not found at '$(_PurviewProjectAgentRoot)'. Set ProjectAgentFolder to the repo-relative ProjectAgent root, or disable EnabledAgentFolderInPackage."
+			Condition="'$(_PurviewAgentPackRoot)' == '' OR !Exists('$(_PurviewAgentPackRoot)')"
+			Text="EnabledAgentFolderInPackage is true, but the AgentPack folder was not found at '$(_PurviewAgentPackRoot)'. Set AgentPackFolder to the repo-relative AgentPack root, or disable EnabledAgentFolderInPackage."
 		/>
 		<RemoveDir
-			Directories="$(_PurviewProjectAgentGitIgnoreStagingRoot)"
-			Condition="'$(_PurviewProjectAgentGitIgnoreStagingRoot)' != ''"
+			Directories="$(_PurviewAgentPackGitIgnoreStagingRoot)"
+			Condition="'$(_PurviewAgentPackGitIgnoreStagingRoot)' != ''"
 		/>
-		<CreateProjectAgentGitIgnoreFiles
-			ProjectAgentRoot="$(_PurviewProjectAgentRoot)"
-			StagingRoot="$(_PurviewProjectAgentGitIgnoreStagingRoot)"
+		<CreateAgentPackGitIgnoreFiles
+			AgentPackRoot="$(_PurviewAgentPackRoot)"
+			StagingRoot="$(_PurviewAgentPackGitIgnoreStagingRoot)"
 			GitIgnoreContent="# Ignore all files%0a*%0a%0a# Don't ignore directories, so Git can traverse them%0a!*/%0a%0a# Keep this file%0a!.gitignore"
-			Condition="'$(_PurviewProjectAgentRoot)' != ''"
+			Condition="'$(_PurviewAgentPackRoot)' != ''"
 		>
-			<Output TaskParameter="GitIgnoreFiles" ItemName="_PurviewProjectAgentGitIgnoreFiles" />
-		</CreateProjectAgentGitIgnoreFiles>
-		<ItemGroup Condition="'$(_PurviewProjectAgentRoot)' != ''">
-			<TfmSpecificPackageFile Include="$(_PurviewProjectAgentRoot)\**\*">
+			<Output TaskParameter="GitIgnoreFiles" ItemName="_PurviewAgentPackGitIgnoreFiles" />
+		</CreateAgentPackGitIgnoreFiles>
+		<ItemGroup Condition="'$(_PurviewAgentPackRoot)' != ''">
+			<TfmSpecificPackageFile Include="$(_PurviewAgentPackRoot)\**\*">
 				<PackagePath>agents/%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
 			</TfmSpecificPackageFile>
-			<TfmSpecificPackageFile Include="@(_PurviewProjectAgentGitIgnoreFiles)">
+			<TfmSpecificPackageFile Include="@(_PurviewAgentPackGitIgnoreFiles)">
 				<PackagePath>%(PackagePath)</PackagePath>
 			</TfmSpecificPackageFile>
 		</ItemGroup>
 	</Target>
 
 	<PropertyGroup
-		Label="ProjectAgent Source Visibility"
+		Label="AgentPack Source Visibility"
 		Condition="'$(EnabledAgentFolderInPackage)' == 'true'"
 	>
-		<_PurviewProjectAgentTreeRepoRoot Condition="'$(RepoRoot)' != ''"
-			>$(RepoRoot)</_PurviewProjectAgentTreeRepoRoot>
-		<_PurviewProjectAgentTreeRepoRoot Condition="'$(_PurviewProjectAgentTreeRepoRoot)' == ''"
-			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'AGENTS.md'))</_PurviewProjectAgentTreeRepoRoot>
-		<_PurviewProjectAgentTreeRepoRoot
-			Condition="'$(_PurviewProjectAgentTreeRepoRoot)' == '' AND '$(SolutionDir)' != '' AND '$(SolutionDir)' != '*Undefined*'"
-			>$(SolutionDir)</_PurviewProjectAgentTreeRepoRoot>
-		<_PurviewProjectAgentTreeRoot Condition="'$(_PurviewProjectAgentTreeRepoRoot)' != ''"
-			>$([MSBuild]::NormalizePath('$(_PurviewProjectAgentTreeRepoRoot)', '$(ProjectAgentFolder)'))</_PurviewProjectAgentTreeRoot>
+		<_PurviewAgentPackTreeRepoRoot Condition="'$(RepoRoot)' != ''"
+			>$(RepoRoot)</_PurviewAgentPackTreeRepoRoot>
+		<_PurviewAgentPackTreeRepoRoot Condition="'$(_PurviewAgentPackTreeRepoRoot)' == ''"
+			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'AGENTS.md'))</_PurviewAgentPackTreeRepoRoot>
+		<_PurviewAgentPackTreeRepoRoot
+			Condition="'$(_PurviewAgentPackTreeRepoRoot)' == '' AND '$(SolutionDir)' != '' AND '$(SolutionDir)' != '*Undefined*'"
+			>$(SolutionDir)</_PurviewAgentPackTreeRepoRoot>
+		<_PurviewAgentPackTreeRoot Condition="'$(_PurviewAgentPackTreeRepoRoot)' != ''"
+			>$([MSBuild]::NormalizePath('$(_PurviewAgentPackTreeRepoRoot)', '$(AgentPackFolder)'))</_PurviewAgentPackTreeRoot>
 	</PropertyGroup>
 
 	<ItemGroup
-		Label="ProjectAgent Source Visibility"
-		Condition="'$(_PurviewProjectAgentTreeRoot)' != '' AND Exists('$(_PurviewProjectAgentTreeRoot)')"
+		Label="AgentPack Source Visibility"
+		Condition="'$(_PurviewAgentPackTreeRoot)' != '' AND Exists('$(_PurviewAgentPackTreeRoot)')"
 	>
-		<None Include="$(_PurviewProjectAgentTreeRoot)\**\*">
-			<Link>ProjectAgent\%(RecursiveDir)%(Filename)%(Extension)</Link>
+		<None Include="$(_PurviewAgentPackTreeRoot)\**\*">
+			<Link>AgentPack\%(RecursiveDir)%(Filename)%(Extension)</Link>
 		</None>
 	</ItemGroup>
 

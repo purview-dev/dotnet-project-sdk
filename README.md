@@ -259,10 +259,10 @@ Version detection logging is disabled by default. Set `VersionDetectionLogEnable
 
 | Property | Default | Description |
 | -- | -- | -- |
-| `EnableAgentFolderInPackage` | `true` | Copies the bundled `agents/**` folder from the SDK NuGet package into the consuming repository's `.agents/` folder (or `$(ProjectAgentDestinationFolder)/`) before build. |
-| `EnabledAgentFolderInPackage` | `false` | When `true`, packs the entire `$(ProjectAgentFolder)` tree into the NuGet package under `agents/**`. Enable this on the SDK package project to ship agent content with the SDK. |
-| `ProjectAgentFolder` | `ProjectAgent` | Repo-relative root folder that contains the agent content to pack. Only used when `EnabledAgentFolderInPackage` is `true`. |
-| `ProjectAgentDestinationFolder` | `.agents` | Repo-relative destination folder that receives the copied agent folder contents when `EnableAgentFolderInPackage` is `true`. |
+| `EnableAgentFolderInPackage` | `true` | Copies the bundled `agents/**` folder from the SDK NuGet package into the consuming repository's `.agents/` folder (or `$(AgentPackDestinationFolder)/`) before build. |
+| `EnabledAgentFolderInPackage` | `false` | When `true`, packs the entire `$(AgentPackFolder)` tree into the NuGet package under `agents/**`. Enable this on the SDK package project to ship agent content with the SDK. |
+| `AgentPackFolder` | `AgentPack` | Repo-relative root folder that contains the agent content to pack. Only used when `EnabledAgentFolderInPackage` is `true`. |
+| `AgentPackDestinationFolder` | `.agents` | Repo-relative destination folder that receives the copied agent folder contents when `EnableAgentFolderInPackage` is `true`. |
 
 To disable bundled agent folder copying in a consuming repo, set the opt-out property before importing the SDK:
 

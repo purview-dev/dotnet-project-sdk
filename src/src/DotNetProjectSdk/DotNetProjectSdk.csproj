@@ -24,7 +24,7 @@
 		<IncludeSymbols>false</IncludeSymbols>
 		<!-- Include the agents file for this SDK. -->
 		<EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>
-		<ProjectAgentFolder>src/ProjectAgent</ProjectAgentFolder>
+		<AgentPackFolder>src/AgentPack</AgentPackFolder>
 		<!-- NU5128: expected for MSBuildSdk packages — no lib/ref assemblies by design -->
 		<NoWarn>$(NoWarn);NU5128</NoWarn>
 		<!-- Allow dotfiles (e.g., .editorconfig) to be packed -->

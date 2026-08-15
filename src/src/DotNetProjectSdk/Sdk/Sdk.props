@@ -218,12 +218,12 @@
 			<Description>When true, copies the bundled agents folder from the SDK NuGet package into the consuming repository. Defaults to true.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="EnabledAgentFolderInPackage">
-			<Description>Opt-in flag that packs the ProjectAgent folder into the SDK package as agents/**.</Description>
+			<Description>Opt-in flag that packs the AgentPack folder into the SDK package as agents/**.</Description>
 		</CompilerVisibleProperty>
-		<CompilerVisibleProperty Include="ProjectAgentFolder">
+		<CompilerVisibleProperty Include="AgentPackFolder">
 			<Description>Repo-relative root folder that contains the agent content to pack.</Description>
 		</CompilerVisibleProperty>
-		<CompilerVisibleProperty Include="ProjectAgentDestinationFolder">
+		<CompilerVisibleProperty Include="AgentPackDestinationFolder">
 			<Description>Repo-relative destination folder for copied agent content. Defaults to .agents.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="DisableGenerateAssemblyInfoClass">

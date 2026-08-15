@@ -5,12 +5,12 @@ using Purview.DotNetProjectSdk.Harness;
 namespace Purview.DotNetProjectSdk.Tests;
 
 /// <summary>
-/// Verifies the opt-in ProjectAgent folder packaging workflow.
+/// Verifies the opt-in AgentPack folder packaging workflow.
 /// </summary>
-public sealed class ProjectAgentFolderTests
+public sealed class AgentPackFolderTests
 {
 	[Test]
-	public async Task EnabledAgentFolderInPackage_ExposesProjectAgentFolderInProjectTree(
+	public async Task EnabledAgentFolderInPackage_ExposesAgentPackFolderInProjectTree(
 		CancellationToken cancellationToken
 	)
 	{
@@ -37,14 +37,14 @@ public sealed class ProjectAgentFolderTests
 				Path.GetDirectoryName(sdkProjectPath)!,
 				"..",
 				"..",
-				"ProjectAgent",
+				"AgentPack",
 				"skills",
 				"sdk-configuration-reference",
 				"SKILL.md"
 			)
 		);
 
-		var projectAgentEntry = noneItems.FirstOrDefault(item =>
+		var AgentPackEntry = noneItems.FirstOrDefault(item =>
 			string.Equals(
 				Path.GetFullPath(item.GetProperty("Identity").GetString()!),
 				expectedPath,
@@ -52,14 +52,14 @@ public sealed class ProjectAgentFolderTests
 			)
 		);
 
-		await Assert.That(projectAgentEntry.ValueKind).IsEqualTo(JsonValueKind.Object);
+		await Assert.That(AgentPackEntry.ValueKind).IsEqualTo(JsonValueKind.Object);
 		await Assert
-			.That(projectAgentEntry.GetProperty("Link").GetString())
-			.IsEqualTo("ProjectAgent\\skills\\sdk-configuration-reference\\SKILL.md");
+			.That(AgentPackEntry.GetProperty("Link").GetString())
+			.IsEqualTo("AgentPack\\skills\\sdk-configuration-reference\\SKILL.md");
 	}
 
 	[Test]
-	public async Task EnabledAgentFolderInPackage_PacksProjectAgentSkillsIntoNuGetPackage(
+	public async Task EnabledAgentFolderInPackage_PacksAgentPackSkillsIntoNuGetPackage(
 		CancellationToken cancellationToken
 	)
 	{
@@ -98,15 +98,15 @@ public sealed class ProjectAgentFolderTests
 			cancellationToken
 		);
 
-		var projectAgentSkillsDirectory = Path.Combine(
+		var agentPackSkillsDirectory = Path.Combine(
 			h.SolutionDirectory,
-			"ProjectAgent",
+			"AgentPack",
 			"skills",
 			"observability"
 		);
-		Directory.CreateDirectory(projectAgentSkillsDirectory);
+		Directory.CreateDirectory(agentPackSkillsDirectory);
 		await File.WriteAllTextAsync(
-			Path.Combine(projectAgentSkillsDirectory, "SKILL.md"),
+			Path.Combine(agentPackSkillsDirectory, "SKILL.md"),
 			"# Observability\n",
 			cancellationToken
 		);
@@ -163,7 +163,7 @@ public sealed class ProjectAgentFolderTests
 	}
 
 	[Test]
-	public async Task EnabledAgentFolderInPackage_PacksProjectAgentContentOutsideSkillsIntoNuGetPackage(
+	public async Task EnabledAgentFolderInPackage_PacksAgentPackContentOutsideSkillsIntoNuGetPackage(
 		CancellationToken cancellationToken
 	)
 	{
@@ -202,15 +202,15 @@ public sealed class ProjectAgentFolderTests
 			cancellationToken
 		);
 
-		var projectAgentPromptsDirectory = Path.Combine(
+		var AgentPackPromptsDirectory = Path.Combine(
 			h.SolutionDirectory,
-			"ProjectAgent",
+			"AgentPack",
 			"prompts",
 			"example"
 		);
-		Directory.CreateDirectory(projectAgentPromptsDirectory);
+		Directory.CreateDirectory(AgentPackPromptsDirectory);
 		await File.WriteAllTextAsync(
-			Path.Combine(projectAgentPromptsDirectory, "PROMPT.md"),
+			Path.Combine(AgentPackPromptsDirectory, "PROMPT.md"),
 			"# Prompt\n",
 			cancellationToken
 		);
@@ -253,7 +253,7 @@ public sealed class ProjectAgentFolderTests
 	}
 
 	[Test]
-	public async Task EnabledAgentFolderInPackage_ErrorsWhenProjectAgentFolderIsMissing(
+	public async Task EnabledAgentFolderInPackage_ErrorsWhenAgentPackFolderIsMissing(
 		CancellationToken cancellationToken
 	)
 	{
@@ -306,7 +306,7 @@ public sealed class ProjectAgentFolderTests
 		// Assert
 		await Assert.That(exitCode).IsNotEqualTo(0);
 		await Assert.That(stdOut + stdErr).Contains("EnabledAgentFolderInPackage is true");
-		await Assert.That(stdOut + stdErr).Contains("ProjectAgent folder was not found");
+		await Assert.That(stdOut + stdErr).Contains("AgentPack folder was not found");
 	}
 
 	static async Task<(int Code, string StdOut, string StdErr)> RunProcessAsync(

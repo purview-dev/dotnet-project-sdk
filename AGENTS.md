@@ -18,28 +18,28 @@ This repo builds and tests `Purview.DotNetProjectSdk`, a reusable MSBuild SDK pa
 
 For full product behaviour and configuration, read [`README.md`](./README.md). Keep edits minimal, targeted, and convention-driven.
 
-Repo-specific agent content lives under `src/ProjectAgent/` and is packed into the NuGet package as `agents/**` by the `IncludeProjectAgentFolderInPackage` target. The SDK project sets `ProjectAgentFolder` to `src/ProjectAgent` (relative to the repo root). Add new skills under that path so they automatically flow into consuming repositories without hardcoding individual skill names.
+Repo-specific agent content lives under `src/AgentPack/` and is packed into the NuGet package as `agents/**` by the `IncludeAgentPackFolderInPackage` target. The SDK project sets `AgentPackFolder` to `src/AgentPack` (relative to the repo root). Add new skills under that path so they automatically flow into consuming repositories without hardcoding individual skill names.
 
-## ProjectAgent folder and downstream impact
+## AgentPack folder and downstream impact
 
-This SDK supports an opt-in packaging feature that ships a repository's `ProjectAgent/` folder inside the NuGet package. The `DotNetProjectSdk.csproj` enables it with:
+This SDK supports an opt-in packaging feature that ships a repository's `AgentPack/` folder inside the NuGet package. The `DotNetProjectSdk.csproj` enables it with:
 
 ```xml
 <EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>
-<ProjectAgentFolder>src/ProjectAgent</ProjectAgentFolder>
+<AgentPackFolder>src/AgentPack</AgentPackFolder>
 ```
 
 Behavior:
 
-- The entire `$(ProjectAgentFolder)` tree is packed into the NuGet package under `agents/**`.
-- `ProjectAgentFolder` is resolved relative to the repo root (location of `AGENTS.md`), defaulting to `ProjectAgent`.
-- Consuming repositories that use this SDK get the bundled agent folder copied into `$(ProjectAgentDestinationFolder)/` (default `.agents/`) before build when `EnableAgentFolderInPackage` is `true` (default).
+- The entire `$(AgentPackFolder)` tree is packed into the NuGet package under `agents/**`.
+- `AgentPackFolder` is resolved relative to the repo root (location of `AGENTS.md`), defaulting to `AgentPack`.
+- Consuming repositories that use this SDK get the bundled agent folder copied into `$(AgentPackDestinationFolder)/` (default `.agents/`) before build when `EnableAgentFolderInPackage` is `true` (default).
 - During packaging, the SDK injects a `.gitignore` file into each second-level agent folder with the content `# Ignore all files\n*\n# Don't ignore directories, so Git can traverse them\n!*/\n# Keep this file\n!.gitignore`, so the copied folder is ignored by Git in consuming repositories while keeping the folder structure discoverable.
-- Any edit, addition, or deletion in `src/ProjectAgent/` therefore changes the contents delivered to every repository that consumes this SDK.
-- Do not add `.gitignore` or other exclusions in the source `ProjectAgent/` tree that hide the skill/source files from Git; the packaging target reads files directly, and skipped files will be missing downstream.
-- The build errors if `EnabledAgentFolderInPackage` is `true` but the expected `$(ProjectAgentFolder)` directory does not exist.
+- Any edit, addition, or deletion in `src/AgentPack/` therefore changes the contents delivered to every repository that consumes this SDK.
+- Do not add `.gitignore` or other exclusions in the source `AgentPack/` tree that hide the skill/source files from Git; the packaging target reads files directly, and skipped files will be missing downstream.
+- The build errors if `EnabledAgentFolderInPackage` is `true` but the expected `$(AgentPackFolder)` directory does not exist.
 
-Tests for this feature live in `src/tests/DotNetProjectSdk.IntegrationTests/Tests/ProjectAgentFolderTests.cs`.
+Tests for this feature live in `src/tests/DotNetProjectSdk.IntegrationTests/Tests/AgentPackFolderTests.cs`.
 
 ## Repository map
 

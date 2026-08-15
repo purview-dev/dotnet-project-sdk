@@ -154,6 +154,7 @@ public sealed class SdkPackageConsumptionTests
 			consumerDirectory,
 			cancellationToken
 		);
+
 		await Assert.That(code).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 	}
 
@@ -245,7 +246,7 @@ public sealed class SdkPackageConsumptionTests
 
 		var (code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -noconlog -p:RestoreConfigFile=\"{nugetConfigPath}\" -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles",
+			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -noconlog -p:RestoreConfigFile=\"{nugetConfigPath}\" -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles -p:CentralPackageFloatingVersionsEnabled=true",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -295,7 +296,7 @@ public sealed class SdkPackageConsumptionTests
 		var editorConfigContent = await File.ReadAllTextAsync(editorConfigPath!, cancellationToken);
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"build \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\"",
+			$"build \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:CentralPackageFloatingVersionsEnabled=true -p:NoWarn=NU1010",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -389,7 +390,7 @@ public sealed class SdkPackageConsumptionTests
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"build \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:ProjectAgentDestinationFolder=.custom-agents",
+			$"build \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:AgentPackDestinationFolder=.custom-agents",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -403,6 +404,14 @@ public sealed class SdkPackageConsumptionTests
 			"SKILL.md"
 		);
 		await Assert.That(File.Exists(customDestinationSkillPath)).IsTrue();
+		var customDestinationGitIgnorePath = Path.Combine(
+			consumerDirectory,
+			".custom-agents",
+			"skills",
+			"sdk-configuration-reference",
+			".gitignore"
+		);
+		await Assert.That(File.Exists(customDestinationGitIgnorePath)).IsTrue();
 	}
 
 	static async Task<(int Code, string StdOut, string StdErr)> RunProcessAsync(
