@@ -22,9 +22,8 @@
 		<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
 		<!-- No compiled output, so no symbol package is produced -->
 		<IncludeSymbols>false</IncludeSymbols>
-		<!-- Include the agents file for this SDK. -->
-		<EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>
-		<AgentPackFolder>src/AgentPack</AgentPackFolder>
+		<!-- This is an MSBuild SDK package, not a standard .NET project; disable auto Sdk/ packing. -->
+		<PurviewAutoSdkPack>false</PurviewAutoSdkPack>
 		<!-- NU5128: expected for MSBuildSdk packages — no lib/ref assemblies by design -->
 		<NoWarn>$(NoWarn);NU5128</NoWarn>
 		<!-- Allow dotfiles (e.g., .editorconfig) to be packed -->
@@ -62,15 +61,51 @@
 		</ItemGroup>
 	</Target>
 
-	<!-- Pack the Sdk/ folder to the Sdk/ path in the NuGet package.
+	<!-- Pack the Sdk/ folder contents into the correct locations in the NuGet package.
 	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
 	<ItemGroup>
-		<None Include="Sdk/**/*" Pack="true" PackagePath="Sdk/" />
 		<None
-			Include="$(MSBuildThisFileDirectory)../../../.editorconfig"
+			Include="Sdk/.agents/**/*"
 			Pack="true"
-			PackagePath="Sdk/"
+			PackagePath=".agents/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)"
 			Visible="true"
+		/>
+		<None
+			Include="Sdk/.github/**/*"
+			Pack="true"
+			PackagePath=".github/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)"
+			Visible="true"
+		/>
+		<None
+			Include="Sdk/build/**/*"
+			Pack="true"
+			PackagePath="build/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)"
+			Visible="true"
+		/>
+		<None
+			Include="Sdk/buildTransitive/**/*"
+			Pack="true"
+			PackagePath="buildTransitive/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)"
+			Visible="true"
+		/>
+		<None
+			Include="Sdk/buildMultiTargeting/**/*"
+			Pack="true"
+			PackagePath="buildMultiTargeting/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)"
+			Visible="true"
+		/>
+		<None
+			Include="Sdk/*.md;Sdk/*.png;Sdk/*.jpg;Sdk/*.jpeg;Sdk/*.gif;Sdk/*.svg"
+			Pack="true"
+			PackagePath="%(Filename)%(Extension)"
+			Visible="true"
+		/>
+		<None
+			Include="Sdk/**/*"
+			Pack="true"
+			PackagePath="Sdk/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)"
+			Visible="true"
+			Exclude="Sdk/.agents/**/*;Sdk/.github/**/*;Sdk/build/**/*;Sdk/buildTransitive/**/*;Sdk/buildMultiTargeting/**/*;Sdk/*.md;Sdk/*.png;Sdk/*.jpg;Sdk/*.jpeg;Sdk/*.gif;Sdk/*.svg"
 		/>
 
 		<None Include="$(MSBuildThisFileDirectory)../../../README.md" Pack="true" PackagePath="/" />

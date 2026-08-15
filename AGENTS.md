@@ -18,26 +18,27 @@ This repo builds and tests `Purview.DotNetProjectSdk`, a reusable MSBuild SDK pa
 
 For full product behaviour and configuration, read [`README.md`](./README.md). Keep edits minimal, targeted, and convention-driven.
 
-Repo-specific agent content lives under `src/AgentPack/` and is packed into the NuGet package as `agents/**` by the `IncludeAgentPackFolderInPackage` target. The SDK project sets `AgentPackFolder` to `src/AgentPack` (relative to the repo root). Add new skills under that path so they automatically flow into consuming repositories without hardcoding individual skill names.
+Repo-specific agent content lives under `src/src/DotNetProjectSdk/Sdk/.agents/` and is packed into the NuGet package as `.agents/**` by the standard `PurviewAutoSdkPack` `Sdk/` packaging logic. Add new skills under that path so they automatically flow into consuming repositories without hardcoding individual skill names.
 
 ## AgentPack folder and downstream impact
 
-This SDK supports an opt-in packaging feature that ships a repository's `AgentPack/` folder inside the NuGet package. The `DotNetProjectSdk.csproj` enables it with:
+**Hard requirement:** This SDK must pack the contents of `Sdk/` into the NuGet package so that downstream consumers of `Purview.DotNetProjectSdk` receive the same `Sdk/**` files. The `PurviewAutoSdkPack` feature is the mechanism that delivers this for standard consuming projects. Do not implement `Sdk/` packaging only for the `DotNetProjectSdk` project itself.
 
-```xml
-<EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>
-<AgentPackFolder>src/AgentPack</AgentPackFolder>
-```
+For packable projects, `PurviewAutoSdkPack` (default `true`) automatically adds `Sdk/**/*` as `None` items with `Pack="true"` and `Visible="true"`, mapping each file to the correct location in the package:
 
-Behavior:
+- `Sdk/.agents/**` → `.agents/**`
+- `Sdk/.github/**` → `.github/**`
+- `Sdk/build/**` → `build/**`
+- `Sdk/buildTransitive/**` → `buildTransitive/**`
+- `Sdk/buildMultiTargeting/**` → `buildMultiTargeting/**`
+- `Sdk/*.md`, `Sdk/*.png`, `Sdk/*.jpg`, etc. → package root
+- everything else under `Sdk/` → `Sdk/`
 
-- The entire `$(AgentPackFolder)` tree is packed into the NuGet package under `agents/**`.
-- `AgentPackFolder` is resolved relative to the repo root (location of `AGENTS.md`), defaulting to `AgentPack`.
-- Consuming repositories that use this SDK get the bundled agent folder copied into `$(AgentPackDestinationFolder)/` (default `.agents/`) before build when `EnableAgentFolderInPackage` is `true` (default).
-- During packaging, the SDK injects a `.gitignore` file into each second-level agent folder with the content `# Ignore all files\n*\n# Don't ignore directories, so Git can traverse them\n!*/\n# Keep this file\n!.gitignore`, so the copied folder is ignored by Git in consuming repositories while keeping the folder structure discoverable.
-- Any edit, addition, or deletion in `src/AgentPack/` therefore changes the contents delivered to every repository that consumes this SDK.
-- Do not add `.gitignore` or other exclusions in the source `AgentPack/` tree that hide the skill/source files from Git; the packaging target reads files directly, and skipped files will be missing downstream.
-- The build errors if `EnabledAgentFolderInPackage` is `true` but the expected `$(AgentPackFolder)` directory does not exist.
+The `DotNetProjectSdk.csproj` itself is an MSBuild SDK, so it disables `PurviewAutoSdkPack` and explicitly packs its `Sdk/` contents instead. This is an exception for the SDK project only; every other project that consumes this SDK relies on `PurviewAutoSdkPack` to ship its `Sdk/` folder. Consuming repositories that use this SDK get the bundled agent folder copied into `$(AgentPackDestinationFolder)/` (default `.agents/`) before build when `EnableAgentFolderInPackage` is `true` (default).
+
+During packaging, the SDK injects a `.gitignore` file into each second-level folder under `Sdk/.agents` with the content `# Ignore all files\n*\n# Don't ignore directories, so Git can traverse them\n!*/\n# Keep this file\n!.gitignore`, so the copied folder is ignored by Git in consuming repositories while keeping the folder structure discoverable.
+
+Any edit, addition, or deletion in `src/src/DotNetProjectSdk/Sdk/.agents/` therefore changes the contents delivered to every repository that consumes this SDK.
 
 Tests for this feature live in `src/tests/DotNetProjectSdk.IntegrationTests/Tests/AgentPackFolderTests.cs`.
 

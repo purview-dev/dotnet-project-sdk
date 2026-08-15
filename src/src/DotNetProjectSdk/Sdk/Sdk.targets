@@ -3,18 +3,18 @@
 
 	<PropertyGroup>
 		<NoDefaultExcludes
-			Condition="'$(NoDefaultExcludes)' == '' AND '$(EnabledAgentFolderInPackage)' == 'true'"
+			Condition="'$(NoDefaultExcludes)' == '' AND '$(PurviewAutoSdkPack)' == 'true'"
 			>true</NoDefaultExcludes>
 	</PropertyGroup>
 
 	<!-- =====================================================================
-	     PROJECT AGENT FOLDER GITIGNORE GENERATION
-	     Generates a .gitignore in each second-level folder of the AgentPack
+	     SDK .AGENTS FOLDER GITIGNORE GENERATION
+	     Generates a .gitignore in each second-level folder of the Sdk/.agents
 	     folder so that copied agent content (skills, prompts, agents, etc.)
 	     ends up in the NuGet package with the correct ignore rules.
 	     ===================================================================== -->
 	<UsingTask
-		TaskName="CreateAgentPackGitIgnoreFiles"
+		TaskName="CreateSdkDotAgentsGitIgnoreFiles"
 		TaskFactory="RoslynCodeTaskFactory"
 		AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll"
 	>
@@ -45,7 +45,7 @@
 								Directory.CreateDirectory(Path.GetDirectoryName(gitIgnorePath));
 								File.WriteAllText(gitIgnorePath, GitIgnoreContent);
 								var item = new TaskItem(gitIgnorePath);
-								item.SetMetadata("PackagePath", "agents/" + firstLevelName + "/" + secondLevelName + "/.gitignore");
+								item.SetMetadata("PackagePath", ".agents/" + firstLevelName + "/" + secondLevelName + "/.gitignore");
 								files.Add(item);
 							}
 						}
@@ -181,8 +181,8 @@
 		Name="EnsureAgentFolderInPackageTarget"
 		BeforeTargets="PrepareForBuild"
 		DependsOnTargets="InitializeSourceControlInformation"
-		Condition="'$(EnableAgentFolderInPackage)' != 'false' AND Exists('$(MSBuildThisFileDirectory)..\agents')"
-		Label="Copies the bundled agent folder into the consuming repository for agent discovery."
+		Condition="'$(EnableAgentFolderInPackage)' != 'false' AND Exists('$(MSBuildThisFileDirectory)..\.agents')"
+		Label="Copies the bundled .agents folder into the consuming repository for agent discovery."
 	>
 		<ItemGroup>
 			<_PurviewAgentSourceRoot Include="@(SourceRoot -> WithMetadataValue('SourceControl', 'git'))" />
@@ -201,7 +201,7 @@
 				>$([MSBuild]::NormalizePath('$(_PurviewAgentFolderRepoRoot)', '$(AgentPackDestinationFolder)'))</_PurviewAgentFolderDestinationRoot>
 		</PropertyGroup>
 		<ItemGroup Condition="'$(_PurviewAgentFolderDestinationRoot)' != ''">
-			<_PurviewAgentFolderFiles Include="$(MSBuildThisFileDirectory)..\agents\**\*" />
+			<_PurviewAgentFolderFiles Include="$(MSBuildThisFileDirectory)..\.agents\**\*" />
 			<_PurviewAgentFolderDirectories Include="@(_PurviewAgentFolderFiles -> '$(_PurviewAgentFolderDestinationRoot)\%(RecursiveDir)')" />
 		</ItemGroup>
 		<MakeDir
@@ -224,73 +224,32 @@
 	</Target>
 
 	<Target
-		Name="IncludeAgentPackFolderInPackage"
+		Name="IncludeSdkDotAgentsGitIgnoreFiles"
 		DependsOnTargets="InitializeSourceControlInformation"
-		Condition="'$(EnabledAgentFolderInPackage)' == 'true'"
-		Label="Packs the repo's AgentPack folder into the NuGet package."
+		Label="Generates .gitignore files for each second-level folder under Sdk/.agents and includes them in the package."
 	>
 		<PropertyGroup>
-			<_PurviewAgentRepoRoot Condition="'$(RepoRoot)' != ''"
-				>$(RepoRoot)</_PurviewAgentRepoRoot>
-			<_PurviewAgentRepoRoot Condition="'$(_PurviewAgentRepoRoot)' == ''"
-				>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'AGENTS.md'))</_PurviewAgentRepoRoot>
-			<_PurviewAgentRepoRoot
-				Condition="'$(_PurviewAgentRepoRoot)' == '' AND '$(SolutionDir)' != '' AND '$(SolutionDir)' != '*Undefined*'"
-				>$(SolutionDir)</_PurviewAgentRepoRoot>
-			<_PurviewAgentPackRoot Condition="'$(_PurviewAgentRepoRoot)' != ''"
-				>$([MSBuild]::NormalizePath('$(_PurviewAgentRepoRoot)', '$(AgentPackFolder)'))</_PurviewAgentPackRoot>
-			<_PurviewAgentPackGitIgnoreStagingRoot Condition="'$(_PurviewAgentPackRoot)' != ''"
-				>$([MSBuild]::NormalizePath('$(IntermediateOutputPath)', '_PurviewAgentPackGitIgnores'))</_PurviewAgentPackGitIgnoreStagingRoot>
+			<_PurviewSdkDotAgentsRoot>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', 'Sdk', '.agents'))</_PurviewSdkDotAgentsRoot>
+			<_PurviewSdkDotAgentsGitIgnoreStagingRoot>$([MSBuild]::NormalizePath('$(IntermediateOutputPath)', '_PurviewSdkDotAgentsGitIgnores'))</_PurviewSdkDotAgentsGitIgnoreStagingRoot>
 		</PropertyGroup>
-		<Error
-			Condition="'$(_PurviewAgentPackRoot)' == '' OR !Exists('$(_PurviewAgentPackRoot)')"
-			Text="EnabledAgentFolderInPackage is true, but the AgentPack folder was not found at '$(_PurviewAgentPackRoot)'. Set AgentPackFolder to the repo-relative AgentPack root, or disable EnabledAgentFolderInPackage."
-		/>
 		<RemoveDir
-			Directories="$(_PurviewAgentPackGitIgnoreStagingRoot)"
-			Condition="'$(_PurviewAgentPackGitIgnoreStagingRoot)' != ''"
+			Directories="$(_PurviewSdkDotAgentsGitIgnoreStagingRoot)"
+			Condition="'$(_PurviewSdkDotAgentsGitIgnoreStagingRoot)' != ''"
 		/>
-		<CreateAgentPackGitIgnoreFiles
-			AgentPackRoot="$(_PurviewAgentPackRoot)"
-			StagingRoot="$(_PurviewAgentPackGitIgnoreStagingRoot)"
+		<CreateSdkDotAgentsGitIgnoreFiles
+			AgentPackRoot="$(_PurviewSdkDotAgentsRoot)"
+			StagingRoot="$(_PurviewSdkDotAgentsGitIgnoreStagingRoot)"
 			GitIgnoreContent="# Ignore all files%0a*%0a%0a# Don't ignore directories, so Git can traverse them%0a!*/%0a%0a# Keep this file%0a!.gitignore"
-			Condition="'$(_PurviewAgentPackRoot)' != ''"
+			Condition="Exists('$(_PurviewSdkDotAgentsRoot)')"
 		>
-			<Output TaskParameter="GitIgnoreFiles" ItemName="_PurviewAgentPackGitIgnoreFiles" />
-		</CreateAgentPackGitIgnoreFiles>
-		<ItemGroup Condition="'$(_PurviewAgentPackRoot)' != ''">
-			<TfmSpecificPackageFile Include="$(_PurviewAgentPackRoot)\**\*">
-				<PackagePath>agents/%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
-			</TfmSpecificPackageFile>
-			<TfmSpecificPackageFile Include="@(_PurviewAgentPackGitIgnoreFiles)">
+			<Output TaskParameter="GitIgnoreFiles" ItemName="_PurviewSdkDotAgentsGitIgnoreFiles" />
+		</CreateSdkDotAgentsGitIgnoreFiles>
+		<ItemGroup Condition="Exists('$(_PurviewSdkDotAgentsRoot)')">
+			<TfmSpecificPackageFile Include="@(_PurviewSdkDotAgentsGitIgnoreFiles)">
 				<PackagePath>%(PackagePath)</PackagePath>
 			</TfmSpecificPackageFile>
 		</ItemGroup>
 	</Target>
-
-	<PropertyGroup
-		Label="AgentPack Source Visibility"
-		Condition="'$(EnabledAgentFolderInPackage)' == 'true'"
-	>
-		<_PurviewAgentPackTreeRepoRoot Condition="'$(RepoRoot)' != ''"
-			>$(RepoRoot)</_PurviewAgentPackTreeRepoRoot>
-		<_PurviewAgentPackTreeRepoRoot Condition="'$(_PurviewAgentPackTreeRepoRoot)' == ''"
-			>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'AGENTS.md'))</_PurviewAgentPackTreeRepoRoot>
-		<_PurviewAgentPackTreeRepoRoot
-			Condition="'$(_PurviewAgentPackTreeRepoRoot)' == '' AND '$(SolutionDir)' != '' AND '$(SolutionDir)' != '*Undefined*'"
-			>$(SolutionDir)</_PurviewAgentPackTreeRepoRoot>
-		<_PurviewAgentPackTreeRoot Condition="'$(_PurviewAgentPackTreeRepoRoot)' != ''"
-			>$([MSBuild]::NormalizePath('$(_PurviewAgentPackTreeRepoRoot)', '$(AgentPackFolder)'))</_PurviewAgentPackTreeRoot>
-	</PropertyGroup>
-
-	<ItemGroup
-		Label="AgentPack Source Visibility"
-		Condition="'$(_PurviewAgentPackTreeRoot)' != '' AND Exists('$(_PurviewAgentPackTreeRoot)')"
-	>
-		<None Include="$(_PurviewAgentPackTreeRoot)\**\*">
-			<Link>AgentPack\%(RecursiveDir)%(Filename)%(Extension)</Link>
-		</None>
-	</ItemGroup>
 
 	<!-- 
 		VALIDATE Testing Framework.

@@ -9,6 +9,9 @@
 		<NamespacePrefix>Purview.DotNetProjectSdk</NamespacePrefix>
 		<!-- Exclude telemetry packages from the packaging project itself -->
 		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
+		<!-- The SDK project is an MSBuild SDK; disable the auto Sdk/ packing intended for standard consuming projects. -->
+		<PurviewAutoSdkPack Condition="'$(MSBuildProjectName)' == 'DotNetProjectSdk'"
+			>false</PurviewAutoSdkPack>
 	</PropertyGroup>
 
 	<!-- Dog fooding the Sdk... -->

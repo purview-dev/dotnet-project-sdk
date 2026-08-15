@@ -183,6 +183,9 @@ public sealed class SdkPackageConsumptionTests
 					<PackageVersion Include="Microsoft.SourceLink.GitHub" Version="*" />
 					<PackageVersion Include="Purview.Telemetry.SourceGenerator" Version="*" />
 					<PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="*" />
+					<PackageVersion Include="TUnit" Version="*" />
+					<PackageVersion Include="TUnit.Mocks" Version="*" />
+					<PackageVersion Include="Bogus" Version="*" />
 				</ItemGroup>
 			</Project>
 			""",

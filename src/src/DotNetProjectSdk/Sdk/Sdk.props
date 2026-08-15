@@ -215,16 +215,13 @@
 			<Description>Opt-out flag that removes Microsoft.Extensions.Telemetry.Abstractions.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="EnableAgentFolderInPackage">
-			<Description>When true, copies the bundled agents folder from the SDK NuGet package into the consuming repository. Defaults to true.</Description>
-		</CompilerVisibleProperty>
-		<CompilerVisibleProperty Include="EnabledAgentFolderInPackage">
-			<Description>Opt-in flag that packs the AgentPack folder into the SDK package as agents/**.</Description>
-		</CompilerVisibleProperty>
-		<CompilerVisibleProperty Include="AgentPackFolder">
-			<Description>Repo-relative root folder that contains the agent content to pack.</Description>
+			<Description>When true, copies the bundled .agents folder from the SDK NuGet package into the consuming repository. Defaults to true.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="AgentPackDestinationFolder">
-			<Description>Repo-relative destination folder for copied agent content. Defaults to .agents.</Description>
+			<Description>Repo-relative destination folder that receives copied .agents content. Defaults to .agents.</Description>
+		</CompilerVisibleProperty>
+		<CompilerVisibleProperty Include="PurviewAutoSdkPack">
+			<Description>When true, automatically packs the Sdk/ folder contents into the NuGet package with the correct root-level paths. Defaults to true.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="DisableGenerateAssemblyInfoClass">
 			<Description>Disables generation of the AssemblyInfo helper class in intermediate output.</Description>
@@ -457,6 +454,47 @@
 		<Content Remove="TestResults/**" />
 		<EmbeddedResource Remove="TestResults/**" />
 		<None Remove="TestResults/**" />
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     AUTOMATIC SDK FOLDER PACKAGING
+	     ===================================================================== -->
+	<PropertyGroup Label="Automatic Sdk Folder Packaging">
+		<PurviewAutoSdkPack Condition="'$(PurviewAutoSdkPack)' == ''">true</PurviewAutoSdkPack>
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeSdkDotAgentsGitIgnoreFiles</TargetsForTfmSpecificContentInPackage>
+	</PropertyGroup>
+
+	<ItemGroup Label="Automatic Sdk Folder Packaging" Condition="'$(PurviewAutoSdkPack)' == 'true'">
+		<None Include="Sdk/.agents/**/*" Pack="true" Visible="true">
+			<PackagePath>.agents/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)</PackagePath>
+		</None>
+		<None Include="Sdk/.github/**/*" Pack="true" Visible="true">
+			<PackagePath>.github/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)</PackagePath>
+		</None>
+		<None Include="Sdk/build/**/*" Pack="true" Visible="true">
+			<PackagePath>build/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)</PackagePath>
+		</None>
+		<None Include="Sdk/buildTransitive/**/*" Pack="true" Visible="true">
+			<PackagePath>buildTransitive/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)</PackagePath>
+		</None>
+		<None Include="Sdk/buildMultiTargeting/**/*" Pack="true" Visible="true">
+			<PackagePath>buildMultiTargeting/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)</PackagePath>
+		</None>
+		<None
+			Include="Sdk/*.md;Sdk/*.png;Sdk/*.jpg;Sdk/*.jpeg;Sdk/*.gif;Sdk/*.svg"
+			Pack="true"
+			Visible="true"
+		>
+			<PackagePath>%(Filename)%(Extension)</PackagePath>
+		</None>
+		<None
+			Include="Sdk/**/*"
+			Pack="true"
+			Visible="true"
+			Exclude="Sdk/.agents/**/*;Sdk/.github/**/*;Sdk/build/**/*;Sdk/buildTransitive/**/*;Sdk/buildMultiTargeting/**/*;Sdk/*.md;Sdk/*.png;Sdk/*.jpg;Sdk/*.jpeg;Sdk/*.gif;Sdk/*.svg"
+		>
+			<PackagePath>Sdk/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)</PackagePath>
+		</None>
 	</ItemGroup>
 
 	<!-- =====================================================================

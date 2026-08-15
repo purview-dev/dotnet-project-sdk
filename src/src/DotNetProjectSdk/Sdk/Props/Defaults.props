@@ -54,8 +54,6 @@
 			>true</EnforceCodeStyleInBuild>
 		<EnableAssemblyNameGeneration Condition="'$(EnableAssemblyNameGeneration)' == ''"
 			>false</EnableAssemblyNameGeneration>
-		<EnabledAgentFolderInPackage Condition="'$(EnabledAgentFolderInPackage)' == ''"
-			>false</EnabledAgentFolderInPackage>
 		<AgentPackDestinationFolder Condition="'$(AgentPackDestinationFolder)' == ''"
 			>.agents</AgentPackDestinationFolder>
 		<Exclude Condition="'$(Exclude)' == ''"></Exclude>
@@ -103,11 +101,9 @@
 		<Packable Condition="'$(Packable)' == ''">false</Packable>
 		<PackageTags Condition="'$(PackageTags)' == ''"></PackageTags>
 		<PackageVersion Condition="'$(PackageVersion)' == ''">$(Version)</PackageVersion>
-		<AgentPackFolder Condition="'$(AgentPackFolder)' == ''">AgentPack</AgentPackFolder>
 		<TargetsForTfmSpecificContentInPackage
 			Condition="'$(TargetsForTfmSpecificContentInPackage)' == ''"
 		></TargetsForTfmSpecificContentInPackage>
-		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeAgentPackFolderInPackage</TargetsForTfmSpecificContentInPackage>
 		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''"
 			>TUnit</ProjectSdkTestFramework>
 		<TestingFramework Condition="'$(TestingFramework)' == ''">TUnit</TestingFramework>

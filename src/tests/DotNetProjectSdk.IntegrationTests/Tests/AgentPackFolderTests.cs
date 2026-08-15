@@ -5,12 +5,12 @@ using Purview.DotNetProjectSdk.Harness;
 namespace Purview.DotNetProjectSdk.Tests;
 
 /// <summary>
-/// Verifies the opt-in AgentPack folder packaging workflow.
+/// Verifies the Sdk/.agents folder packaging workflow and PurviewAutoSdkPack behaviour.
 /// </summary>
 public sealed class AgentPackFolderTests
 {
 	[Test]
-	public async Task EnabledAgentFolderInPackage_ExposesAgentPackFolderInProjectTree(
+	public async Task PurviewAutoSdkPack_ExposesSdkDotAgentsInProjectTree(
 		CancellationToken cancellationToken
 	)
 	{
@@ -35,38 +35,37 @@ public sealed class AgentPackFolderTests
 		var expectedPath = Path.GetFullPath(
 			Path.Combine(
 				Path.GetDirectoryName(sdkProjectPath)!,
-				"..",
-				"..",
-				"AgentPack",
+				"Sdk",
+				".agents",
 				"skills",
 				"sdk-configuration-reference",
 				"SKILL.md"
 			)
 		);
 
-		var AgentPackEntry = noneItems.FirstOrDefault(item =>
+		var agentEntry = noneItems.FirstOrDefault(item =>
 			string.Equals(
-				Path.GetFullPath(item.GetProperty("Identity").GetString()!),
+				item.GetProperty("FullPath").GetString(),
 				expectedPath,
 				StringComparison.OrdinalIgnoreCase
 			)
 		);
 
-		await Assert.That(AgentPackEntry.ValueKind).IsEqualTo(JsonValueKind.Object);
+		await Assert.That(agentEntry.ValueKind).IsEqualTo(JsonValueKind.Object);
 		await Assert
-			.That(AgentPackEntry.GetProperty("Link").GetString())
-			.IsEqualTo("AgentPack\\skills\\sdk-configuration-reference\\SKILL.md");
+			.That(agentEntry.GetProperty("PackagePath").GetString())
+			.IsEqualTo(".agents/skills/sdk-configuration-reference/SKILL.md");
 	}
 
 	[Test]
-	public async Task EnabledAgentFolderInPackage_PacksAgentPackSkillsIntoNuGetPackage(
+	public async Task PurviewAutoSdkPack_PacksSdkDotAgentsSkillsIntoNuGetPackage(
 		CancellationToken cancellationToken
 	)
 	{
 		// Arrange
 		using var h = await ProjectHarness.CreateAsync(
 			"PackableProject",
-			extraProps: "<IsPackable>true</IsPackable><EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>",
+			extraProps: "<IsPackable>true</IsPackable>",
 			cancellationToken: cancellationToken
 		);
 
@@ -99,8 +98,9 @@ public sealed class AgentPackFolderTests
 		);
 
 		var agentPackSkillsDirectory = Path.Combine(
-			h.SolutionDirectory,
-			"AgentPack",
+			h.ProjectDirectory,
+			"Sdk",
+			".agents",
 			"skills",
 			"observability"
 		);
@@ -141,14 +141,14 @@ public sealed class AgentPackFolderTests
 
 		using var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken);
 		var entries = zip.Entries.Select(entry => entry.FullName).ToList();
-		await Assert.That(entries).Contains("agents/skills/observability/SKILL.md");
+		await Assert.That(entries).Contains(".agents/skills/observability/SKILL.md");
 		await Assert
 			.That(entries)
-			.Contains("agents/skills/observability/.gitignore")
+			.Contains(".agents/skills/observability/.gitignore")
 			.Because($"{stdOut}\n{stdErr}\n--- package entries ---\n{string.Join("\n", entries)}");
 
 		var gitIgnoreEntry = zip.Entries.Single(entry =>
-			entry.FullName == "agents/skills/observability/.gitignore"
+			entry.FullName == ".agents/skills/observability/.gitignore"
 		);
 		using var gitIgnoreStream = await gitIgnoreEntry.OpenAsync(cancellationToken);
 		using var reader = new StreamReader(gitIgnoreStream);
@@ -163,14 +163,14 @@ public sealed class AgentPackFolderTests
 	}
 
 	[Test]
-	public async Task EnabledAgentFolderInPackage_PacksAgentPackContentOutsideSkillsIntoNuGetPackage(
+	public async Task PurviewAutoSdkPack_PacksSdkDotAgentsContentOutsideSkillsIntoNuGetPackage(
 		CancellationToken cancellationToken
 	)
 	{
 		// Arrange
 		using var h = await ProjectHarness.CreateAsync(
 			"PackableProject",
-			extraProps: "<IsPackable>true</IsPackable><EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>",
+			extraProps: "<IsPackable>true</IsPackable>",
 			cancellationToken: cancellationToken
 		);
 
@@ -202,15 +202,16 @@ public sealed class AgentPackFolderTests
 			cancellationToken
 		);
 
-		var AgentPackPromptsDirectory = Path.Combine(
-			h.SolutionDirectory,
-			"AgentPack",
+		var agentPackPromptsDirectory = Path.Combine(
+			h.ProjectDirectory,
+			"Sdk",
+			".agents",
 			"prompts",
 			"example"
 		);
-		Directory.CreateDirectory(AgentPackPromptsDirectory);
+		Directory.CreateDirectory(agentPackPromptsDirectory);
 		await File.WriteAllTextAsync(
-			Path.Combine(AgentPackPromptsDirectory, "PROMPT.md"),
+			Path.Combine(agentPackPromptsDirectory, "PROMPT.md"),
 			"# Prompt\n",
 			cancellationToken
 		);
@@ -245,22 +246,22 @@ public sealed class AgentPackFolderTests
 
 		using var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken);
 		var entries = zip.Entries.Select(entry => entry.FullName).ToList();
-		await Assert.That(entries).Contains("agents/prompts/example/PROMPT.md");
+		await Assert.That(entries).Contains(".agents/prompts/example/PROMPT.md");
 		await Assert
 			.That(entries)
-			.Contains("agents/prompts/example/.gitignore")
+			.Contains(".agents/prompts/example/.gitignore")
 			.Because($"{stdOut}\n{stdErr}\n--- package entries ---\n{string.Join("\n", entries)}");
 	}
 
 	[Test]
-	public async Task EnabledAgentFolderInPackage_ErrorsWhenAgentPackFolderIsMissing(
+	public async Task PurviewAutoSdkPack_PacksAllSdkRootFoldersIntoNuGetPackage(
 		CancellationToken cancellationToken
 	)
 	{
 		// Arrange
 		using var h = await ProjectHarness.CreateAsync(
 			"PackableProject",
-			extraProps: "<IsPackable>true</IsPackable><EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>",
+			extraProps: "<IsPackable>true</IsPackable>",
 			cancellationToken: cancellationToken
 		);
 
@@ -291,6 +292,77 @@ public sealed class AgentPackFolderTests
 			""",
 			cancellationToken
 		);
+
+		var sdkAgentsDirectory = Path.Combine(
+			h.ProjectDirectory,
+			"Sdk",
+			".agents",
+			"skills",
+			"test"
+		);
+		Directory.CreateDirectory(sdkAgentsDirectory);
+		await File.WriteAllTextAsync(
+			Path.Combine(sdkAgentsDirectory, "SKILL.md"),
+			"# Test\n",
+			cancellationToken
+		);
+
+		var sdkGitHubDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".github", "workflows");
+		Directory.CreateDirectory(sdkGitHubDirectory);
+		await File.WriteAllTextAsync(
+			Path.Combine(sdkGitHubDirectory, "ci.yml"),
+			"name: CI\n",
+			cancellationToken
+		);
+
+		var sdkBuildDirectory = Path.Combine(h.ProjectDirectory, "Sdk", "build");
+		Directory.CreateDirectory(sdkBuildDirectory);
+		await File.WriteAllTextAsync(
+			Path.Combine(sdkBuildDirectory, "Custom.targets"),
+			"<Project />\n",
+			cancellationToken
+		);
+
+		var sdkBuildTransitiveDirectory = Path.Combine(
+			h.ProjectDirectory,
+			"Sdk",
+			"buildTransitive"
+		);
+		Directory.CreateDirectory(sdkBuildTransitiveDirectory);
+		await File.WriteAllTextAsync(
+			Path.Combine(sdkBuildTransitiveDirectory, "Custom.props"),
+			"<Project />\n",
+			cancellationToken
+		);
+
+		var sdkBuildMultiTargetingDirectory = Path.Combine(
+			h.ProjectDirectory,
+			"Sdk",
+			"buildMultiTargeting"
+		);
+		Directory.CreateDirectory(sdkBuildMultiTargetingDirectory);
+		await File.WriteAllTextAsync(
+			Path.Combine(sdkBuildMultiTargetingDirectory, "Custom.props"),
+			"<Project />\n",
+			cancellationToken
+		);
+
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "Sdk", "README.md"),
+			"# README\n",
+			cancellationToken
+		);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "Sdk", "logo.svg"),
+			"<svg />\n",
+			cancellationToken
+		);
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "Sdk", "Custom.props"),
+			"<Project />\n",
+			cancellationToken
+		);
+
 		var feedDirectory = Path.Combine(h.SolutionDirectory, "feed");
 		Directory.CreateDirectory(feedDirectory);
 		var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
@@ -304,9 +376,33 @@ public sealed class AgentPackFolderTests
 		);
 
 		// Assert
-		await Assert.That(exitCode).IsNotEqualTo(0);
-		await Assert.That(stdOut + stdErr).Contains("EnabledAgentFolderInPackage is true");
-		await Assert.That(stdOut + stdErr).Contains("AgentPack folder was not found");
+		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+
+		var packagePath = Directory
+			.GetFiles(
+				feedDirectory,
+				$"PackableProject.{packageVersion}.nupkg",
+				SearchOption.TopDirectoryOnly
+			)
+			.SingleOrDefault();
+
+		await Assert
+			.That(packagePath)
+			.IsNotNull()
+			.Because("The packed project package was not created.");
+
+		using var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken);
+		var entries = zip.Entries.Select(entry => entry.FullName).ToList();
+
+		await Assert.That(entries).Contains(".agents/skills/test/SKILL.md");
+		await Assert.That(entries).Contains(".agents/skills/test/.gitignore");
+		await Assert.That(entries).Contains(".github/workflows/ci.yml");
+		await Assert.That(entries).Contains("build/Custom.targets");
+		await Assert.That(entries).Contains("buildTransitive/Custom.props");
+		await Assert.That(entries).Contains("buildMultiTargeting/Custom.props");
+		await Assert.That(entries).Contains("README.md");
+		await Assert.That(entries).Contains("logo.svg");
+		await Assert.That(entries).Contains("Sdk/Custom.props");
 	}
 
 	static async Task<(int Code, string StdOut, string StdErr)> RunProcessAsync(
