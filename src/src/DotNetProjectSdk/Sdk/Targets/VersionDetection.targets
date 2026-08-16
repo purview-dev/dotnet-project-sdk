@@ -1,7 +1,6 @@
 <Project>
 	<PropertyGroup>
-		<VersionDetectionLogEnabled Condition="'$(VersionDetectionLogEnabled)' == ''"
-			>false</VersionDetectionLogEnabled>
+		<VersionDetectionLogEnabled Condition="'$(VersionDetectionLogEnabled)' == ''">false</VersionDetectionLogEnabled>
 	</PropertyGroup>
 
 	<Target

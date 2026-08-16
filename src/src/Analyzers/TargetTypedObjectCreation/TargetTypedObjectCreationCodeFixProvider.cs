@@ -8,15 +8,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Purview.DotNetProjectSdk.Analyzers.TargetTypedObjectCreation;
 
-[ExportCodeFixProvider(
-	LanguageNames.CSharp,
-	Name = nameof(TargetTypedObjectCreationCodeFixProvider)
-)]
+[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(TargetTypedObjectCreationCodeFixProvider))]
 [Shared]
 public sealed class TargetTypedObjectCreationCodeFixProvider : CodeFixProvider
 {
-	public override ImmutableArray<string> FixableDiagnosticIds =>
-		[TargetTypedObjectCreationAnalyzer.DiagnosticId];
+	public override ImmutableArray<string> FixableDiagnosticIds => [TargetTypedObjectCreationAnalyzer.DiagnosticId];
 
 	public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
@@ -40,8 +36,7 @@ public sealed class TargetTypedObjectCreationCodeFixProvider : CodeFixProvider
 		context.RegisterCodeFix(
 			CodeAction.Create(
 				"Use explicit type and target-typed new",
-				cancellationToken =>
-					ApplyFixAsync(context.Document, declaration, cancellationToken),
+				cancellationToken => ApplyFixAsync(context.Document, declaration, cancellationToken),
 				equivalenceKey: TargetTypedObjectCreationAnalyzer.DiagnosticId
 			),
 			context.Diagnostics
@@ -54,10 +49,7 @@ public sealed class TargetTypedObjectCreationCodeFixProvider : CodeFixProvider
 		CancellationToken cancellationToken
 	)
 	{
-		if (
-			declaration.Variables[0].Initializer?.Value
-			is not ObjectCreationExpressionSyntax objectCreation
-		)
+		if (declaration.Variables[0].Initializer?.Value is not ObjectCreationExpressionSyntax objectCreation)
 			return document;
 
 		var explicitType = objectCreation.Type.WithTriviaFrom(declaration.Type);
@@ -68,12 +60,8 @@ public sealed class TargetTypedObjectCreationCodeFixProvider : CodeFixProvider
 			)
 			.WithTriviaFrom(objectCreation);
 
-		var rewrittenDeclaration = declaration
-			.ReplaceNode(objectCreation, targetTypedCreation)
-			.WithType(explicitType);
+		var rewrittenDeclaration = declaration.ReplaceNode(objectCreation, targetTypedCreation).WithType(explicitType);
 		var root = await document.GetSyntaxRootAsync(cancellationToken);
-		return root is null
-			? document
-			: document.WithSyntaxRoot(root.ReplaceNode(declaration, rewrittenDeclaration));
+		return root is null ? document : document.WithSyntaxRoot(root.ReplaceNode(declaration, rewrittenDeclaration));
 	}
 }

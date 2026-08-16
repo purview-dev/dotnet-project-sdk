@@ -44,15 +44,12 @@ static class AnalyzerTestInfrastructure
 		return new AnalyzerOptions([], provider);
 	}
 
-	sealed class InMemoryAnalyzerConfigOptions(Dictionary<string, string> values)
-		: AnalyzerConfigOptions
+	sealed class InMemoryAnalyzerConfigOptions(Dictionary<string, string> values) : AnalyzerConfigOptions
 	{
-		public override bool TryGetValue(string key, out string value) =>
-			values.TryGetValue(key, out value!);
+		public override bool TryGetValue(string key, out string value) => values.TryGetValue(key, out value!);
 	}
 
-	sealed class InMemoryAnalyzerConfigOptionsProvider(AnalyzerConfigOptions options)
-		: AnalyzerConfigOptionsProvider
+	sealed class InMemoryAnalyzerConfigOptionsProvider(AnalyzerConfigOptions options) : AnalyzerConfigOptionsProvider
 	{
 		public override AnalyzerConfigOptions GlobalOptions => options;
 

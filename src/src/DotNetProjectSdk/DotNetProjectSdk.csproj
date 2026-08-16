@@ -22,6 +22,7 @@
 		<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>
 		<!-- No compiled output, so no symbol package is produced -->
 		<IncludeSymbols>false</IncludeSymbols>
+		<IncludeSource>false</IncludeSource>
 		<!-- This is an MSBuild SDK package, not a standard .NET project; disable auto Sdk/ packing. -->
 		<PurviewAutoSdkPack>false</PurviewAutoSdkPack>
 		<!-- NU5128: expected for MSBuildSdk packages — no lib/ref assemblies by design -->
@@ -32,34 +33,15 @@
 		<AutoIncludeUsings>false</AutoIncludeUsings>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<ProjectSdkSourceGeneratorProject>$(MSBuildThisFileDirectory)..\Analyzers\Analyzers.csproj</ProjectSdkSourceGeneratorProject>
-		<ProjectSdkSourceGeneratorTargetFramework>netstandard2.0</ProjectSdkSourceGeneratorTargetFramework>
-		<ProjectSdkSourceGeneratorAssembly>$(MSBuildThisFileDirectory)..\Analyzers\bin\$(Configuration)\$(ProjectSdkSourceGeneratorTargetFramework)\Purview.DotNetProjectSdk.Analyzers.dll</ProjectSdkSourceGeneratorAssembly>
-		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeProjectSdkSourceGenerator</TargetsForTfmSpecificContentInPackage>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<ProjectReference
-			Include="$(ProjectSdkSourceGeneratorProject)"
+			Include="..\Analyzers\Analyzers.csproj"
 			PrivateAssets="all"
 			ReferenceOutputAssembly="false"
 			OutputItemType="Analyzer"
+			Targets="GetSourceGeneratorAnalyzerFiles"
 		/>
 	</ItemGroup>
-
-	<Target Name="IncludeProjectSdkSourceGenerator" DependsOnTargets="Build">
-		<Error
-			Condition="!Exists('$(ProjectSdkSourceGeneratorAssembly)')"
-			Text="The Project SDK source generator was not found at '$(ProjectSdkSourceGeneratorAssembly)'."
-		/>
-
-		<ItemGroup>
-			<TfmSpecificPackageFile Include="$(ProjectSdkSourceGeneratorAssembly)">
-				<PackagePath>analyzers/dotnet/cs/</PackagePath>
-			</TfmSpecificPackageFile>
-		</ItemGroup>
-	</Target>
 
 	<!-- Pack the Sdk/ folder contents into the correct locations in the NuGet package.
 	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
@@ -109,11 +91,7 @@
 		/>
 
 		<None Include="$(MSBuildThisFileDirectory)../../../README.md" Pack="true" PackagePath="/" />
-		<None
-			Include="$(MSBuildThisFileDirectory)../../../LICENSE.md"
-			Pack="true"
-			PackagePath="/"
-		/>
+		<None Include="$(MSBuildThisFileDirectory)../../../LICENSE.md" Pack="true" PackagePath="/" />
 		<None
 			Include="$(MSBuildThisFileDirectory)../../../assets/images/purview-logo.jpg"
 			Pack="true"

@@ -14,8 +14,7 @@ public sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 		"EditorBrowsable(Never) members do not require XML docs."
 	);
 
-	public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions =>
-		[SuppressMissingXmlDocs];
+	public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions => [SuppressMissingXmlDocs];
 
 	public override void ReportSuppressions(SuppressionAnalysisContext context)
 	{
@@ -43,10 +42,7 @@ public sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 	{
 		foreach (var attribute in symbol.GetAttributes())
 		{
-			if (
-				attribute.AttributeClass?.ToDisplayString()
-				!= typeof(EditorBrowsableAttribute).FullName
-			)
+			if (attribute.AttributeClass?.ToDisplayString() != typeof(EditorBrowsableAttribute).FullName)
 			{
 				continue;
 			}

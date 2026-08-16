@@ -14,8 +14,7 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 {
 	const string ProjectDirPropertyKey = "build_property.ProjectDir";
 
-	public override ImmutableArray<string> FixableDiagnosticIds =>
-		[ExtensionsNamespaceAnalyzer.DiagnosticId];
+	public override ImmutableArray<string> FixableDiagnosticIds => [ExtensionsNamespaceAnalyzer.DiagnosticId];
 
 	public override FixAllProvider GetFixAllProvider()
 	{
@@ -86,9 +85,7 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 
 		var rewrittenNamespace = namespaceDeclaration switch
 		{
-			FileScopedNamespaceDeclarationSyntax fileScoped => fileScoped.WithName(
-				expectedNamespaceName
-			),
+			FileScopedNamespaceDeclarationSyntax fileScoped => fileScoped.WithName(expectedNamespaceName),
 			NamespaceDeclarationSyntax blockScoped => blockScoped.WithName(expectedNamespaceName),
 			_ => namespaceDeclaration,
 		};
@@ -99,9 +96,7 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 
 	static bool TryGetProjectDir(Document document, SyntaxTree syntaxTree, out string projectDir)
 	{
-		var options = document.Project.AnalyzerOptions.AnalyzerConfigOptionsProvider.GetOptions(
-			syntaxTree
-		);
+		var options = document.Project.AnalyzerOptions.AnalyzerConfigOptionsProvider.GetOptions(syntaxTree);
 
 		if (
 			options.TryGetValue(ProjectDirPropertyKey, out var configuredValue)
@@ -116,19 +111,14 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 		return false;
 	}
 
-	static SyntaxNode RemoveNamespaceDeclaration(
-		SyntaxNode root,
-		BaseNamespaceDeclarationSyntax namespaceDeclaration
-	)
+	static SyntaxNode RemoveNamespaceDeclaration(SyntaxNode root, BaseNamespaceDeclarationSyntax namespaceDeclaration)
 	{
 		if (namespaceDeclaration.Parent is CompilationUnitSyntax compilationUnit)
 		{
 			var index = compilationUnit.Members.IndexOf(namespaceDeclaration);
 			if (index >= 0)
 			{
-				var members = compilationUnit
-					.Members.RemoveAt(index)
-					.InsertRange(index, namespaceDeclaration.Members);
+				var members = compilationUnit.Members.RemoveAt(index).InsertRange(index, namespaceDeclaration.Members);
 				return compilationUnit.WithMembers(members);
 			}
 		}
@@ -138,9 +128,7 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 			var index = parentNamespace.Members.IndexOf(namespaceDeclaration);
 			if (index >= 0)
 			{
-				var members = parentNamespace
-					.Members.RemoveAt(index)
-					.InsertRange(index, namespaceDeclaration.Members);
+				var members = parentNamespace.Members.RemoveAt(index).InsertRange(index, namespaceDeclaration.Members);
 				var rewrittenParent = parentNamespace.WithMembers(members);
 				return root.ReplaceNode(parentNamespace, rewrittenParent);
 			}

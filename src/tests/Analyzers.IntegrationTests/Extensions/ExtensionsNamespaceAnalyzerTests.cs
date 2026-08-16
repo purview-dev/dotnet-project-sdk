@@ -20,18 +20,14 @@ public sealed class ExtensionsNamespaceAnalyzerTests
 	)
 	{
 		var compilation = AnalyzerTestInfrastructure.CreateCompilation(source, filePath);
-		var analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(
-			new ExtensionsNamespaceAnalyzer()
-		);
+		var analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(new ExtensionsNamespaceAnalyzer());
 		var options = AnalyzerTestInfrastructure.CreateAnalyzerOptions();
 		var compilationWithAnalyzers = compilation.WithAnalyzers(analyzers, options);
 		return await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
 	}
 
 	[Test]
-	public async Task Analyzer_NoDiagnostic_WhenNamespaceMatchesExtensionsFolder(
-		CancellationToken cancellationToken
-	)
+	public async Task Analyzer_NoDiagnostic_WhenNamespaceMatchesExtensionsFolder(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace System
@@ -46,10 +42,7 @@ public sealed class ExtensionsNamespaceAnalyzerTests
 			cancellationToken
 		);
 
-		Diagnostic[] matches =
-		[
-			.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId),
-		];
+		Diagnostic[] matches = [.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId)];
 		await Assert.That(matches.Length).IsEqualTo(0);
 	}
 
@@ -71,10 +64,7 @@ public sealed class ExtensionsNamespaceAnalyzerTests
 			cancellationToken
 		);
 
-		Diagnostic[] matches =
-		[
-			.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId),
-		];
+		Diagnostic[] matches = [.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId)];
 		await Assert.That(matches).HasSingleItem();
 		await Assert
 			.That(matches[0].GetMessage(CultureInfo.InvariantCulture))
@@ -111,23 +101,14 @@ public sealed class ExtensionsNamespaceAnalyzerTests
 
 		var diagnostics = await AnalyzeAsync(fileName, source, cancellationToken);
 
-		Diagnostic[] matches =
-		[
-			.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId),
-		];
+		Diagnostic[] matches = [.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId)];
 		await Assert.That(matches).HasSingleItem();
-		await Assert
-			.That(matches[0].GetMessage(CultureInfo.InvariantCulture))
-			.Contains(wrongNamespace);
-		await Assert
-			.That(matches[0].GetMessage(CultureInfo.InvariantCulture))
-			.Contains(expectedNamespace);
+		await Assert.That(matches[0].GetMessage(CultureInfo.InvariantCulture)).Contains(wrongNamespace);
+		await Assert.That(matches[0].GetMessage(CultureInfo.InvariantCulture)).Contains(expectedNamespace);
 	}
 
 	[Test]
-	public async Task Analyzer_NoDiagnostic_ForFileAtProjectRoot(
-		CancellationToken cancellationToken
-	)
+	public async Task Analyzer_NoDiagnostic_ForFileAtProjectRoot(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace An.Example.Project
@@ -136,22 +117,13 @@ public sealed class ExtensionsNamespaceAnalyzerTests
 			}
 			""";
 
-		var diagnostics = await AnalyzeAsync(
-			@"C:\FakeProject\Program.cs",
-			source,
-			cancellationToken
-		);
-		Diagnostic[] matches =
-		[
-			.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId),
-		];
+		var diagnostics = await AnalyzeAsync(@"C:\FakeProject\Program.cs", source, cancellationToken);
+		Diagnostic[] matches = [.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId)];
 		await Assert.That(matches.Length).IsEqualTo(0);
 	}
 
 	[Test]
-	public async Task Analyzer_NoDiagnostic_ForNestedExtensionsFolder(
-		CancellationToken cancellationToken
-	)
+	public async Task Analyzer_NoDiagnostic_ForNestedExtensionsFolder(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace An.Example.Project.Services.Extensions
@@ -165,17 +137,12 @@ public sealed class ExtensionsNamespaceAnalyzerTests
 			source,
 			cancellationToken
 		);
-		Diagnostic[] matches =
-		[
-			.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId),
-		];
+		Diagnostic[] matches = [.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId)];
 		await Assert.That(matches.Length).IsEqualTo(0);
 	}
 
 	[Test]
-	public async Task Analyzer_RaisesDiagnostic_ForFileScopedNamespace(
-		CancellationToken cancellationToken
-	)
+	public async Task Analyzer_RaisesDiagnostic_ForFileScopedNamespace(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace An.Example.Project.Extensions.System;
@@ -189,10 +156,7 @@ public sealed class ExtensionsNamespaceAnalyzerTests
 			cancellationToken
 		);
 
-		Diagnostic[] matches =
-		[
-			.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId),
-		];
+		Diagnostic[] matches = [.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId)];
 		await Assert.That(matches).HasSingleItem();
 		await Assert
 			.That(matches[0].GetMessage(CultureInfo.InvariantCulture))
@@ -201,24 +165,15 @@ public sealed class ExtensionsNamespaceAnalyzerTests
 	}
 
 	[Test]
-	public async Task Analyzer_NoDiagnostic_ForTopLevelStatements(
-		CancellationToken cancellationToken
-	)
+	public async Task Analyzer_NoDiagnostic_ForTopLevelStatements(CancellationToken cancellationToken)
 	{
 		const string source = """
 			using System;
 			Console.WriteLine("hello");
 			""";
 
-		var diagnostics = await AnalyzeAsync(
-			@"C:\FakeProject\Extensions\System\Program.cs",
-			source,
-			cancellationToken
-		);
-		Diagnostic[] matches =
-		[
-			.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId),
-		];
+		var diagnostics = await AnalyzeAsync(@"C:\FakeProject\Extensions\System\Program.cs", source, cancellationToken);
+		Diagnostic[] matches = [.. diagnostics.Where(d => d.Id == ExtensionsNamespaceAnalyzer.DiagnosticId)];
 		await Assert.That(matches.Length).IsEqualTo(0);
 	}
 }

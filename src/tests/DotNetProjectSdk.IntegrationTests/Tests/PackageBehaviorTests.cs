@@ -12,13 +12,8 @@ public sealed class PackagebehaviourTests
 	public async Task Library_IsPackable_False_ByDefault(CancellationToken cancellationToken)
 	{
 		// The SDK sets IsPackable=false by default; projects must opt in explicitly.
-		using var h = await ProjectHarness.CreateAsync(
-			"MyLibrary",
-			cancellationToken: cancellationToken
-		);
-		await Assert
-			.That(await h.GetPropertyAsync("IsPackable", cancellationToken))
-			.IsEqualTo("false");
+		using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("IsPackable", cancellationToken)).IsEqualTo("false");
 	}
 
 	[Test]
@@ -29,33 +24,21 @@ public sealed class PackagebehaviourTests
 			extraProps: "<IsPackable>true</IsPackable>",
 			cancellationToken: cancellationToken
 		);
-		await Assert
-			.That(await h.GetPropertyAsync("IsPackable", cancellationToken))
-			.IsEqualTo("true");
+		await Assert.That(await h.GetPropertyAsync("IsPackable", cancellationToken)).IsEqualTo("true");
 	}
 
 	[Test]
 	public async Task TestProject_IsPackable_False(CancellationToken cancellationToken)
 	{
-		using var h = await ProjectHarness.CreateAsync(
-			"MyApp.UnitTests",
-			cancellationToken: cancellationToken
-		);
-		await Assert
-			.That(await h.GetPropertyAsync("IsPackable", cancellationToken))
-			.IsEqualTo("false");
+		using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("IsPackable", cancellationToken)).IsEqualTo("false");
 	}
 
 	[Test]
 	public async Task SharedTestingProject_IsPackable_False(CancellationToken cancellationToken)
 	{
-		using var h = await ProjectHarness.CreateAsync(
-			"SharedTestingFramework",
-			cancellationToken: cancellationToken
-		);
-		await Assert
-			.That(await h.GetPropertyAsync("IsPackable", cancellationToken))
-			.IsEqualTo("false");
+		using var h = await ProjectHarness.CreateAsync("SharedTestingFramework", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("IsPackable", cancellationToken)).IsEqualTo("false");
 	}
 
 	[Test]
@@ -66,9 +49,7 @@ public sealed class PackagebehaviourTests
 			extraProps: "<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>",
 			cancellationToken: cancellationToken
 		);
-		await Assert
-			.That(await h.GetPropertyAsync("ExcludePurviewTelemetry", cancellationToken))
-			.IsEqualTo("true");
+		await Assert.That(await h.GetPropertyAsync("ExcludePurviewTelemetry", cancellationToken)).IsEqualTo("true");
 	}
 
 	[Test]
@@ -79,8 +60,6 @@ public sealed class PackagebehaviourTests
 			extraProps: "<ExcludeMSTelemetryExtension>true</ExcludeMSTelemetryExtension>",
 			cancellationToken: cancellationToken
 		);
-		await Assert
-			.That(await h.GetPropertyAsync("ExcludeMSTelemetryExtension", cancellationToken))
-			.IsEqualTo("true");
+		await Assert.That(await h.GetPropertyAsync("ExcludeMSTelemetryExtension", cancellationToken)).IsEqualTo("true");
 	}
 }

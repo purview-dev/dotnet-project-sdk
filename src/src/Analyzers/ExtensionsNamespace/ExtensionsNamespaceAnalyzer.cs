@@ -59,10 +59,7 @@ public sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 		// only reports diagnostics for files scoped to the root Extensions directory.
 		TryGetBuildProperty(context, RootNamespacePropertyKey, out _);
 
-		var expectedNamespace = ExtensionsNamespaceHelper.ComputeExpectedNamespace(
-			projectDir,
-			filePath
-		);
+		var expectedNamespace = ExtensionsNamespaceHelper.ComputeExpectedNamespace(projectDir, filePath);
 		if (expectedNamespace is null)
 		{
 			return;
@@ -86,14 +83,9 @@ public sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 
 	static bool TryGetBuildProperty(SyntaxNodeAnalysisContext context, string key, out string value)
 	{
-		var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(
-			context.Node.SyntaxTree
-		);
+		var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(context.Node.SyntaxTree);
 
-		if (
-			options.TryGetValue(key, out var configuredValue)
-			&& !string.IsNullOrWhiteSpace(configuredValue)
-		)
+		if (options.TryGetValue(key, out var configuredValue) && !string.IsNullOrWhiteSpace(configuredValue))
 		{
 			value = configuredValue;
 			return true;

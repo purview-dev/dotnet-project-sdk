@@ -236,7 +236,9 @@ Version detection logging is disabled by default. Set `VersionDetectionLogEnable
 | -- | -- | -- |
 | `NamespacePrefix` | *(required)* | Root namespace prefix, e.g. `Acme`. Results in `Acme.MyProject`. |
 | `DisableNamespacePrefixCheck` | `false` | Set to `true` to suppress the build error for missing `NamespacePrefix`. |
-| `TargetFramework` | `net10.0` | Override the default TFM per-project or globally. |
+| `TargetFramework` | `net10.0` | Override the default TFM per-project or globally. Defaults to `netstandard2.0` for projects declaring `IsRoslynComponent=true`. |
+| `IsRoslynComponent` | `false` | When explicitly `true`, applies source-generator defaults for a single `netstandard2.0` target, analyzer rules, SourceLink, generated-file output, dependency output, symbol packaging, telemetry exclusion, and package build output. |
+| `PackProjectReferencedSourceGenerators` | `true` | Automatically packs analyzer `ProjectReference` outputs and their runtime dependencies under `analyzers/dotnet/cs/`. Set to `false` to opt out; set `Pack="false"` on an individual reference to exclude only that generator. |
 | `SourceLinkPackageName` | `Microsoft.SourceLink.GitHub` | SourceLink provider. Set to `Microsoft.SourceLink.AzureDevOps.Git` for ADO repos. |
 | `DisableSourceLink` | `false` | Set to `true` to stop the SDK from adding the configured SourceLink package automatically. |
 | `EnableAssemblyNameGeneration` | `false` | When `true`, the SDK derives `AssemblyName` (and `PackageId`) from `$(PurviewLogicalProjectName)` — i.e. `$(NamespacePrefix).$(ProjectName)` with deduplication logic. When `false` (default), standard .NET behaviour applies (`$(MSBuildProjectName)`). Explicit `<AssemblyName>` in a `.csproj` always takes precedence. |

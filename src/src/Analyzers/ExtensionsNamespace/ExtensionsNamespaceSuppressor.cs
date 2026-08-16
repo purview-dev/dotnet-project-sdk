@@ -33,27 +33,17 @@ public sealed class ExtensionsNamespaceSuppressor : DiagnosticSuppressor
 				continue;
 			}
 
-			var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(
-				location.SourceTree
-			);
+			var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(location.SourceTree);
 			if (
-				!options.TryGetValue(ProjectDirPropertyKey, out var projectDir)
-				|| string.IsNullOrWhiteSpace(projectDir)
+				!options.TryGetValue(ProjectDirPropertyKey, out var projectDir) || string.IsNullOrWhiteSpace(projectDir)
 			)
 			{
 				continue;
 			}
 
-			if (
-				ExtensionsNamespaceHelper.IsInExtensionsRootScope(
-					projectDir,
-					location.SourceTree.FilePath
-				)
-			)
+			if (ExtensionsNamespaceHelper.IsInExtensionsRootScope(projectDir, location.SourceTree.FilePath))
 			{
-				context.ReportSuppression(
-					Suppression.Create(SuppressIde0130ForExtensionsNamespaceRule, diagnostic)
-				);
+				context.ReportSuppression(Suppression.Create(SuppressIde0130ForExtensionsNamespaceRule, diagnostic));
 			}
 		}
 	}

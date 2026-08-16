@@ -11,14 +11,9 @@ namespace Purview.DotNetProjectSdk.Tests;
 public sealed class SdkPackageConsumptionTests
 {
 	[Test]
-	public async Task PackedSdk_Exposes_EditorConfig_To_NewConsumerProject(
-		CancellationToken cancellationToken
-	)
+	public async Task PackedSdk_Exposes_EditorConfig_To_NewConsumerProject(CancellationToken cancellationToken)
 	{
-		var tempRoot = Path.Combine(
-			Path.GetTempPath(),
-			$"PurviewSdkPackageConsumption-{Guid.NewGuid():N}"
-		);
+		var tempRoot = Path.Combine(Path.GetTempPath(), $"PurviewSdkPackageConsumption-{Guid.NewGuid():N}");
 		var feedDirectory = Path.Combine(tempRoot, "feed");
 		var consumerDirectory = Path.Combine(tempRoot, "consumer");
 		var consumerSrcDirectory = Path.Combine(consumerDirectory, "src");
@@ -30,16 +25,8 @@ public sealed class SdkPackageConsumptionTests
 		try
 		{
 			var packageVersion = await PackSdkAsync(feedDirectory, cancellationToken);
-			await VerifyPackageContainsEditorConfigAsync(
-				feedDirectory,
-				packageVersion,
-				cancellationToken
-			);
-			await SetupConsumerProjectAsync(
-				consumerDirectory,
-				consumerSrcDirectory,
-				cancellationToken
-			);
+			await VerifyPackageContainsEditorConfigAsync(feedDirectory, packageVersion, cancellationToken);
+			await SetupConsumerProjectAsync(consumerDirectory, consumerSrcDirectory, cancellationToken);
 			await WriteConfigurationFilesAsync(
 				consumerDirectory,
 				consumerSrcDirectory,
@@ -57,14 +44,9 @@ public sealed class SdkPackageConsumptionTests
 		}
 	}
 
-	static async Task<string> PackSdkAsync(
-		string feedDirectory,
-		CancellationToken cancellationToken
-	)
+	static async Task<string> PackSdkAsync(string feedDirectory, CancellationToken cancellationToken)
 	{
-		var sdkProjectPath = Path.GetFullPath(
-			Path.Combine(SdkPaths.SdkDirectory, "..", "DotNetProjectSdk.csproj")
-		);
+		var sdkProjectPath = Path.GetFullPath(Path.Combine(SdkPaths.SdkDirectory, "..", "DotNetProjectSdk.csproj"));
 		var sdkProjectDirectory =
 			Path.GetDirectoryName(sdkProjectPath)
 			?? throw new InvalidOperationException("Unable to determine SDK project directory.");
@@ -88,11 +70,7 @@ public sealed class SdkPackageConsumptionTests
 	)
 	{
 		var packagePath = Directory
-			.GetFiles(
-				feedDirectory,
-				$"Purview.DotNetProjectSdk.{packageVersion}.nupkg",
-				SearchOption.TopDirectoryOnly
-			)
+			.GetFiles(feedDirectory, $"Purview.DotNetProjectSdk.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
 			.SingleOrDefault();
 
 		await Assert
@@ -123,12 +101,7 @@ public sealed class SdkPackageConsumptionTests
 		);
 		await Assert.That(code).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
-		(code, stdOut, stdErr) = await RunProcessAsync(
-			"git",
-			"init",
-			consumerDirectory,
-			cancellationToken
-		);
+		(code, stdOut, stdErr) = await RunProcessAsync("git", "init", consumerDirectory, cancellationToken);
 		await Assert.That(code).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
@@ -240,10 +213,7 @@ public sealed class SdkPackageConsumptionTests
 		);
 	}
 
-	static async Task VerifyEditorConfigIntegrationAsync(
-		string consumerDirectory,
-		CancellationToken cancellationToken
-	)
+	static async Task VerifyEditorConfigIntegrationAsync(string consumerDirectory, CancellationToken cancellationToken)
 	{
 		var nugetConfigPath = Path.Combine(consumerDirectory, "NuGet.Config");
 
@@ -287,11 +257,7 @@ public sealed class SdkPackageConsumptionTests
 		await Assert
 			.That(
 				itemPaths.Any(path =>
-					string.Equals(
-						path,
-						normalizedEditorConfigPath,
-						StringComparison.OrdinalIgnoreCase
-					)
+					string.Equals(path, normalizedEditorConfigPath, StringComparison.OrdinalIgnoreCase)
 				)
 			)
 			.IsTrue();
@@ -306,10 +272,7 @@ public sealed class SdkPackageConsumptionTests
 		await Assert.That(code).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 	}
 
-	static async Task VerifyAdditionalFeaturesAsync(
-		string consumerDirectory,
-		CancellationToken cancellationToken
-	)
+	static async Task VerifyAdditionalFeaturesAsync(string consumerDirectory, CancellationToken cancellationToken)
 	{
 		var nugetConfigPath = Path.Combine(consumerDirectory, "NuGet.Config");
 
@@ -347,9 +310,7 @@ public sealed class SdkPackageConsumptionTests
 		await Assert
 			.That(File.Exists(repositoryEditorConfigPath))
 			.IsTrue()
-			.Because(
-				$"Repository EditorConfig file not found at path: {repositoryEditorConfigPath}"
-			);
+			.Because($"Repository EditorConfig file not found at path: {repositoryEditorConfigPath}");
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
@@ -374,10 +335,7 @@ public sealed class SdkPackageConsumptionTests
 			.IsTrue()
 			.Because($"Repository GlobalJson file not found at path: {repositoryGlobalJsonPath}");
 
-		var repositoryGlobalJsonContent = await File.ReadAllTextAsync(
-			repositoryGlobalJsonPath,
-			cancellationToken
-		);
+		var repositoryGlobalJsonContent = await File.ReadAllTextAsync(repositoryGlobalJsonPath, cancellationToken);
 		await Assert
 			.That(repositoryGlobalJsonContent)
 			.Contains("\"runner\": \"Microsoft.Testing.Platform\"")

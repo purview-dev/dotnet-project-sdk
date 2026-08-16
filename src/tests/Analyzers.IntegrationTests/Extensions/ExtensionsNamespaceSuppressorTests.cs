@@ -30,9 +30,7 @@ public sealed class ExtensionsNamespaceSuppressorTests
 	}
 
 	[Test]
-	public async Task Suppressor_SuppressesIde0130_ForFileUnderExtensionsRoot(
-		CancellationToken cancellationToken
-	)
+	public async Task Suppressor_SuppressesIde0130_ForFileUnderExtensionsRoot(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace System
@@ -63,11 +61,7 @@ public sealed class ExtensionsNamespaceSuppressorTests
 			}
 			""";
 
-		var diagnostics = await AnalyzeAsync(
-			@"C:\FakeProject\Services\MyService.cs",
-			source,
-			cancellationToken
-		);
+		var diagnostics = await AnalyzeAsync(@"C:\FakeProject\Services\MyService.cs", source, cancellationToken);
 
 		Diagnostic[] ide0130Diagnostics = [.. diagnostics.Where(d => d.Id == "IDE0130")];
 		await Assert.That(ide0130Diagnostics).HasSingleItem();
@@ -101,16 +95,13 @@ public sealed class ExtensionsNamespaceSuppressorTests
 		static void AnalyzeNamespace(SyntaxNodeAnalysisContext context)
 		{
 			if (
-				context.Node
-				is not Microsoft.CodeAnalysis.CSharp.Syntax.NamespaceDeclarationSyntax namespaceDeclaration
+				context.Node is not Microsoft.CodeAnalysis.CSharp.Syntax.NamespaceDeclarationSyntax namespaceDeclaration
 			)
 			{
 				return;
 			}
 
-			context.ReportDiagnostic(
-				Diagnostic.Create(Rule, namespaceDeclaration.Name.GetLocation())
-			);
+			context.ReportDiagnostic(Diagnostic.Create(Rule, namespaceDeclaration.Name.GetLocation()));
 		}
 	}
 }

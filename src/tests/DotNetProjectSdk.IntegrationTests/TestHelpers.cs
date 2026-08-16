@@ -29,10 +29,7 @@ static class TestHelpers
 	/// Helper to create a complete project structure with SDK boilerplate,
 	/// then evaluate the project to get items.
 	/// </summary>
-	public static Task<(
-		ProjectHarness Harness,
-		IReadOnlyList<string> ProjectReferences
-	)> CreateProjectStructureAsync(
+	public static Task<(ProjectHarness Harness, IReadOnlyList<string> ProjectReferences)> CreateProjectStructureAsync(
 		string projectName,
 		Action<string>? createSiblings = null,
 		Func<string>? additionalProjectContent = null,
@@ -63,11 +60,7 @@ static class TestHelpers
 		CancellationToken cancellationToken = default
 	)
 	{
-		var workDir = Path.Combine(
-			Path.GetTempPath(),
-			"PurviewSdkTests",
-			Guid.NewGuid().ToString("N")
-		);
+		var workDir = Path.Combine(Path.GetTempPath(), "PurviewSdkTests", Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(workDir);
 
 		// Create the main project directory
@@ -132,10 +125,7 @@ static class TestHelpers
 
 		// Create harness manually to use our custom setup
 		var harness = new ProjectHarness(workDir, projectName);
-		var projectReferences = await harness.GetItemIdentitiesAsync(
-			"ProjectReference",
-			cancellationToken
-		);
+		var projectReferences = await harness.GetItemIdentitiesAsync("ProjectReference", cancellationToken);
 
 		return (harness, projectReferences);
 	}

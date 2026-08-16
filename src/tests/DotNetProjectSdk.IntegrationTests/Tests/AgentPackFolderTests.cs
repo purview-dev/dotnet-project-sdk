@@ -10,13 +10,63 @@ namespace Purview.DotNetProjectSdk.Tests;
 public sealed class AgentPackFolderTests
 {
 	[Test]
-	public async Task PurviewAutoSdkPack_ExposesSdkDotAgentsInProjectTree(
-		CancellationToken cancellationToken
-	)
+	public async Task PurviewAutoSdkPack_PacksPhysicalAndLinkedRootAssets(CancellationToken cancellationToken)
 	{
-		var sdkProjectPath = Path.GetFullPath(
-			Path.Combine(SdkPaths.SdkDirectory, "..", "DotNetProjectSdk.csproj")
+		using var h = await ProjectHarness.CreateAsync(
+			"PackableProject",
+			extraProps: """
+			<TargetFramework></TargetFramework>
+			<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+			<IsPackable>true</IsPackable>
+			<DisableSourceLink>true</DisableSourceLink>
+			<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
+			<PackageReadmeFile>README.md</PackageReadmeFile>
+			<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+			<PackageIcon>purview-logo.jpg</PackageIcon>
+			""",
+			extraItems: """
+			<None Include="..\LICENSE.md" Link="Sdk\LICENSE.md" />
+			<None Include="..\purview-logo.jpg" Link="Sdk\purview-logo.jpg" />
+			""",
+			cancellationToken: cancellationToken
 		);
+
+		Directory.CreateDirectory(Path.Combine(h.ProjectDirectory, "Sdk"));
+		await File.WriteAllTextAsync(
+			Path.Combine(h.ProjectDirectory, "Sdk", "README.md"),
+			"# Package",
+			cancellationToken
+		);
+		await File.WriteAllTextAsync(Path.Combine(h.SolutionDirectory, "LICENSE.md"), "License", cancellationToken);
+		await File.WriteAllBytesAsync(
+			Path.Combine(h.SolutionDirectory, "purview-logo.jpg"),
+			[0xFF, 0xD8, 0xFF, 0xD9],
+			cancellationToken
+		);
+
+		var feedDirectory = Path.Combine(h.SolutionDirectory, "feed");
+		var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
+		var (exitCode, stdOut, stdErr) = await RunProcessAsync(
+			"dotnet",
+			$"pack \"{h.ProjectFilePath}\" -c Release -o \"{feedDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion}",
+			h.SolutionDirectory,
+			cancellationToken
+		);
+
+		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+		await Assert.That(stdOut + stdErr).DoesNotContain("NU5118");
+		var packagePath = Directory.GetFiles(feedDirectory, "PackableProject.*.nupkg").Single();
+		using var package = await ZipFile.OpenReadAsync(packagePath, cancellationToken);
+		var entries = package.Entries.Select(entry => entry.FullName).ToList();
+		await Assert.That(entries).Contains("README.md");
+		await Assert.That(entries).Contains("LICENSE.md");
+		await Assert.That(entries).Contains("purview-logo.jpg");
+	}
+
+	[Test]
+	public async Task PurviewAutoSdkPack_ExposesSdkDotAgentsInProjectTree(CancellationToken cancellationToken)
+	{
+		var sdkProjectPath = Path.GetFullPath(Path.Combine(SdkPaths.SdkDirectory, "..", "DotNetProjectSdk.csproj"));
 
 		var (exitCode, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
@@ -44,11 +94,7 @@ public sealed class AgentPackFolderTests
 		);
 
 		var agentEntry = noneItems.FirstOrDefault(item =>
-			string.Equals(
-				item.GetProperty("FullPath").GetString(),
-				expectedPath,
-				StringComparison.OrdinalIgnoreCase
-			)
+			string.Equals(item.GetProperty("FullPath").GetString(), expectedPath, StringComparison.OrdinalIgnoreCase)
 		);
 
 		await Assert.That(agentEntry.ValueKind).IsEqualTo(JsonValueKind.Object);
@@ -58,9 +104,7 @@ public sealed class AgentPackFolderTests
 	}
 
 	[Test]
-	public async Task PurviewAutoSdkPack_PacksSdkDotAgentsSkillsIntoNuGetPackage(
-		CancellationToken cancellationToken
-	)
+	public async Task PurviewAutoSdkPack_PacksSdkDotAgentsSkillsIntoNuGetPackage(CancellationToken cancellationToken)
 	{
 		// Arrange
 		using var h = await ProjectHarness.CreateAsync(
@@ -69,11 +113,7 @@ public sealed class AgentPackFolderTests
 			cancellationToken: cancellationToken
 		);
 
-		await File.WriteAllTextAsync(
-			Path.Combine(h.SolutionDirectory, ".git"),
-			string.Empty,
-			cancellationToken
-		);
+		await File.WriteAllTextAsync(Path.Combine(h.SolutionDirectory, ".git"), string.Empty, cancellationToken);
 		await File.WriteAllTextAsync(
 			Path.Combine(h.SolutionDirectory, "package.json"),
 			/*lang=json,strict*/
@@ -97,13 +137,7 @@ public sealed class AgentPackFolderTests
 			cancellationToken
 		);
 
-		var agentPackSkillsDirectory = Path.Combine(
-			h.ProjectDirectory,
-			"Sdk",
-			".agents",
-			"skills",
-			"observability"
-		);
+		var agentPackSkillsDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".agents", "skills", "observability");
 		Directory.CreateDirectory(agentPackSkillsDirectory);
 		await File.WriteAllTextAsync(
 			Path.Combine(agentPackSkillsDirectory, "SKILL.md"),
@@ -127,17 +161,10 @@ public sealed class AgentPackFolderTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		var packagePath = Directory
-			.GetFiles(
-				feedDirectory,
-				$"PackableProject.{packageVersion}.nupkg",
-				SearchOption.TopDirectoryOnly
-			)
+			.GetFiles(feedDirectory, $"PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
 			.SingleOrDefault();
 
-		await Assert
-			.That(packagePath)
-			.IsNotNull()
-			.Because("The packed project package was not created.");
+		await Assert.That(packagePath).IsNotNull().Because("The packed project package was not created.");
 
 		using var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken);
 		var entries = zip.Entries.Select(entry => entry.FullName).ToList();
@@ -147,14 +174,10 @@ public sealed class AgentPackFolderTests
 			.Contains(".agents/skills/observability/.gitignore")
 			.Because($"{stdOut}\n{stdErr}\n--- package entries ---\n{string.Join("\n", entries)}");
 
-		var gitIgnoreEntry = zip.Entries.Single(entry =>
-			entry.FullName == ".agents/skills/observability/.gitignore"
-		);
+		var gitIgnoreEntry = zip.Entries.Single(entry => entry.FullName == ".agents/skills/observability/.gitignore");
 		using var gitIgnoreStream = await gitIgnoreEntry.OpenAsync(cancellationToken);
 		using var reader = new StreamReader(gitIgnoreStream);
-		var gitIgnoreContent = (await reader.ReadToEndAsync(cancellationToken)).ReplaceLineEndings(
-			"\n"
-		);
+		var gitIgnoreContent = (await reader.ReadToEndAsync(cancellationToken)).ReplaceLineEndings("\n");
 		await Assert
 			.That(gitIgnoreContent)
 			.IsEqualTo(
@@ -174,11 +197,7 @@ public sealed class AgentPackFolderTests
 			cancellationToken: cancellationToken
 		);
 
-		await File.WriteAllTextAsync(
-			Path.Combine(h.SolutionDirectory, ".git"),
-			string.Empty,
-			cancellationToken
-		);
+		await File.WriteAllTextAsync(Path.Combine(h.SolutionDirectory, ".git"), string.Empty, cancellationToken);
 		await File.WriteAllTextAsync(
 			Path.Combine(h.SolutionDirectory, "package.json"),
 			/*lang=json,strict*/
@@ -202,13 +221,7 @@ public sealed class AgentPackFolderTests
 			cancellationToken
 		);
 
-		var agentPackPromptsDirectory = Path.Combine(
-			h.ProjectDirectory,
-			"Sdk",
-			".agents",
-			"prompts",
-			"example"
-		);
+		var agentPackPromptsDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".agents", "prompts", "example");
 		Directory.CreateDirectory(agentPackPromptsDirectory);
 		await File.WriteAllTextAsync(
 			Path.Combine(agentPackPromptsDirectory, "PROMPT.md"),
@@ -232,17 +245,10 @@ public sealed class AgentPackFolderTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		var packagePath = Directory
-			.GetFiles(
-				feedDirectory,
-				$"PackableProject.{packageVersion}.nupkg",
-				SearchOption.TopDirectoryOnly
-			)
+			.GetFiles(feedDirectory, $"PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
 			.SingleOrDefault();
 
-		await Assert
-			.That(packagePath)
-			.IsNotNull()
-			.Because("The packed project package was not created.");
+		await Assert.That(packagePath).IsNotNull().Because("The packed project package was not created.");
 
 		using var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken);
 		var entries = zip.Entries.Select(entry => entry.FullName).ToList();
@@ -254,9 +260,7 @@ public sealed class AgentPackFolderTests
 	}
 
 	[Test]
-	public async Task PurviewAutoSdkPack_PacksAllSdkRootFoldersIntoNuGetPackage(
-		CancellationToken cancellationToken
-	)
+	public async Task PurviewAutoSdkPack_PacksAllSdkRootFoldersIntoNuGetPackage(CancellationToken cancellationToken)
 	{
 		// Arrange
 		using var h = await ProjectHarness.CreateAsync(
@@ -265,11 +269,7 @@ public sealed class AgentPackFolderTests
 			cancellationToken: cancellationToken
 		);
 
-		await File.WriteAllTextAsync(
-			Path.Combine(h.SolutionDirectory, ".git"),
-			string.Empty,
-			cancellationToken
-		);
+		await File.WriteAllTextAsync(Path.Combine(h.SolutionDirectory, ".git"), string.Empty, cancellationToken);
 		await File.WriteAllTextAsync(
 			Path.Combine(h.SolutionDirectory, "package.json"),
 			/*lang=json,strict*/
@@ -293,27 +293,13 @@ public sealed class AgentPackFolderTests
 			cancellationToken
 		);
 
-		var sdkAgentsDirectory = Path.Combine(
-			h.ProjectDirectory,
-			"Sdk",
-			".agents",
-			"skills",
-			"test"
-		);
+		var sdkAgentsDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".agents", "skills", "test");
 		Directory.CreateDirectory(sdkAgentsDirectory);
-		await File.WriteAllTextAsync(
-			Path.Combine(sdkAgentsDirectory, "SKILL.md"),
-			"# Test\n",
-			cancellationToken
-		);
+		await File.WriteAllTextAsync(Path.Combine(sdkAgentsDirectory, "SKILL.md"), "# Test\n", cancellationToken);
 
 		var sdkGitHubDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".github", "workflows");
 		Directory.CreateDirectory(sdkGitHubDirectory);
-		await File.WriteAllTextAsync(
-			Path.Combine(sdkGitHubDirectory, "ci.yml"),
-			"name: CI\n",
-			cancellationToken
-		);
+		await File.WriteAllTextAsync(Path.Combine(sdkGitHubDirectory, "ci.yml"), "name: CI\n", cancellationToken);
 
 		var sdkBuildDirectory = Path.Combine(h.ProjectDirectory, "Sdk", "build");
 		Directory.CreateDirectory(sdkBuildDirectory);
@@ -323,11 +309,7 @@ public sealed class AgentPackFolderTests
 			cancellationToken
 		);
 
-		var sdkBuildTransitiveDirectory = Path.Combine(
-			h.ProjectDirectory,
-			"Sdk",
-			"buildTransitive"
-		);
+		var sdkBuildTransitiveDirectory = Path.Combine(h.ProjectDirectory, "Sdk", "buildTransitive");
 		Directory.CreateDirectory(sdkBuildTransitiveDirectory);
 		await File.WriteAllTextAsync(
 			Path.Combine(sdkBuildTransitiveDirectory, "Custom.props"),
@@ -335,11 +317,7 @@ public sealed class AgentPackFolderTests
 			cancellationToken
 		);
 
-		var sdkBuildMultiTargetingDirectory = Path.Combine(
-			h.ProjectDirectory,
-			"Sdk",
-			"buildMultiTargeting"
-		);
+		var sdkBuildMultiTargetingDirectory = Path.Combine(h.ProjectDirectory, "Sdk", "buildMultiTargeting");
 		Directory.CreateDirectory(sdkBuildMultiTargetingDirectory);
 		await File.WriteAllTextAsync(
 			Path.Combine(sdkBuildMultiTargetingDirectory, "Custom.props"),
@@ -379,17 +357,10 @@ public sealed class AgentPackFolderTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		var packagePath = Directory
-			.GetFiles(
-				feedDirectory,
-				$"PackableProject.{packageVersion}.nupkg",
-				SearchOption.TopDirectoryOnly
-			)
+			.GetFiles(feedDirectory, $"PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
 			.SingleOrDefault();
 
-		await Assert
-			.That(packagePath)
-			.IsNotNull()
-			.Because("The packed project package was not created.");
+		await Assert.That(packagePath).IsNotNull().Because("The packed project package was not created.");
 
 		using var zip = await ZipFile.OpenReadAsync(packagePath!, cancellationToken);
 		var entries = zip.Entries.Select(entry => entry.FullName).ToList();

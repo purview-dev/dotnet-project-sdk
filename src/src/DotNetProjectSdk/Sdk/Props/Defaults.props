@@ -21,15 +21,12 @@
 		<BootstrapGlobalJsonToRepoRoot Condition="'$(BootstrapGlobalJsonToRepoRoot)' == ''"
 			>true</BootstrapGlobalJsonToRepoRoot>
 		<CollectCoverage Condition="'$(CollectCoverage)' == ''">false</CollectCoverage>
-		<ContinuousIntegrationBuild Condition="'$(ContinuousIntegrationBuild)' == ''"
-			>false</ContinuousIntegrationBuild>
+		<ContinuousIntegrationBuild Condition="'$(ContinuousIntegrationBuild)' == ''">false</ContinuousIntegrationBuild>
 		<CurrentYear Condition="'$(CurrentYear)' == ''"></CurrentYear>
 		<Deterministic Condition="'$(Deterministic)' == ''">true</Deterministic>
-		<DisableProjectFileNamingConventionCheck
-			Condition="'$(DisableProjectFileNamingConventionCheck)' == ''"
+		<DisableProjectFileNamingConventionCheck Condition="'$(DisableProjectFileNamingConventionCheck)' == ''"
 			>false</DisableProjectFileNamingConventionCheck>
-		<DisableAutoCopySdkFiles Condition="'$(DisableAutoCopySdkFiles)' == ''"
-			>false</DisableAutoCopySdkFiles>
+		<DisableAutoCopySdkFiles Condition="'$(DisableAutoCopySdkFiles)' == ''">false</DisableAutoCopySdkFiles>
 		<DisableAutoInternalsVisibleTo Condition="'$(DisableAutoInternalsVisibleTo)' == ''"
 			>false</DisableAutoInternalsVisibleTo>
 		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''"
@@ -38,20 +35,16 @@
 		<DockerDefaultTargetOS Condition="'$(DockerDefaultTargetOS)' == ''"></DockerDefaultTargetOS>
 		<DockerfileContext Condition="'$(DockerfileContext)' == ''"></DockerfileContext>
 		<EditorConfigFilePath Condition="'$(EditorConfigFilePath)' == ''"></EditorConfigFilePath>
-		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''"
-			>true</EmbedUntrackedSources>
-		<EnableAgentFolderInPackage Condition="'$(EnableAgentFolderInPackage)' == ''"
-			>true</EnableAgentFolderInPackage>
-		<EnableDynamicNativeInstrumentation
-			Condition="'$(EnableDynamicNativeInstrumentation)' == ''"
+		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''">true</EmbedUntrackedSources>
+		<EnableAgentFolderInPackage Condition="'$(EnableAgentFolderInPackage)' == ''">true</EnableAgentFolderInPackage>
+		<EnableDynamicNativeInstrumentation Condition="'$(EnableDynamicNativeInstrumentation)' == ''"
 			>false</EnableDynamicNativeInstrumentation>
 		<EnableMicrosoftTestingPlatform Condition="'$(EnableMicrosoftTestingPlatform)' == ''"
 			>false</EnableMicrosoftTestingPlatform>
 		<EnableNETAnalyzers Condition="'$(EnableNETAnalyzers)' == ''">true</EnableNETAnalyzers>
 		<EnableStaticNativeInstrumentation Condition="'$(EnableStaticNativeInstrumentation)' == ''"
 			>false</EnableStaticNativeInstrumentation>
-		<EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''"
-			>true</EnforceCodeStyleInBuild>
+		<EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
 		<EnableAssemblyNameGeneration Condition="'$(EnableAssemblyNameGeneration)' == ''"
 			>false</EnableAssemblyNameGeneration>
 		<AgentPackDestinationFolder Condition="'$(AgentPackDestinationFolder)' == ''"
@@ -60,23 +53,17 @@
 		<ExcludeByAttribute Condition="'$(ExcludeByAttribute)' == ''"></ExcludeByAttribute>
 		<ExcludeMSTelemetryExtension Condition="'$(ExcludeMSTelemetryExtension)' == ''"
 			>false</ExcludeMSTelemetryExtension>
-		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''"
-			>false</ExcludePurviewTelemetry>
+		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''">false</ExcludePurviewTelemetry>
 		<GenerateAssemblyCompanyAttribute Condition="'$(GenerateAssemblyCompanyAttribute)' == ''"
 			>false</GenerateAssemblyCompanyAttribute>
-		<GenerateAssemblyCopyrightAttribute
-			Condition="'$(GenerateAssemblyCopyrightAttribute)' == ''"
+		<GenerateAssemblyCopyrightAttribute Condition="'$(GenerateAssemblyCopyrightAttribute)' == ''"
 			>false</GenerateAssemblyCopyrightAttribute>
-		<GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''"
-			>false</GenerateDocumentationFile>
+		<GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''">false</GenerateDocumentationFile>
 		<ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>
 		<IncludeSource Condition="'$(IncludeSource)' == ''">false</IncludeSource>
 		<IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
-		<InterceptorsNamespaces
-			Condition="'$(InterceptorsNamespaces)' == ''"
-		></InterceptorsNamespaces>
-		<InvariantGlobalization Condition="'$(InvariantGlobalization)' == ''"
-			>false</InvariantGlobalization>
+		<InterceptorsNamespaces Condition="'$(InterceptorsNamespaces)' == ''"></InterceptorsNamespaces>
+		<InvariantGlobalization Condition="'$(InvariantGlobalization)' == ''">false</InvariantGlobalization>
 		<IsAspireHostProject Condition="'$(IsAspireHostProject)' == ''">false</IsAspireHostProject>
 		<IsCLIProject Condition="'$(IsCLIProject)' == ''">false</IsCLIProject>
 		<IsContainerProject Condition="'$(IsContainerProject)' == ''">false</IsContainerProject>
@@ -85,8 +72,7 @@
 		<IsPublishable Condition="'$(IsPublishable)' == ''">false</IsPublishable>
 		<IsSdkProject Condition="'$(IsSdkProject)' == ''">false</IsSdkProject>
 		<IsSharedProject Condition="'$(IsSharedProject)' == ''">false</IsSharedProject>
-		<IsSharedTestingProject Condition="'$(IsSharedTestingProject)' == ''"
-			>false</IsSharedTestingProject>
+		<IsSharedTestingProject Condition="'$(IsSharedTestingProject)' == ''">false</IsSharedTestingProject>
 		<IsTestProject Condition="'$(IsTestProject)' == ''">false</IsTestProject>
 		<IsWebProject Condition="'$(IsWebProject)' == ''">false</IsWebProject>
 		<IsWebSdkProject Condition="'$(IsWebSdkProject)' == ''">false</IsWebSdkProject>
@@ -104,27 +90,17 @@
 		<TargetsForTfmSpecificContentInPackage
 			Condition="'$(TargetsForTfmSpecificContentInPackage)' == ''"
 		></TargetsForTfmSpecificContentInPackage>
-		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''"
-			>TUnit</ProjectSdkTestFramework>
+		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''">TUnit</ProjectSdkTestFramework>
 		<TestingFramework Condition="'$(TestingFramework)' == ''">TUnit</TestingFramework>
-		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''"
-			>TUnitMocks</SubstituteFramework>
+		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''">TUnitMocks</SubstituteFramework>
 		<TestDataFramework Condition="'$(TestDataFramework)' == ''">Bogus</TestDataFramework>
-		<PurviewLogicalProjectName
-			Condition="'$(PurviewLogicalProjectName)' == ''"
-		></PurviewLogicalProjectName>
-		<PurviewNamespacePrefix
-			Condition="'$(PurviewNamespacePrefix)' == ''"
-		></PurviewNamespacePrefix>
-		<PurviewProjectShortName
-			Condition="'$(PurviewProjectShortName)' == ''"
-		></PurviewProjectShortName>
+		<PurviewLogicalProjectName Condition="'$(PurviewLogicalProjectName)' == ''"></PurviewLogicalProjectName>
+		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"></PurviewNamespacePrefix>
+		<PurviewProjectShortName Condition="'$(PurviewProjectShortName)' == ''"></PurviewProjectShortName>
 		<PurviewTestType Condition="'$(PurviewTestType)' == ''"></PurviewTestType>
 		<PublishAot Condition="'$(PublishAot)' == ''">false</PublishAot>
-		<PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''"
-			>true</PublishRepositoryUrl>
-		<PurviewDotNetProjectSdkVersionForGlobalJson
-			Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == ''"
+		<PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''">true</PublishRepositoryUrl>
+		<PurviewDotNetProjectSdkVersionForGlobalJson Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == ''"
 			>1.0.0</PurviewDotNetProjectSdkVersionForGlobalJson>
 		<RepositoryEditorConfigFilePath
 			Condition="'$(RepositoryEditorConfigFilePath)' == ''"
@@ -163,39 +139,21 @@
 		></_UsePackageJsonVersionNormalized>
 		<RepoRoot Condition="'$(RepoRoot)' == ''"></RepoRoot>
 		<RootPackageJson Condition="'$(RootPackageJson)' == ''"></RootPackageJson>
-		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''"
-			>true</UsePackageJsonVersion>
+		<UsePackageJsonVersion Condition="'$(UsePackageJsonVersion)' == ''">true</UsePackageJsonVersion>
 		<EnableVersionDetectionCache Condition="'$(EnableVersionDetectionCache)' == ''"
 			>true</EnableVersionDetectionCache>
-		<VersionDetectionLogEnabled Condition="'$(VersionDetectionLogEnabled)' == ''"
-			>false</VersionDetectionLogEnabled>
-		<VersionDetectionCacheFile
-			Condition="'$(VersionDetectionCacheFile)' == ''"
-		></VersionDetectionCacheFile>
+		<VersionDetectionLogEnabled Condition="'$(VersionDetectionLogEnabled)' == ''">false</VersionDetectionLogEnabled>
+		<VersionDetectionCacheFile Condition="'$(VersionDetectionCacheFile)' == ''"></VersionDetectionCacheFile>
 		<_VersionDetectionCacheDirectory
 			Condition="'$(_VersionDetectionCacheDirectory)' == ''"
 		></_VersionDetectionCacheDirectory>
-		<_VersionDetectionCacheText
-			Condition="'$(_VersionDetectionCacheText)' == ''"
-		></_VersionDetectionCacheText>
+		<_VersionDetectionCacheText Condition="'$(_VersionDetectionCacheText)' == ''"></_VersionDetectionCacheText>
 		<_CachedRepoRoot Condition="'$(_CachedRepoRoot)' == ''"></_CachedRepoRoot>
-		<_CachedRootPackageJson
-			Condition="'$(_CachedRootPackageJson)' == ''"
-		></_CachedRootPackageJson>
-		<_CachedPackageJsonVersion
-			Condition="'$(_CachedPackageJsonVersion)' == ''"
-		></_CachedPackageJsonVersion>
-		<_CachedPackageJsonTicks
-			Condition="'$(_CachedPackageJsonTicks)' == ''"
-		></_CachedPackageJsonTicks>
-		<_CurrentPackageJsonTicks
-			Condition="'$(_CurrentPackageJsonTicks)' == ''"
-		></_CurrentPackageJsonTicks>
-		<_VersionDetectionCacheKey
-			Condition="'$(_VersionDetectionCacheKey)' == ''"
-		></_VersionDetectionCacheKey>
-		<_VersionDetectionCacheRoot
-			Condition="'$(_VersionDetectionCacheRoot)' == ''"
-		></_VersionDetectionCacheRoot>
+		<_CachedRootPackageJson Condition="'$(_CachedRootPackageJson)' == ''"></_CachedRootPackageJson>
+		<_CachedPackageJsonVersion Condition="'$(_CachedPackageJsonVersion)' == ''"></_CachedPackageJsonVersion>
+		<_CachedPackageJsonTicks Condition="'$(_CachedPackageJsonTicks)' == ''"></_CachedPackageJsonTicks>
+		<_CurrentPackageJsonTicks Condition="'$(_CurrentPackageJsonTicks)' == ''"></_CurrentPackageJsonTicks>
+		<_VersionDetectionCacheKey Condition="'$(_VersionDetectionCacheKey)' == ''"></_VersionDetectionCacheKey>
+		<_VersionDetectionCacheRoot Condition="'$(_VersionDetectionCacheRoot)' == ''"></_VersionDetectionCacheRoot>
 	</PropertyGroup>
 </Project>

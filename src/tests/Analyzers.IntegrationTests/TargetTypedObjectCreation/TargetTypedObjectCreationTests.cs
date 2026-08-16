@@ -11,9 +11,7 @@ namespace Purview.DotNetProjectSdk.Analyzers.TargetTypedObjectCreation;
 public sealed class TargetTypedObjectCreationTests
 {
 	[Test]
-	public async Task Analyzer_MethodCallResult_DoesNotReportDiagnostic(
-		CancellationToken cancellationToken
-	)
+	public async Task Analyzer_MethodCallResult_DoesNotReportDiagnostic(CancellationToken cancellationToken)
 	{
 		// Arrange
 		const string source = "var value = Factory.Create();";
@@ -27,9 +25,7 @@ public sealed class TargetTypedObjectCreationTests
 	}
 
 	[Test]
-	public async Task Analyzer_ObjectCreationWithVar_ReportsDiagnostic(
-		CancellationToken cancellationToken
-	)
+	public async Task Analyzer_ObjectCreationWithVar_ReportsDiagnostic(CancellationToken cancellationToken)
 	{
 		// Arrange
 		const string source = "var value = new Widget();";
@@ -40,9 +36,7 @@ public sealed class TargetTypedObjectCreationTests
 
 		// Assert
 		await Assert.That(diagnostics).Count().IsEqualTo(1);
-		await Assert
-			.That(diagnostics[0].Id)
-			.IsEqualTo(TargetTypedObjectCreationAnalyzer.DiagnosticId);
+		await Assert.That(diagnostics[0].Id).IsEqualTo(TargetTypedObjectCreationAnalyzer.DiagnosticId);
 	}
 
 	[Test]
@@ -56,19 +50,12 @@ public sealed class TargetTypedObjectCreationTests
 		var diagnostic = (await GetDiagnosticsAsync(document, cancellationToken)).Single();
 		var provider = new TargetTypedObjectCreationCodeFixProvider();
 		var actions = new List<CodeAction>();
-		var context = new CodeFixContext(
-			document,
-			diagnostic,
-			(action, _) => actions.Add(action),
-			cancellationToken
-		);
+		var context = new CodeFixContext(document, diagnostic, (action, _) => actions.Add(action), cancellationToken);
 
 		// Act
 		await provider.RegisterCodeFixesAsync(context);
 		var operations = await actions.Single().GetOperationsAsync(cancellationToken);
-		var changedDocument = (
-			(ApplyChangesOperation)operations.Single()
-		).ChangedSolution.GetDocument(document.Id)!;
+		var changedDocument = ((ApplyChangesOperation)operations.Single()).ChangedSolution.GetDocument(document.Id)!;
 		var fixedSource = (await changedDocument.GetTextAsync(cancellationToken)).ToString();
 
 		// Assert
@@ -88,9 +75,7 @@ public sealed class TargetTypedObjectCreationTests
 				"TestProject",
 				LanguageNames.CSharp,
 				parseOptions: CSharpParseOptions.Default,
-				compilationOptions: new CSharpCompilationOptions(
-					OutputKind.DynamicallyLinkedLibrary
-				)
+				compilationOptions: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
 			)
 			.WithMetadataReferences(AnalyzerTestInfrastructure.BuildBclReferences());
 
@@ -106,9 +91,7 @@ public sealed class TargetTypedObjectCreationTests
 	)
 	{
 		var compilation = (await document.Project.GetCompilationAsync(cancellationToken))!;
-		var analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(
-			new TargetTypedObjectCreationAnalyzer()
-		);
+		var analyzers = ImmutableArray.Create<DiagnosticAnalyzer>(new TargetTypedObjectCreationAnalyzer());
 		return await compilation
 			.WithAnalyzers(analyzers, document.Project.AnalyzerOptions)
 			.GetAnalyzerDiagnosticsAsync(cancellationToken);

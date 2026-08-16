@@ -6,35 +6,22 @@ public class TestTypeDetectionTests
 {
 	[Test]
 	[MethodDataSource(nameof(TestTypes))]
-	public async Task TestProject_TestingTypeInName_IsTestType(
-		string testType,
-		CancellationToken cancellationToken
-	)
+	public async Task TestProject_TestingTypeInName_IsTestType(string testType, CancellationToken cancellationToken)
 	{
-		using var h = await ProjectHarness.CreateAsync(
-			$"MyApp.{testType}Tests",
-			cancellationToken: cancellationToken
-		);
-		await Assert
-			.That(await h.GetPropertyAsync("TestingType", cancellationToken))
-			.IsEqualTo(testType);
+		using var h = await ProjectHarness.CreateAsync($"MyApp.{testType}Tests", cancellationToken: cancellationToken);
+		await Assert.That(await h.GetPropertyAsync("TestingType", cancellationToken)).IsEqualTo(testType);
 	}
 
 	[Test]
 	[MethodDataSource(nameof(TestTypes))]
-	public async Task TestProject_TestingTypeInName_RootNamespace(
-		string testType,
-		CancellationToken cancellationToken
-	)
+	public async Task TestProject_TestingTypeInName_RootNamespace(string testType, CancellationToken cancellationToken)
 	{
 		using var h = await ProjectHarness.CreateAsync(
 			$"MyApp.{testType}Tests",
 			namespacePrefix: "MyApp",
 			cancellationToken: cancellationToken
 		);
-		await Assert
-			.That(await h.GetPropertyAsync("RootNamespace", cancellationToken))
-			.IsEqualTo("MyApp");
+		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("MyApp");
 	}
 
 	[Test]

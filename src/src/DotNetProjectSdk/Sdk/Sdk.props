@@ -66,14 +66,10 @@
 	     Runs for all .csproj files to classify project types and detect the
 	     testing type from the project name suffix.
 	     ===================================================================== -->
-	<PropertyGroup
-		Label="Define C# Properties"
-		Condition="'$(MSBuildProjectExtension)' == '.csproj'"
-	>
+	<PropertyGroup Label="Define C# Properties" Condition="'$(MSBuildProjectExtension)' == '.csproj'">
 		<!-- Set some defaults -->
 		<IsCSharpProject>true</IsCSharpProject>
-		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''"
-			>false</ExcludePurviewTelemetry>
+		<ExcludePurviewTelemetry Condition="'$(ExcludePurviewTelemetry)' == ''">false</ExcludePurviewTelemetry>
 		<ExcludeMSTelemetryExtension Condition="'$(ExcludeMSTelemetryExtension)' == ''"
 			>false</ExcludeMSTelemetryExtension>
 		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''"
@@ -95,13 +91,20 @@
 		<IsWorkerSdkProject>false</IsWorkerSdkProject>
 		<IsAspireHostProject>false</IsAspireHostProject>
 		<IsCLIProject>false</IsCLIProject>
+		<IsRoslynComponent
+			Condition="'$(IsRoslynComponent)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText(`$(MSBuildProjectFullPath)`)), `(?is)&lt;IsRoslynComponent\s*&gt;\s*true\s*&lt;/IsRoslynComponent\s*&gt;`))"
+			>true</IsRoslynComponent>
+		<IsPackable
+			Condition="$([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText(`$(MSBuildProjectFullPath)`)), `(?is)&lt;IsPackable\s*&gt;\s*true\s*&lt;/IsPackable\s*&gt;`))"
+			>true</IsPackable>
+		<_PurviewProjectDeclaresTargetFramework
+			Condition="$([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText(`$(MSBuildProjectFullPath)`)), `(?is)&lt;TargetFrameworks?\s*&gt;`))"
+			>true</_PurviewProjectDeclaresTargetFramework>
 		<!-- SDK project type detection by parsing the Sdk attribute -->
 		<SdkProjectName>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText(`$(MSBuildProjectFullPath)`)), `(?s-i)(?:^|\s|&gt;)(?s-i)(?:^|\s|&gt;)&lt;\s*(?:Project|Import)\s(?:[^&gt;]*?)\s?Sdk\s*="(?&lt;sdkproj&gt;.*?)"`).Groups['sdkproj'].Value)</SdkProjectName>
 		<IsSdkProject Condition="'$(SdkProjectName)' != ''">true</IsSdkProject>
-		<IsWebSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Web'"
-			>true</IsWebSdkProject>
-		<IsWorkerSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Worker'"
-			>true</IsWorkerSdkProject>
+		<IsWebSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Web'">true</IsWebSdkProject>
+		<IsWorkerSdkProject Condition="'$(SdkProjectName)' == 'Microsoft.NET.Sdk.Worker'">true</IsWorkerSdkProject>
 		<IsContainerProject
 			Condition="Exists('$(MSBuildProjectDirectory)\Dockerfile') OR Exists('$(MSBuildProjectDirectory)\dockerfile') OR Exists('$(MSBuildProjectDirectory)\Dockerfile.dev')"
 			>true</IsContainerProject>
@@ -117,15 +120,13 @@
 			>true</IsSharedProject>
 		<PurviewNamespacePrefix Condition="'$(PurviewNamespacePrefix)' == ''"
 			>$(NamespacePrefix)</PurviewNamespacePrefix>
-		<NamespacePrefix Condition="'$(NamespacePrefix)' == ''"
-			>$(PurviewNamespacePrefix)</NamespacePrefix>
+		<NamespacePrefix Condition="'$(NamespacePrefix)' == ''">$(PurviewNamespacePrefix)</NamespacePrefix>
 		<PurviewProjectShortName>$(MSBuildProjectName)</PurviewProjectShortName>
 		<_PurviewEscapedNamespacePrefix Condition="'$(PurviewNamespacePrefix)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Escape('$(PurviewNamespacePrefix)'))</_PurviewEscapedNamespacePrefix>
 		<_PurviewNamespacePrefixTailSegment Condition="'$(PurviewNamespacePrefix)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Match('$(PurviewNamespacePrefix)', '([^\.]+)$').Groups[1].Value)</_PurviewNamespacePrefixTailSegment>
-		<_PurviewEscapedNamespacePrefixTailSegment
-			Condition="'$(_PurviewNamespacePrefixTailSegment)' != ''"
+		<_PurviewEscapedNamespacePrefixTailSegment Condition="'$(_PurviewNamespacePrefixTailSegment)' != ''"
 			>$([System.Text.RegularExpressions.Regex]::Escape('$(_PurviewNamespacePrefixTailSegment)'))</_PurviewEscapedNamespacePrefixTailSegment>
 		<_PurviewProjectNameWithoutRepeatedTail
 			Condition="'$(PurviewNamespacePrefix)' != '' AND '$(_PurviewEscapedNamespacePrefixTailSegment)' != ''"
@@ -309,6 +310,27 @@
 	<!-- =====================================================================
 	     C# PROJECT DEFAULTS
 	     ===================================================================== -->
+	<PropertyGroup
+		Label="Roslyn Component Project Properties"
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true'"
+	>
+		<!-- Compiler components should not inherit repository-wide application TFMs. A project-level
+		     TargetFramework/TargetFrameworks declaration is evaluated later and can still override this. -->
+		<TargetFrameworks></TargetFrameworks>
+		<TargetFramework Condition="'$(_PurviewProjectDeclaresTargetFramework)' != 'true'"
+			>netstandard2.0</TargetFramework>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<DisableSourceLink>true</DisableSourceLink>
+		<EmbedUntrackedSources>false</EmbedUntrackedSources>
+		<GenerateDependencyFile>false</GenerateDependencyFile>
+		<SymbolPackageFormat>symbols.nupkg</SymbolPackageFormat>
+		<TargetsForTfmSpecificDebugSymbolsInPackage
+			Condition="!$([System.String]::Copy(';$(TargetsForTfmSpecificDebugSymbolsInPackage);').Contains(';PackSourceGeneratorSymbols;'))"
+			>$(TargetsForTfmSpecificDebugSymbolsInPackage);PackSourceGeneratorSymbols</TargetsForTfmSpecificDebugSymbolsInPackage>
+		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+	</PropertyGroup>
+
 	<PropertyGroup Label="C# Project Property Groups" Condition="'$(IsCSharpProject)' == 'true'">
 		<TargetFramework Condition="'$(TargetFramework)' == '' AND '$(TargetFrameworks)' == ''"
 			>net10.0</TargetFramework>
@@ -319,8 +341,7 @@
 		<!-- EditorConfig from the NuGet package Sdk/ folder — used for build-time code-style enforcement -->
 		<EditorConfigFilePath>$(MSBuildThisFileDirectory).editorconfig</EditorConfigFilePath>
 		<!-- Also bootstrap a physical repo-level .editorconfig for tools (for example CSharpier) that don't read @(EditorConfigFiles). -->
-		<DisableAutoCopySdkFiles Condition="'$(DisableAutoCopySdkFiles)' == ''"
-			>false</DisableAutoCopySdkFiles>
+		<DisableAutoCopySdkFiles Condition="'$(DisableAutoCopySdkFiles)' == ''">false</DisableAutoCopySdkFiles>
 		<BootstrapEditorConfigToRepoRoot Condition="'$(BootstrapEditorConfigToRepoRoot)' == ''"
 			>true</BootstrapEditorConfigToRepoRoot>
 		<RepositoryEditorConfigFilePath
@@ -336,13 +357,12 @@
 		<PurviewDotNetProjectSdkVersionForGlobalJson
 			Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(_PurviewSdkContainerDirectoryName)', '^\d+\.\d+\.\d+([-.].+)?$'))"
 			>$(_PurviewSdkContainerDirectoryName)</PurviewDotNetProjectSdkVersionForGlobalJson>
-		<PurviewDotNetProjectSdkVersionForGlobalJson
-			Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == ''"
+		<PurviewDotNetProjectSdkVersionForGlobalJson Condition="'$(PurviewDotNetProjectSdkVersionForGlobalJson)' == ''"
 			>1.0.0</PurviewDotNetProjectSdkVersionForGlobalJson>
 		<!-- Sensible default for SourceLink (override by setting SourceLinkPackageName) -->
 		<SourceLinkPackageName Condition="'$(SourceLinkPackageName)' == ''"
 			>Microsoft.SourceLink.GitHub</SourceLinkPackageName>
-		<DisableSourceLink>false</DisableSourceLink>
+		<DisableSourceLink Condition="'$(IsRoslynComponent)' != 'true'">false</DisableSourceLink>
 		<GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
 		<IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
@@ -461,7 +481,17 @@
 	     ===================================================================== -->
 	<PropertyGroup Label="Automatic Sdk Folder Packaging">
 		<PurviewAutoSdkPack Condition="'$(PurviewAutoSdkPack)' == ''">true</PurviewAutoSdkPack>
-		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeSdkDotAgentsGitIgnoreFiles</TargetsForTfmSpecificContentInPackage>
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeLinkedSdkFiles;IncludeSdkDotAgentsGitIgnoreFiles</TargetsForTfmSpecificContentInPackage>
+	</PropertyGroup>
+
+	<!-- Analyzer project references are build-time assets and are not packed by NuGet's
+	     normal ProjectReference handling. Collect them automatically for packable projects. -->
+	<PropertyGroup Label="Automatic Source Generator Packaging">
+		<PackProjectReferencedSourceGenerators Condition="'$(PackProjectReferencedSourceGenerators)' == ''"
+			>true</PackProjectReferencedSourceGenerators>
+		<TargetsForTfmSpecificContentInPackage
+			Condition="'$(PackProjectReferencedSourceGenerators)' == 'true' AND !$([System.String]::Copy(';$(TargetsForTfmSpecificContentInPackage);').Contains(';IncludeProjectReferencedSourceGenerators;'))"
+			>$(TargetsForTfmSpecificContentInPackage);IncludeProjectReferencedSourceGenerators</TargetsForTfmSpecificContentInPackage>
 	</PropertyGroup>
 
 	<ItemGroup Label="Automatic Sdk Folder Packaging" Condition="'$(PurviewAutoSdkPack)' == 'true'">
@@ -480,11 +510,7 @@
 		<None Include="Sdk/buildMultiTargeting/**/*" Pack="true" Visible="true">
 			<PackagePath>buildMultiTargeting/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)</PackagePath>
 		</None>
-		<None
-			Include="Sdk/*.md;Sdk/*.png;Sdk/*.jpg;Sdk/*.jpeg;Sdk/*.gif;Sdk/*.svg"
-			Pack="true"
-			Visible="true"
-		>
+		<None Include="Sdk/*.md;Sdk/*.png;Sdk/*.jpg;Sdk/*.jpeg;Sdk/*.gif;Sdk/*.svg" Pack="true" Visible="true">
 			<PackagePath>%(Filename)%(Extension)</PackagePath>
 		</None>
 		<None
@@ -510,20 +536,14 @@
 		<DockerfileContext>..\..\</DockerfileContext>
 	</PropertyGroup>
 
-	<ItemGroup
-		Label="Container Project"
-		Condition="'$(IsContainerProject)' == 'true' AND '$(IsTestProject)' != 'true'"
-	>
+	<ItemGroup Label="Container Project" Condition="'$(IsContainerProject)' == 'true' AND '$(IsTestProject)' != 'true'">
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
 	</ItemGroup>
 
 	<!-- =====================================================================
 	     WEB PROJECTS (non-API web apps that need OpenAPI interceptors)
 	     ===================================================================== -->
-	<PropertyGroup
-		Label="Web Project"
-		Condition="'$(IsWebSdkProject)' == 'true' AND '$(IsWebProject)' != 'true'"
-	>
+	<PropertyGroup Label="Web Project" Condition="'$(IsWebSdkProject)' == 'true' AND '$(IsWebProject)' != 'true'">
 		<InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
 	</PropertyGroup>
 
@@ -551,7 +571,7 @@
 		<IncludeSource>true</IncludeSource>
 		<IncludeSymbols>true</IncludeSymbols>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<SymbolPackageFormat Condition="'$(IsRoslynComponent)' != 'true'">snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 	<!-- =====================================================================
@@ -668,16 +688,10 @@
 		Label="TUnit NuGet Packages"
 		Condition="('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true') AND '$(_TestingFrameworkNormalized)' == 'tunit'"
 	>
-		<AssemblyAttribute
-			Include="TUnit.Core.Category"
-			Condition="'$(IsSharedTestingProject)' != 'true'"
-		>
+		<AssemblyAttribute Include="TUnit.Core.Category" Condition="'$(IsSharedTestingProject)' != 'true'">
 			<_Parameter1>$(TestingType)</_Parameter1>
 		</AssemblyAttribute>
-		<AssemblyAttribute
-			Include="TUnit.Core.Skip"
-			Condition="'$(IsSharedTestingProject)' == 'true'"
-		>
+		<AssemblyAttribute Include="TUnit.Core.Skip" Condition="'$(IsSharedTestingProject)' == 'true'">
 			<_Parameter1>Skipping Shared Testing Project</_Parameter1>
 		</AssemblyAttribute>
 		<PackageReference Include="TUnit" Condition="'$(IsSharedTestingProject)' != 'true'" />
@@ -696,10 +710,7 @@
 			<_Parameter2>$(TestingType)</_Parameter2>
 		</AssemblyAttribute>
 		<PackageReference Include="xunit.v3" Condition="'$(IsSharedTestingProject)' != 'true'" />
-		<PackageReference
-			Include="xunit.runner.visualstudio"
-			Condition="'$(IsSharedTestingProject)' != 'true'"
-		>
+		<PackageReference Include="xunit.runner.visualstudio" Condition="'$(IsSharedTestingProject)' != 'true'">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
@@ -714,10 +725,7 @@
 		Condition="'$(IsTestProject)' != 'true' AND '$(IsSharedProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'"
 	>
 		<!-- Shared project alongside this one (wildcards silently match 0 files) -->
-		<ProjectReference
-			Condition="'$(IsAspireHostProject)' == 'false'"
-			Include="../Shared*/Shared*.csproj"
-		/>
+		<ProjectReference Condition="'$(IsAspireHostProject)' == 'false'" Include="../Shared*/Shared*.csproj" />
 		<ProjectReference
 			Condition="'$(IsAspireHostProject)' == 'true'"
 			Include="../Shared*/Shared*.csproj"

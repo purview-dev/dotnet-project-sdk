@@ -29,10 +29,7 @@ public sealed class TargetTypedObjectCreationAnalyzer : DiagnosticAnalyzer
 
 		context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 		context.EnableConcurrentExecution();
-		context.RegisterSyntaxNodeAction(
-			AnalyzeLocalDeclaration,
-			SyntaxKind.LocalDeclarationStatement
-		);
+		context.RegisterSyntaxNodeAction(AnalyzeLocalDeclaration, SyntaxKind.LocalDeclarationStatement);
 	}
 
 	static void AnalyzeLocalDeclaration(SyntaxNodeAnalysisContext context)

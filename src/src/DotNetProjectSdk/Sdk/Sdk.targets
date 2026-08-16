@@ -2,8 +2,151 @@
 	<Import Project="$(MSBuildThisFileDirectory)Targets/VersionDetection.targets " />
 
 	<PropertyGroup>
-		<NoDefaultExcludes
-			Condition="'$(NoDefaultExcludes)' == '' AND '$(PurviewAutoSdkPack)' == 'true'"
+		<DefaultTargetFramework Condition="'$(DefaultTargetFramework)' == '' AND '$(TargetFrameworks)' != ''"
+			>$([System.Text.RegularExpressions.Regex]::Match('$(TargetFrameworks)', '^[^;]+').Value)</DefaultTargetFramework>
+		<DefaultTargetFramework Condition="'$(DefaultTargetFramework)' == '' AND '$(TargetFramework)' != ''"
+			>$(TargetFramework)</DefaultTargetFramework>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true'">
+		<!-- Microsoft.Managed.Core.targets clears this when emission is disabled; retain the
+		     Roslyn-component default so enabling EmitCompilerGeneratedFiles needs no second setting. -->
+		<CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''"
+			>$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+	</PropertyGroup>
+
+	<Target
+		Name="CreateRoslynComponentGeneratedFilesDirectory"
+		BeforeTargets="CoreCompile"
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true' AND '$(CompilerGeneratedFilesOutputPath)' != ''"
+	>
+		<MakeDir Directories="$(CompilerGeneratedFilesOutputPath)" />
+	</Target>
+
+	<!-- Analyzer project references need the extended target so runtime dependencies are
+	     propagated as well as the generator assembly. Make it the default when omitted. -->
+	<Target Name="ConfigureSourceGeneratorProjectReferences" BeforeTargets="AssignProjectConfiguration">
+		<ItemGroup>
+			<ProjectReference
+				Update="@(ProjectReference)"
+				Condition="'%(ProjectReference.OutputItemType)' == 'Analyzer' AND '%(ProjectReference.ReferenceOutputAssembly)' == 'false' AND '%(ProjectReference.Targets)' == ''"
+			>
+				<Targets>GetSourceGeneratorAnalyzerFiles</Targets>
+			</ProjectReference>
+		</ItemGroup>
+	</Target>
+
+	<!-- Visual Studio's project system may retain only the primary output from an analyzer
+	     ProjectReference. Resolve the extended target explicitly and add every returned file
+	     to the compiler's Analyzer items, including generator runtime dependencies. -->
+	<Target Name="ResolveSourceGeneratorProjectReferenceFiles" AfterTargets="ResolveProjectReferences">
+		<ItemGroup>
+			<_PurviewSourceGeneratorCompilerProjectReference
+				Include="@(ProjectReference)"
+				Condition="'%(ProjectReference.OutputItemType)' == 'Analyzer' AND '%(ProjectReference.ReferenceOutputAssembly)' == 'false'"
+			/>
+		</ItemGroup>
+		<MSBuild
+			Projects="@(_PurviewSourceGeneratorCompilerProjectReference)"
+			Targets="GetSourceGeneratorAnalyzerFiles"
+			BuildInParallel="$(BuildInParallel)"
+			Properties="Configuration=$(Configuration)"
+			RemoveProperties="TargetFramework;TargetFrameworks;RuntimeIdentifier;SelfContained"
+			Condition="'@(_PurviewSourceGeneratorCompilerProjectReference)' != ''"
+		>
+			<Output TaskParameter="TargetOutputs" ItemName="_PurviewResolvedSourceGeneratorCompilerFile" />
+		</MSBuild>
+		<ItemGroup>
+			<Analyzer Remove="@(_PurviewResolvedSourceGeneratorCompilerFile)" />
+			<Analyzer Include="@(_PurviewResolvedSourceGeneratorCompilerFile)" />
+		</ItemGroup>
+	</Target>
+
+	<Target
+		Name="CopySourceGeneratorRuntimeDependencies"
+		AfterTargets="CopyFilesToOutputDirectory"
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true' AND '@(SourceGeneratorRuntimeDependency)' != ''"
+	>
+		<ItemGroup>
+			<_PurviewSourceGeneratorRuntimeDependency Include="@(SourceGeneratorRuntimeDependency)">
+				<DestinationPath Condition="'%(SourceGeneratorRuntimeDependency.DestinationSubPath)' != ''"
+					>$(TargetDir)%(SourceGeneratorRuntimeDependency.DestinationSubPath)</DestinationPath>
+				<DestinationPath Condition="'%(SourceGeneratorRuntimeDependency.DestinationSubPath)' == ''"
+					>$(TargetDir)%(SourceGeneratorRuntimeDependency.Filename)%(SourceGeneratorRuntimeDependency.Extension)</DestinationPath>
+			</_PurviewSourceGeneratorRuntimeDependency>
+		</ItemGroup>
+		<Copy
+			SourceFiles="@(_PurviewSourceGeneratorRuntimeDependency)"
+			DestinationFiles="@(_PurviewSourceGeneratorRuntimeDependency->'%(DestinationPath)')"
+			SkipUnchangedFiles="true"
+		/>
+	</Target>
+
+	<!-- Analyzer project references can request this target to receive the built generator
+	     assembly. Generator-specific packages may override it to append runtime dependencies. -->
+	<Target
+		Name="GetSourceGeneratorAnalyzerFiles"
+		Returns="@(_PurviewSourceGeneratorAnalyzerFile)"
+		DependsOnTargets="Build;GetTargetPathWithTargetPlatformMoniker"
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true'"
+	>
+		<ItemGroup>
+			<_PurviewSourceGeneratorAnalyzerFile Include="@(TargetPathWithTargetPlatformMoniker)" />
+			<!-- Roslyn resolves analyzer dependencies beside the analyzer assembly. Return the
+			     copies in TargetDir, rather than their original NuGet/package locations. -->
+			<_PurviewSourceGeneratorAnalyzerFile
+				Include="$(TargetDir)%(SourceGeneratorRuntimeDependency.DestinationSubPath)"
+				Condition="'@(SourceGeneratorRuntimeDependency)' != '' AND '%(SourceGeneratorRuntimeDependency.DestinationSubPath)' != ''"
+			/>
+			<_PurviewSourceGeneratorAnalyzerFile
+				Include="$(TargetDir)%(SourceGeneratorRuntimeDependency.Filename)%(SourceGeneratorRuntimeDependency.Extension)"
+				Condition="'@(SourceGeneratorRuntimeDependency)' != '' AND '%(SourceGeneratorRuntimeDependency.DestinationSubPath)' == ''"
+			/>
+		</ItemGroup>
+		<Error
+			Code="PSGF0001"
+			Condition="'@(_PurviewSourceGeneratorAnalyzerFile)' == ''"
+			Text="The Roslyn component '$(MSBuildProjectName)' did not produce a source-generator analyzer assembly. Ensure IsRoslynComponent is true and the project builds successfully."
+		/>
+		<Error
+			Code="PSGF0001"
+			Condition="!Exists('%(_PurviewSourceGeneratorAnalyzerFile.Identity)')"
+			Text="Source-generator analyzer file '%(_PurviewSourceGeneratorAnalyzerFile.Identity)' was not produced. Runtime dependencies must be declared as SourceGeneratorRuntimeDependency items so they can be copied beside the generator."
+		/>
+	</Target>
+
+	<Target
+		Name="IncludeProjectReferencedSourceGenerators"
+		Condition="'$(PackProjectReferencedSourceGenerators)' == 'true' AND ('$(DefaultTargetFramework)' == '' OR '$(TargetFramework)' == '$(DefaultTargetFramework)')"
+		Label="Packs analyzer project references and their runtime dependencies automatically."
+	>
+		<ItemGroup>
+			<_PurviewSourceGeneratorProjectReference
+				Include="@(ProjectReference)"
+				Condition="'%(ProjectReference.OutputItemType)' == 'Analyzer' AND '%(ProjectReference.ReferenceOutputAssembly)' == 'false' AND '%(ProjectReference.Pack)' != 'false'"
+			/>
+		</ItemGroup>
+
+		<MSBuild
+			Projects="@(_PurviewSourceGeneratorProjectReference)"
+			Targets="GetSourceGeneratorAnalyzerFiles"
+			BuildInParallel="$(BuildInParallel)"
+			Properties="Configuration=$(Configuration)"
+			RemoveProperties="TargetFramework;TargetFrameworks;RuntimeIdentifier;SelfContained"
+			Condition="'@(_PurviewSourceGeneratorProjectReference)' != ''"
+		>
+			<Output TaskParameter="TargetOutputs" ItemName="_PurviewSourceGeneratorPackageFile" />
+		</MSBuild>
+
+		<ItemGroup>
+			<TfmSpecificPackageFile Include="@(_PurviewSourceGeneratorPackageFile)">
+				<PackagePath>analyzers/dotnet/cs/</PackagePath>
+			</TfmSpecificPackageFile>
+		</ItemGroup>
+	</Target>
+
+	<PropertyGroup>
+		<NoDefaultExcludes Condition="'$(NoDefaultExcludes)' == '' AND '$(PurviewAutoSdkPack)' == 'true'"
 			>true</NoDefaultExcludes>
 	</PropertyGroup>
 
@@ -62,10 +205,7 @@
 	     in .csproj or Directory.Build.props) is visible. When disabled (default),
 	     AssemblyName uses standard .NET behaviour (MSBuildProjectName).
 	     ===================================================================== -->
-	<PropertyGroup
-		Condition="'$(IsCSharpProject)' == 'true'"
-		Label="Assembly Name and Package ID Generation"
-	>
+	<PropertyGroup Condition="'$(IsCSharpProject)' == 'true'" Label="Assembly Name and Package ID Generation">
 		<AssemblyName
 			Condition="'$(EnableAssemblyNameGeneration)' == 'true' AND ('$(AssemblyName)' == '' OR '$(AssemblyName)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
 			>$(PurviewLogicalProjectName)</AssemblyName>
@@ -134,8 +274,7 @@
 			<_RepositoryProbe2>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe1)\..'))</_RepositoryProbe2>
 			<_RepositoryProbe3>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe2)\..'))</_RepositoryProbe3>
 			<_RepositoryProbe4>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe3)\..'))</_RepositoryProbe4>
-			<_DetectedRepositoryRoot
-				Condition="'$(_GitRepositoryRoot)' != '' AND Exists('$(_GitRepositoryRoot)')"
+			<_DetectedRepositoryRoot Condition="'$(_GitRepositoryRoot)' != '' AND Exists('$(_GitRepositoryRoot)')"
 				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)/.git/HEAD') OR Exists('$(_RepositoryProbe0)/.git'))"
@@ -188,8 +327,7 @@
 			<_PurviewAgentSourceRoot Include="@(SourceRoot -> WithMetadataValue('SourceControl', 'git'))" />
 		</ItemGroup>
 		<PropertyGroup>
-			<_PurviewAgentFolderRepoRoot Condition="'$(RepoRoot)' != ''"
-				>$(RepoRoot)</_PurviewAgentFolderRepoRoot>
+			<_PurviewAgentFolderRepoRoot Condition="'$(RepoRoot)' != ''">$(RepoRoot)</_PurviewAgentFolderRepoRoot>
 			<_PurviewAgentFolderAgentsMd Condition="'$(_PurviewAgentFolderRepoRoot)' == ''"
 				>$([MSBuild]::GetPathOfFileAbove('AGENTS.md', '$(MSBuildProjectDirectory)'))</_PurviewAgentFolderAgentsMd>
 			<_PurviewAgentFolderRepoRoot
@@ -224,8 +362,25 @@
 	</Target>
 
 	<Target
+		Name="IncludeLinkedSdkFiles"
+		Condition="'$(PurviewAutoSdkPack)' == 'true' AND ('$(DefaultTargetFramework)' == '' OR '$(TargetFramework)' == '$(DefaultTargetFramework)')"
+		Label="Packs external files linked beneath Sdk/ using the same paths as physical Sdk files."
+	>
+		<ItemGroup>
+			<_PurviewLinkedSdkFile
+				Include="@(None)"
+				Condition="$([System.String]::Copy('%(None.Link)').StartsWith('Sdk\')) OR $([System.String]::Copy('%(None.Link)').StartsWith('Sdk/'))"
+			>
+				<PackagePath>$([System.String]::Copy('%(None.Link)').Substring(4).Replace('\', '/'))</PackagePath>
+			</_PurviewLinkedSdkFile>
+			<TfmSpecificPackageFile Include="@(_PurviewLinkedSdkFile)" />
+		</ItemGroup>
+	</Target>
+
+	<Target
 		Name="IncludeSdkDotAgentsGitIgnoreFiles"
 		DependsOnTargets="InitializeSourceControlInformation"
+		Condition="'$(DefaultTargetFramework)' == '' OR '$(TargetFramework)' == '$(DefaultTargetFramework)'"
 		Label="Generates .gitignore files for each second-level folder under Sdk/.agents and includes them in the package."
 	>
 		<PropertyGroup>
@@ -319,8 +474,7 @@
 			<_RepositoryProbe2>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe1)\..'))</_RepositoryProbe2>
 			<_RepositoryProbe3>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe2)\..'))</_RepositoryProbe3>
 			<_RepositoryProbe4>$([System.IO.Path]::GetFullPath('$(_RepositoryProbe3)\..'))</_RepositoryProbe4>
-			<_DetectedRepositoryRoot
-				Condition="'$(_GitRepositoryRoot)' != '' AND Exists('$(_GitRepositoryRoot)')"
+			<_DetectedRepositoryRoot Condition="'$(_GitRepositoryRoot)' != '' AND Exists('$(_GitRepositoryRoot)')"
 				>$(_GitRepositoryRoot)</_DetectedRepositoryRoot>
 			<_DetectedRepositoryRoot
 				Condition="'$(_DetectedRepositoryRoot)' == '' AND (Exists('$(_RepositoryProbe0)/.git/HEAD') OR Exists('$(_RepositoryProbe0)/.git'))"

@@ -46,9 +46,7 @@ sealed class ProjectHarnessBuilder
 		return this;
 	}
 
-	public ProjectHarnessBuilder WithDockerfile(
-		string baseImage = "mcr.microsoft.com/dotnet/runtime:10.0"
-	)
+	public ProjectHarnessBuilder WithDockerfile(string baseImage = "mcr.microsoft.com/dotnet/runtime:10.0")
 	{
 		_withDockerfile = true;
 		_dockerBaseImage = baseImage;
@@ -144,28 +142,15 @@ sealed class ProjectHarnessBuilder
 			ownsWorkDir
 		);
 
-		await harness.WriteBoilerplateAsync(
-			_namespacePrefix,
-			_projectName,
-			_preImportPropsRaw,
-			cancellationToken
-		);
+		await harness.WriteBoilerplateAsync(_namespacePrefix, _projectName, _preImportPropsRaw, cancellationToken);
 
 		if (!string.IsNullOrWhiteSpace(_projectFileContent))
 		{
-			await File.WriteAllTextAsync(
-				harness.ProjectFilePath,
-				_projectFileContent,
-				cancellationToken
-			);
+			await File.WriteAllTextAsync(harness.ProjectFilePath, _projectFileContent, cancellationToken);
 		}
 		else
 		{
-			await File.WriteAllTextAsync(
-				harness.ProjectFilePath,
-				BuildProjectFileContent(),
-				cancellationToken
-			);
+			await File.WriteAllTextAsync(harness.ProjectFilePath, BuildProjectFileContent(), cancellationToken);
 		}
 
 		if (_withDockerfile)
