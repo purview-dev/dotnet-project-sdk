@@ -293,9 +293,25 @@ public sealed class AgentPackFolderTests
 			cancellationToken
 		);
 
-		var sdkAgentsDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".agents", "skills", "test");
-		Directory.CreateDirectory(sdkAgentsDirectory);
-		await File.WriteAllTextAsync(Path.Combine(sdkAgentsDirectory, "SKILL.md"), "# Test\n", cancellationToken);
+		var sdkAgentSkillsDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".agents", "skills", "test");
+		Directory.CreateDirectory(sdkAgentSkillsDirectory);
+		await File.WriteAllTextAsync(Path.Combine(sdkAgentSkillsDirectory, "SKILL.md"), "# Test\n", cancellationToken);
+
+		var sdkAgentAgentsDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".agents", "agents");
+		Directory.CreateDirectory(sdkAgentAgentsDirectory);
+		await File.WriteAllTextAsync(
+			Path.Combine(sdkAgentAgentsDirectory, "this-is-a-test-agent.md"),
+			"# Test\n",
+			cancellationToken
+		);
+
+		var sdkAgentPromptsDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".agents", "prompts");
+		Directory.CreateDirectory(sdkAgentPromptsDirectory);
+		await File.WriteAllTextAsync(
+			Path.Combine(sdkAgentPromptsDirectory, "this-is-a-test-prompt.md"),
+			"# Test\n",
+			cancellationToken
+		);
 
 		var sdkGitHubDirectory = Path.Combine(h.ProjectDirectory, "Sdk", ".github", "workflows");
 		Directory.CreateDirectory(sdkGitHubDirectory);
@@ -367,6 +383,8 @@ public sealed class AgentPackFolderTests
 
 		await Assert.That(entries).Contains(".agents/skills/test/SKILL.md");
 		await Assert.That(entries).Contains(".agents/skills/test/.gitignore");
+		await Assert.That(entries).Contains(".agents/prompts/this-is-a-test-prompt.md");
+		await Assert.That(entries).Contains(".agents/agents/this-is-a-test-agent.md");
 		await Assert.That(entries).Contains(".github/workflows/ci.yml");
 		await Assert.That(entries).Contains("build/Custom.targets");
 		await Assert.That(entries).Contains("buildTransitive/Custom.props");

@@ -90,7 +90,6 @@
 		<TargetsForTfmSpecificContentInPackage
 			Condition="'$(TargetsForTfmSpecificContentInPackage)' == ''"
 		></TargetsForTfmSpecificContentInPackage>
-		<ProjectSdkTestFramework Condition="'$(ProjectSdkTestFramework)' == ''">TUnit</ProjectSdkTestFramework>
 		<TestingFramework Condition="'$(TestingFramework)' == ''">TUnit</TestingFramework>
 		<SubstituteFramework Condition="'$(SubstituteFramework)' == ''">TUnitMocks</SubstituteFramework>
 		<TestDataFramework Condition="'$(TestDataFramework)' == ''">Bogus</TestDataFramework>

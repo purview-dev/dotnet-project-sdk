@@ -200,6 +200,81 @@
 	</UsingTask>
 
 	<!-- =====================================================================
+	     DISCOVER PACKAGED AGENT FOLDERS
+	     Reads project.assets.json to find every restored NuGet package (any
+	     PackageReference, not just this SDK) that bundles its own .agents
+	     folder at its package root - the same layout PurviewAutoSdkPack
+	     produces for any packable project. Lets EnableAgentFolderInPackage
+	     copy bundled agent content from every such package automatically.
+	     ===================================================================== -->
+	<UsingTask
+		TaskName="DiscoverAgentPackageFolders"
+		TaskFactory="RoslynCodeTaskFactory"
+		AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll"
+	>
+		<ParameterGroup>
+			<ProjectAssetsFile ParameterType="System.String" Required="true" />
+			<NuGetPackageFolders ParameterType="System.String" Required="false" />
+			<ExcludeFolder ParameterType="System.String" Required="false" />
+			<AgentFolders ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System.IO" />
+			<Using Namespace="System.Linq" />
+			<Using Namespace="System.Text.RegularExpressions" />
+			<Using Namespace="Microsoft.Build.Framework" />
+			<Using Namespace="Microsoft.Build.Utilities" />
+			<Reference Include="$(MSBuildToolsPath)\Microsoft.Build.Framework.dll" />
+			<Reference Include="$(MSBuildToolsPath)\Microsoft.Build.Utilities.Core.dll" />
+			<Code Type="Fragment" Language="cs">
+				<![CDATA[
+					var results = new List<ITaskItem>();
+					if (File.Exists(ProjectAssetsFile))
+					{
+						var roots = (NuGetPackageFolders ?? string.Empty)
+							.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+							.Select(root => root.TrimEnd('\\', '/'))
+							.Where(root => root.Length > 0)
+							.ToArray();
+						var excludeFullPath = string.IsNullOrEmpty(ExcludeFolder) ? null : Path.GetFullPath(ExcludeFolder);
+
+						// project.assets.json "libraries" entries are consistently emitted by NuGet as
+						// "<id>/<version>": { "sha512": "...", "type": "package", "path": "<lowercase-id>/<version>", "files": [...] }
+						var json = File.ReadAllText(ProjectAssetsFile);
+						var libraryPattern = new Regex(
+							"\"(?<id>[^\"/]+)/[^\"]+\"\\s*:\\s*\\{[^{}]*?\"type\"\\s*:\\s*\"package\"[^{}]*?\"path\"\\s*:\\s*\"(?<path>[^\"]+)\"",
+							RegexOptions.Singleline
+						);
+						foreach (Match match in libraryPattern.Matches(json))
+						{
+							var libraryPath = match.Groups["path"].Value;
+							if (string.IsNullOrEmpty(libraryPath))
+								continue;
+
+							var normalizedPath = libraryPath.Replace('/', Path.DirectorySeparatorChar);
+							foreach (var root in roots)
+							{
+								var candidate = Path.GetFullPath(Path.Combine(root, normalizedPath, ".agents"));
+								if (!Directory.Exists(candidate))
+									continue;
+
+								if (excludeFullPath != null && string.Equals(candidate, excludeFullPath, StringComparison.OrdinalIgnoreCase))
+									break;
+
+								var item = new TaskItem(candidate);
+								item.SetMetadata("PackageId", match.Groups["id"].Value);
+								results.Add(item);
+								break;
+							}
+						}
+					}
+					AgentFolders = results.ToArray();
+				]]>
+			</Code>
+		</Task>
+	</UsingTask>
+
+	<!-- =====================================================================
 	     ASSEMBLY NAME AND PACKAGE ID GENERATION
 	     Evaluated after the project body so EnableAssemblyNameGeneration (set
 	     in .csproj or Directory.Build.props) is visible. When disabled (default),
@@ -317,11 +392,10 @@
 	</Target>
 
 	<Target
-		Name="EnsureAgentFolderInPackageTarget"
-		BeforeTargets="PrepareForBuild"
+		Name="ResolveAgentPackDestinationRootTarget"
 		DependsOnTargets="InitializeSourceControlInformation"
-		Condition="'$(EnableAgentFolderInPackage)' != 'false' AND Exists('$(MSBuildThisFileDirectory)..\.agents')"
-		Label="Copies the bundled .agents folder into the consuming repository for agent discovery."
+		Condition="'$(EnableAgentFolderInPackage)' != 'false' AND '$(_PurviewAgentFolderDestinationRoot)' == ''"
+		Label="Resolves the repo-relative destination root used when copying bundled .agents folders."
 	>
 		<ItemGroup>
 			<_PurviewAgentSourceRoot Include="@(SourceRoot -> WithMetadataValue('SourceControl', 'git'))" />
@@ -338,6 +412,15 @@
 			<_PurviewAgentFolderDestinationRoot Condition="'$(_PurviewAgentFolderRepoRoot)' != ''"
 				>$([MSBuild]::NormalizePath('$(_PurviewAgentFolderRepoRoot)', '$(AgentPackDestinationFolder)'))</_PurviewAgentFolderDestinationRoot>
 		</PropertyGroup>
+	</Target>
+
+	<Target
+		Name="EnsureAgentFolderInPackageTarget"
+		BeforeTargets="PrepareForBuild"
+		DependsOnTargets="ResolveAgentPackDestinationRootTarget"
+		Condition="'$(EnableAgentFolderInPackage)' != 'false' AND Exists('$(MSBuildThisFileDirectory)..\.agents') AND ('$(DefaultTargetFramework)' == '' OR '$(TargetFramework)' == '$(DefaultTargetFramework)')"
+		Label="Copies the bundled .agents folder into the consuming repository for agent discovery."
+	>
 		<ItemGroup Condition="'$(_PurviewAgentFolderDestinationRoot)' != ''">
 			<_PurviewAgentFolderFiles Include="$(MSBuildThisFileDirectory)..\.agents\**\*" />
 			<_PurviewAgentFolderDirectories Include="@(_PurviewAgentFolderFiles -> '$(_PurviewAgentFolderDestinationRoot)\%(RecursiveDir)')" />
@@ -357,6 +440,40 @@
 			DestinationFolder="$(_PurviewAgentFolderDestinationRoot)\%(RecursiveDir)"
 			SkipUnchangedFiles="true"
 			Condition="'$(_PurviewAgentFolderDestinationRoot)' != ''"
+			ContinueOnError="true"
+		/>
+	</Target>
+
+	<Target
+		Name="CopyPackagedAgentFoldersTarget"
+		BeforeTargets="PrepareForBuild"
+		DependsOnTargets="ResolveAgentPackDestinationRootTarget"
+		Condition="'$(EnableAgentFolderInPackage)' != 'false' AND '$(_PurviewAgentFolderDestinationRoot)' != '' AND Exists('$(ProjectAssetsFile)') AND ('$(DefaultTargetFramework)' == '' OR '$(TargetFramework)' == '$(DefaultTargetFramework)')"
+		Label="Copies bundled .agents folders shipped by any restored NuGet package (via PurviewAutoSdkPack) into the consuming repository."
+	>
+		<DiscoverAgentPackageFolders
+			ProjectAssetsFile="$(ProjectAssetsFile)"
+			NuGetPackageFolders="$(NuGetPackageFolders)"
+			ExcludeFolder="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\.agents'))"
+		>
+			<Output TaskParameter="AgentFolders" ItemName="_PurviewPackagedAgentFolder" />
+		</DiscoverAgentPackageFolders>
+		<ItemGroup Condition="'@(_PurviewPackagedAgentFolder)' != ''">
+			<_PurviewPackagedAgentFolderFiles Include="%(_PurviewPackagedAgentFolder.Identity)\**\*" />
+		</ItemGroup>
+		<ItemGroup Condition="'@(_PurviewPackagedAgentFolderFiles)' != ''">
+			<_PurviewPackagedAgentFolderDirectories Include="@(_PurviewPackagedAgentFolderFiles -> '$(_PurviewAgentFolderDestinationRoot)\%(RecursiveDir)')" />
+		</ItemGroup>
+		<MakeDir
+			Directories="@(_PurviewPackagedAgentFolderDirectories)"
+			Condition="'@(_PurviewPackagedAgentFolderDirectories)' != ''"
+			ContinueOnError="true"
+		/>
+		<Copy
+			SourceFiles="@(_PurviewPackagedAgentFolderFiles)"
+			DestinationFolder="$(_PurviewAgentFolderDestinationRoot)\%(RecursiveDir)"
+			SkipUnchangedFiles="true"
+			Condition="'@(_PurviewPackagedAgentFolderFiles)' != ''"
 			ContinueOnError="true"
 		/>
 	</Target>
@@ -665,7 +782,7 @@ namespace $(RootNamespace)
 	[global::System.Runtime.CompilerServices.CompilerGenerated]
 	[global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 	[global::System.CodeDom.Compiler.GeneratedCode(&quot;Purview.DotNetProjectSdk&quot;, &quot;$(PackageVersion)&quot;)]
-	static class AssemblyInfo
+	static partial class AssemblyInfo
 	{
 		public const string RootNamespace = &quot;$(RootNamespace)&quot;%3B
 		public const string AssemblyName = &quot;$(AssemblyName)&quot;%3B
@@ -678,14 +795,14 @@ namespace $(RootNamespace)
 
 		public static string GetFriendlyName()
 		{
-			var possibles = new[]
+			var possibleNames = new[]
 			{
 				AssemblyProduct,
 				AssemblyTitle,
 				AssemblyName
 			}%3B
 
-			foreach (var name in possibles)
+			foreach (var name in possibleNames)
 			{
 				if (!string.IsNullOrWhiteSpace(name))
 				{

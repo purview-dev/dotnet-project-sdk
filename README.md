@@ -17,7 +17,7 @@ A reusable MSBuild SDK NuGet package that delivers standardised .NET project def
 | **CI detection** | `ContinuousIntegrationBuild` set automatically when `CI`, `GITHUB_ACTIONS`, or `TF_BUILD` env vars are present |
 | **SourceLink** | `Microsoft.SourceLink.GitHub` added to all packable projects (configurable via `SourceLinkPackageName`) |
 | **Purview Telemetry** | `Purview.Telemetry.SourceGenerator` + `Microsoft.Extensions.Telemetry.Abstractions` added by default (opt-out) |
-| **Assembly info** | Auto-generated `static class AssemblyInfo` with `RootNamespace`, `Version`, `Company`, etc., plus an embedded `Microsoft.CodeAnalysis.EmbeddedAttribute` (can be excluded via `PURVIEW_SDK_EXCLUDE_EMBEDDED`). |
+| **Assembly info** | Auto-generated `static partial class AssemblyInfo` with `RootNamespace`, `Version`, `Company`, etc., plus an embedded `Microsoft.CodeAnalysis.EmbeddedAttribute` (can be excluded via `PURVIEW_SDK_EXCLUDE_EMBEDDED`). |
 | **InternalsVisibleTo** | Generated for all `TestType` variants and shared testing projects, using the resolved `$(AssemblyName)` so explicit, generated, and default naming are all handled |
 | **Namespace management** | `NamespacePrefix.ProjectName` pattern with suffix stripping (`.Core`, `.Shared`, `.EF`, …) |
 | **Testing framework** | `TestingFramework`: **TUnit** (default), `Xunit`, or `None` |
@@ -301,7 +301,6 @@ The SDK automatically adds a `.gitignore` file into each second-level folder und
 | `TestingFramework` | `TUnit` | Testing framework. Supported values: `TUnit`, `Xunit`, `None`. |
 | `SubstituteFramework` | `TUnitMocks` | Mocking provider. Supported values: `TUnitMocks`, `NSubstitute`, `None`. |
 | `TestDataFramework` | `Bogus` | Test data provider. Supported values: `Bogus`, `None`. |
-| `ProjectSdkTestFramework` | `TUnit` | Legacy alias for `TestingFramework`. |
 | `DisableAutoInternalsVisibleTo` | `false` | Set to `true` to disable automatic `InternalsVisibleTo` generation for test types and shared testing projects. |
 
 ### Compiler-visible SDK properties
@@ -317,7 +316,6 @@ The SDK now exports its properties via `CompilerVisibleProperty`, so analyzers a
 | `PackageVersion` | NuGet package version, sourced from `package.json` when detection is enabled. |
 | `NamespacePrefix` | Required namespace prefix used to derive `RootNamespace`. |
 | `DisableNamespacePrefixCheck` | Disables the build error for missing `NamespacePrefix`. |
-| `ProjectSdkTestFramework` | Legacy alias for `TestingFramework`. |
 | `TestingFramework` | Selected testing framework (`TUnit`, `Xunit`, or `None`). |
 | `SubstituteFramework` | Selected mocking provider (`TUnitMocks`, `NSubstitute`, or `None`). |
 | `TestDataFramework` | Selected test data provider (`Bogus` or `None`). |
