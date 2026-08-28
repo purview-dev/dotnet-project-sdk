@@ -47,6 +47,13 @@
 	     .editorconfig must be listed explicitly — NuGet excludes dotfiles by default. -->
 	<ItemGroup>
 		<None
+			Include="$(MSBuildThisFileDirectory)../../../.editorconfig"
+			Pack="true"
+			PackagePath="Sdk/.editorconfig"
+			Visible="true"
+		/>
+
+		<None
 			Include="Sdk/.agents/**/*"
 			Pack="true"
 			PackagePath=".agents/$([System.String]::Copy('%(RecursiveDir)').Replace(&quot;\&quot;, &quot;/&quot;))%(Filename)%(Extension)"

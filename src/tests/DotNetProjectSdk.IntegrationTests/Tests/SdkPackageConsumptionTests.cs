@@ -536,6 +536,19 @@ public sealed class SdkPackageConsumptionTests
 			.IsTrue()
 			.Because($"Repository EditorConfig file not found at path: {repositoryEditorConfigPath}");
 
+		File.Delete(repositoryEditorConfigPath);
+		(code, stdOut, stdErr) = await RunProcessAsync(
+			"dotnet",
+			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:BootstrapEditorConfigToRepoRoot=false -t:EnsureRepositoryEditorConfigTarget",
+			consumerDirectory,
+			cancellationToken
+		);
+		await Assert.That(code).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+		await Assert
+			.That(File.Exists(repositoryEditorConfigPath))
+			.IsFalse()
+			.Because("BootstrapEditorConfigToRepoRoot=false should disable the physical repo-level copy.");
+
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
 			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryGlobalJsonTarget -getProperty:RepositoryGlobalJsonFilePath",
