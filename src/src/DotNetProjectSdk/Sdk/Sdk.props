@@ -338,8 +338,16 @@
 		<ContinuousIntegrationBuild
 			Condition="'$(CI)' == 'true' OR '$(GITHUB_ACTIONS)' == 'true' OR '$(TF_BUILD)' == 'true' OR '$(IsPackable)' == 'true'"
 			>true</ContinuousIntegrationBuild>
-		<!-- EditorConfig from the NuGet package Sdk/ folder — used for build-time code-style enforcement -->
-		<EditorConfigFilePath>$(MSBuildThisFileDirectory).editorconfig</EditorConfigFilePath>
+		<!-- EditorConfig from the NuGet package Sdk/ folder — used for build-time code-style enforcement. -->
+		<_PurviewPackagedEditorConfigFilePath>$(MSBuildThisFileDirectory).editorconfig</_PurviewPackagedEditorConfigFilePath>
+		<EditorConfigFilePath>$(_PurviewPackagedEditorConfigFilePath)</EditorConfigFilePath>
+		<!-- Source-tree fallback: the package project packs the repository-root file into Sdk/.editorconfig. -->
+		<EditorConfigFilePath Condition="!Exists('$(EditorConfigFilePath)')"
+			>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../../../../.editorconfig'))</EditorConfigFilePath>
+		<_PurviewDiscoveredEditorConfigFilePath>$([MSBuild]::GetPathOfFileAbove('.editorconfig', '$(MSBuildProjectDirectory)'))</_PurviewDiscoveredEditorConfigFilePath>
+		<_PurviewEffectiveEditorConfigFullPath>$([System.IO.Path]::GetFullPath('$(EditorConfigFilePath)'))</_PurviewEffectiveEditorConfigFullPath>
+		<_PurviewDiscoveredEditorConfigFullPath Condition="'$(_PurviewDiscoveredEditorConfigFilePath)' != ''"
+			>$([System.IO.Path]::GetFullPath('$(_PurviewDiscoveredEditorConfigFilePath)'))</_PurviewDiscoveredEditorConfigFullPath>
 		<!-- Also bootstrap a physical repo-level .editorconfig for tools (for example CSharpier) that don't read @(EditorConfigFiles). -->
 		<DisableAutoCopySdkFiles Condition="'$(DisableAutoCopySdkFiles)' == ''">false</DisableAutoCopySdkFiles>
 		<BootstrapEditorConfigToRepoRoot Condition="'$(BootstrapEditorConfigToRepoRoot)' == ''"
@@ -414,7 +422,10 @@
 		Label="C# Analyzer Config Files"
 		Condition="'$(IsCSharpProject)' == 'true' AND Exists('$(EditorConfigFilePath)')"
 	>
-		<EditorConfigFiles Include="$(EditorConfigFilePath)" />
+		<EditorConfigFiles
+			Include="$(EditorConfigFilePath)"
+			Condition="'$(_PurviewEffectiveEditorConfigFullPath)' != '$(_PurviewDiscoveredEditorConfigFullPath)'"
+		/>
 	</ItemGroup>
 
 	<!-- Default namespace from logical project identity -->
