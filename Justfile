@@ -21,6 +21,10 @@ test filter=default_test_filter *args:
     echo "Running tests for {{ BLUE }}{{ solution }}{{ NORMAL }} with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }} and filter {{ GREEN }}{{ filter }}{{ NORMAL }}"
     dotnet test {{ solution }} -c {{ build_configuration }} --ignore-exit-code 8 --treenode-filter "{{ filter }}" -- {{ args }}
 
+# Run agent-pack integration tests in the same Linux SDK environment used by CI
+test-linux:
+    pwsh -NoProfile -File ./scripts/test-linux-docker.ps1
+
 # Run tests with the specified configuration, defaulting to "Release"
 restore *args:
     echo "Restoring dependencies for {{ BLUE }}{{ solution }}{{ NORMAL }}"

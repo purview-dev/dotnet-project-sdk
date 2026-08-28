@@ -159,7 +159,7 @@
 	<UsingTask
 		TaskName="CreateSdkDotAgentsGitIgnoreFiles"
 		TaskFactory="RoslynCodeTaskFactory"
-		AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll"
+		AssemblyFile="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Tasks.Core.dll'))"
 	>
 		<ParameterGroup>
 			<AgentPackRoot ParameterType="System.String" Required="true" />
@@ -171,8 +171,8 @@
 			<Using Namespace="System.IO" />
 			<Using Namespace="Microsoft.Build.Framework" />
 			<Using Namespace="Microsoft.Build.Utilities" />
-			<Reference Include="$(MSBuildToolsPath)\Microsoft.Build.Framework.dll" />
-			<Reference Include="$(MSBuildToolsPath)\Microsoft.Build.Utilities.Core.dll" />
+			<Reference Include="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Framework.dll'))" />
+			<Reference Include="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Utilities.Core.dll'))" />
 			<Code Type="Fragment" Language="cs">
 				<![CDATA[
 					var files = new List<ITaskItem>();
@@ -210,7 +210,7 @@
 	<UsingTask
 		TaskName="DiscoverAgentPackageFolders"
 		TaskFactory="RoslynCodeTaskFactory"
-		AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll"
+		AssemblyFile="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Tasks.Core.dll'))"
 	>
 		<ParameterGroup>
 			<ProjectAssetsFile ParameterType="System.String" Required="true" />
@@ -224,8 +224,8 @@
 			<Using Namespace="System.Text.RegularExpressions" />
 			<Using Namespace="Microsoft.Build.Framework" />
 			<Using Namespace="Microsoft.Build.Utilities" />
-			<Reference Include="$(MSBuildToolsPath)\Microsoft.Build.Framework.dll" />
-			<Reference Include="$(MSBuildToolsPath)\Microsoft.Build.Utilities.Core.dll" />
+			<Reference Include="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Framework.dll'))" />
+			<Reference Include="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Utilities.Core.dll'))" />
 			<Code Type="Fragment" Language="cs">
 				<![CDATA[
 					var results = new List<ITaskItem>();
