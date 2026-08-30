@@ -7,8 +7,6 @@ namespace Purview.DotNetProjectSdk.Analyzers.ExtensionsNamespace;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class ExtensionsNamespaceSuppressor : DiagnosticSuppressor
 {
-	const string ProjectDirPropertyKey = "build_property.ProjectDir";
-
 	static readonly SuppressionDescriptor SuppressIde0130ForExtensionsNamespaceRule = new(
 		"PDS0003",
 		"IDE0130",
@@ -34,9 +32,7 @@ public sealed class ExtensionsNamespaceSuppressor : DiagnosticSuppressor
 			}
 
 			var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(location.SourceTree);
-			if (
-				!options.TryGetValue(ProjectDirPropertyKey, out var projectDir) || string.IsNullOrWhiteSpace(projectDir)
-			)
+			if (!options.TryGetBuildProperty(BuildPropertyKeys.ProjectDir, out var projectDir))
 			{
 				continue;
 			}

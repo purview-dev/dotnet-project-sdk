@@ -46,6 +46,7 @@ Tests for this feature live in `src/tests/DotNetProjectSdk.IntegrationTests/Test
 
 - `src/src/DotNetProjectSdk/` — packable MSBuild SDK package (`Purview.DotNetProjectSdk`)
 - `src/src/Analyzers/` — Roslyn analyzer/source-generator assembly
+- `src/src/CodeFixers/` — Roslyn code-fix assembly (`Purview.DotNetProjectSdk.CodeFixers`)
 - `src/tests/Analyzers.UnitTests/` — analyzer-focused unit tests
 - `src/tests/Analyzers.IntegrationTests/` — analyzer integration tests (Roslyn end-to-end analyzer/suppressor/code-fix behavior)
 - `src/tests/DotNetProjectSdk.IntegrationTests/` — integration harness validating SDK behaviour

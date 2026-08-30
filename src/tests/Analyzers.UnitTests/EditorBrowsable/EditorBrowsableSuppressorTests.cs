@@ -20,6 +20,16 @@ public sealed class EditorBrowsableSuppressorTests
 	static ImmutableArray<MetadataReference> BuildBclReferences() =>
 		[.. TrustedAssemblies.Select(p => MetadataReference.CreateFromFile(p))];
 
+	static ImmutableArray<MetadataReference> BuildBclReferencesWithoutEditorBrowsable() =>
+		[
+			.. TrustedAssemblies
+				.Where(p =>
+					!Path.GetFileNameWithoutExtension(p)
+						.StartsWith("System.ComponentModel", StringComparison.OrdinalIgnoreCase)
+				)
+				.Select(p => MetadataReference.CreateFromFile(p)),
+		];
+
 	static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source, CancellationToken cancellationToken)
 	{
 		var parseOptions = CSharpParseOptions.Default.WithDocumentationMode(DocumentationMode.Diagnose);
@@ -30,6 +40,29 @@ public sealed class EditorBrowsableSuppressorTests
 			"TestAssembly",
 			[syntaxTree],
 			BuildBclReferences(),
+			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+		);
+
+		var suppressors = ImmutableArray.Create<DiagnosticAnalyzer>(new EditorBrowsableSuppressor());
+
+		var compilationWithAnalyzers = compilation.WithAnalyzers(suppressors);
+
+		return await compilationWithAnalyzers.GetAllDiagnosticsAsync(cancellationToken);
+	}
+
+	static async Task<ImmutableArray<Diagnostic>> AnalyzeWithoutEditorBrowsableReferenceAsync(
+		string source,
+		CancellationToken cancellationToken
+	)
+	{
+		var parseOptions = CSharpParseOptions.Default.WithDocumentationMode(DocumentationMode.Diagnose);
+
+		var syntaxTree = CSharpSyntaxTree.ParseText(source, parseOptions, cancellationToken: cancellationToken);
+
+		var compilation = CSharpCompilation.Create(
+			"TestAssembly",
+			[syntaxTree],
+			BuildBclReferencesWithoutEditorBrowsable(),
 			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
 		);
 
@@ -115,6 +148,31 @@ public sealed class EditorBrowsableSuppressorTests
 		var diagnostics = await AnalyzeAsync(source, cancellationToken);
 		var cs1591 = diagnostics.Where(d => d.Id == "CS1591").ToArray();
 
+		foreach (var d in cs1591)
+			await Assert.That(d.IsSuppressed).IsFalse();
+	}
+
+	/// <summary>
+	/// When the compilation does not reference <c>System.ComponentModel</c>, the
+	/// <c>EditorBrowsableAttribute</c> type cannot be resolved, so the suppressor must be a
+	/// no-op and leave CS1591 unsuppressed.
+	/// </summary>
+	[Test]
+	public async Task DoesNotSuppress_WhenEditorBrowsableAttribute_IsNotReferenced(CancellationToken cancellationToken)
+	{
+		const string source = """
+			namespace MyLib;
+
+			public class MyClass
+			{
+			    public void PublicMethod() { }
+			}
+			""";
+
+		var diagnostics = await AnalyzeWithoutEditorBrowsableReferenceAsync(source, cancellationToken);
+		var cs1591 = diagnostics.Where(d => d.Id == "CS1591").ToArray();
+
+		await Assert.That(cs1591).IsNotEmpty();
 		foreach (var d in cs1591)
 			await Assert.That(d.IsSuppressed).IsFalse();
 	}

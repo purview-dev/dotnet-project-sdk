@@ -5,14 +5,16 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Purview.DotNetProjectSdk.Analyzers;
+using Purview.DotNetProjectSdk.Analyzers.ExtensionsNamespace;
 
-namespace Purview.DotNetProjectSdk.Analyzers.ExtensionsNamespace;
+namespace Purview.DotNetProjectSdk.CodeFixers.ExtensionsNamespace;
 
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ExtensionsNamespaceCodeFixProvider))]
 [Shared]
 public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 {
-	const string ProjectDirPropertyKey = "build_property.ProjectDir";
+	internal const string SyncNamespaceToExtensionsFolderEquivalenceKey = "SyncNamespaceToExtensionsFolder";
 
 	public override ImmutableArray<string> FixableDiagnosticIds => [ExtensionsNamespaceAnalyzer.DiagnosticId];
 
@@ -29,22 +31,24 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 			return;
 		}
 
-		var diagnostic = context.Diagnostics[0];
-		var node = root.FindNode(diagnostic.Location.SourceSpan, getInnermostNodeForTie: true);
-		var namespaceDeclaration = node.FirstAncestorOrSelf<BaseNamespaceDeclarationSyntax>();
-		if (namespaceDeclaration is null)
+		foreach (var diagnostic in context.Diagnostics)
 		{
-			return;
-		}
+			var node = root.FindNode(diagnostic.Location.SourceSpan, getInnermostNodeForTie: true);
+			var namespaceDeclaration = node.FirstAncestorOrSelf<BaseNamespaceDeclarationSyntax>();
+			if (namespaceDeclaration is null)
+			{
+				continue;
+			}
 
-		context.RegisterCodeFix(
-			CodeAction.Create(
-				"Sync namespace to Extensions folder structure",
-				ct => ApplyFixAsync(context.Document, namespaceDeclaration, ct),
-				equivalenceKey: ExtensionsNamespaceAnalyzer.DiagnosticId
-			),
-			diagnostic
-		);
+			context.RegisterCodeFix(
+				CodeAction.Create(
+					"Sync namespace to Extensions folder structure",
+					ct => ApplyFixAsync(context.Document, namespaceDeclaration, ct),
+					equivalenceKey: SyncNamespaceToExtensionsFolderEquivalenceKey
+				),
+				diagnostic
+			);
+		}
 	}
 
 	static async Task<Document> ApplyFixAsync(
@@ -97,18 +101,7 @@ public sealed class ExtensionsNamespaceCodeFixProvider : CodeFixProvider
 	static bool TryGetProjectDir(Document document, SyntaxTree syntaxTree, out string projectDir)
 	{
 		var options = document.Project.AnalyzerOptions.AnalyzerConfigOptionsProvider.GetOptions(syntaxTree);
-
-		if (
-			options.TryGetValue(ProjectDirPropertyKey, out var configuredValue)
-			&& !string.IsNullOrWhiteSpace(configuredValue)
-		)
-		{
-			projectDir = configuredValue;
-			return true;
-		}
-
-		projectDir = string.Empty;
-		return false;
+		return options.TryGetBuildProperty(BuildPropertyKeys.ProjectDir, out projectDir);
 	}
 
 	static SyntaxNode RemoveNamespaceDeclaration(SyntaxNode root, BaseNamespaceDeclarationSyntax namespaceDeclaration)

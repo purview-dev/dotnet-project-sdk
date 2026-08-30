@@ -11,16 +11,14 @@ public sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 {
 	internal const string DiagnosticId = "PDS0002";
 
-	const string ProjectDirPropertyKey = "build_property.ProjectDir";
-	const string RootNamespacePropertyKey = "build_property.RootNamespace";
-
 	static readonly DiagnosticDescriptor Rule = new(
 		DiagnosticId,
 		"Extensions root folder resets namespace",
 		"Namespace '{0}' does not match expected Extensions namespace '{1}'",
 		"Naming",
 		DiagnosticSeverity.Warning,
-		isEnabledByDefault: true
+		isEnabledByDefault: true,
+		description: "Files under the project-root 'Extensions' folder derive their namespace from the folder structure, ignoring RootNamespace."
 	);
 
 	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
@@ -51,13 +49,9 @@ public sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 		if (string.IsNullOrWhiteSpace(filePath))
 			return;
 
-		if (!TryGetBuildProperty(context, ProjectDirPropertyKey, out var projectDir))
+		var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(context.Node.SyntaxTree);
+		if (!options.TryGetBuildProperty(BuildPropertyKeys.ProjectDir, out var projectDir))
 			return;
-
-		// The RootNamespace build property is intentionally read from AnalyzerConfigOptions
-		// as the authoritative source for non-Extensions files, even though this analyzer
-		// only reports diagnostics for files scoped to the root Extensions directory.
-		TryGetBuildProperty(context, RootNamespacePropertyKey, out _);
 
 		var expectedNamespace = ExtensionsNamespaceHelper.ComputeExpectedNamespace(projectDir, filePath);
 		if (expectedNamespace is null)
@@ -79,19 +73,5 @@ public sealed class ExtensionsNamespaceAnalyzer : DiagnosticAnalyzer
 		);
 
 		context.ReportDiagnostic(diagnostic);
-	}
-
-	static bool TryGetBuildProperty(SyntaxNodeAnalysisContext context, string key, out string value)
-	{
-		var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(context.Node.SyntaxTree);
-
-		if (options.TryGetValue(key, out var configuredValue) && !string.IsNullOrWhiteSpace(configuredValue))
-		{
-			value = configuredValue;
-			return true;
-		}
-
-		value = string.Empty;
-		return false;
 	}
 }

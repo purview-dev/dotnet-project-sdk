@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
+using Purview.DotNetProjectSdk.CodeFixers.TargetTypedObjectCreation;
 
 namespace Purview.DotNetProjectSdk.Analyzers.TargetTypedObjectCreation;
 
@@ -37,6 +38,16 @@ public sealed class TargetTypedObjectCreationTests
 		// Assert
 		await Assert.That(diagnostics).Count().IsEqualTo(1);
 		await Assert.That(diagnostics[0].Id).IsEqualTo(TargetTypedObjectCreationAnalyzer.DiagnosticId);
+	}
+
+	[Test]
+	public async Task CodeFixProvider_Exposes_TargetTypedObjectCreationDiagnosticId(CancellationToken cancellationToken)
+	{
+		_ = cancellationToken;
+
+		var provider = new TargetTypedObjectCreationCodeFixProvider();
+
+		await Assert.That(provider.FixableDiagnosticIds).Contains(TargetTypedObjectCreationAnalyzer.DiagnosticId);
 	}
 
 	[Test]

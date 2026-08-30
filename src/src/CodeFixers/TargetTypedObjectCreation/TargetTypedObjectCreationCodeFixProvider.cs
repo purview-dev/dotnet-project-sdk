@@ -5,13 +5,16 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Purview.DotNetProjectSdk.Analyzers.TargetTypedObjectCreation;
 
-namespace Purview.DotNetProjectSdk.Analyzers.TargetTypedObjectCreation;
+namespace Purview.DotNetProjectSdk.CodeFixers.TargetTypedObjectCreation;
 
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(TargetTypedObjectCreationCodeFixProvider))]
 [Shared]
 public sealed class TargetTypedObjectCreationCodeFixProvider : CodeFixProvider
 {
+	internal const string UseExplicitTypeAndTargetTypedNewEquivalenceKey = "UseExplicitTypeAndTargetTypedNew";
+
 	public override ImmutableArray<string> FixableDiagnosticIds => [TargetTypedObjectCreationAnalyzer.DiagnosticId];
 
 	public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
@@ -22,25 +25,28 @@ public sealed class TargetTypedObjectCreationCodeFixProvider : CodeFixProvider
 		if (root is null)
 			return;
 
-		var node = root.FindNode(context.Diagnostics[0].Location.SourceSpan);
-		var declaration = node.FirstAncestorOrSelf<VariableDeclarationSyntax>();
-		if (declaration is null || !declaration.Type.IsVar)
-			return;
+		foreach (var diagnostic in context.Diagnostics)
+		{
+			var node = root.FindNode(diagnostic.Location.SourceSpan);
+			var declaration = node.FirstAncestorOrSelf<VariableDeclarationSyntax>();
+			if (declaration is null || !declaration.Type.IsVar)
+				continue;
 
-		if (
-			declaration.Variables.Count != 1
-			|| declaration.Variables[0].Initializer?.Value is not ObjectCreationExpressionSyntax
-		)
-			return;
+			if (
+				declaration.Variables.Count != 1
+				|| declaration.Variables[0].Initializer?.Value is not ObjectCreationExpressionSyntax
+			)
+				continue;
 
-		context.RegisterCodeFix(
-			CodeAction.Create(
-				"Use explicit type and target-typed new",
-				cancellationToken => ApplyFixAsync(context.Document, declaration, cancellationToken),
-				equivalenceKey: TargetTypedObjectCreationAnalyzer.DiagnosticId
-			),
-			context.Diagnostics
-		);
+			context.RegisterCodeFix(
+				CodeAction.Create(
+					"Use explicit type and target-typed new",
+					cancellationToken => ApplyFixAsync(context.Document, declaration, cancellationToken),
+					equivalenceKey: UseExplicitTypeAndTargetTypedNewEquivalenceKey
+				),
+				diagnostic
+			);
+		}
 	}
 
 	static async Task<Document> ApplyFixAsync(

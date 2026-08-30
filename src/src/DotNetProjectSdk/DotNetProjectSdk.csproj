@@ -41,6 +41,13 @@
 			OutputItemType="Analyzer"
 			Targets="GetSourceGeneratorAnalyzerFiles"
 		/>
+		<ProjectReference
+			Include="..\CodeFixers\CodeFixers.csproj"
+			PrivateAssets="all"
+			ReferenceOutputAssembly="false"
+			OutputItemType="Analyzer"
+			Targets="GetSourceGeneratorAnalyzerFiles"
+		/>
 	</ItemGroup>
 
 	<!-- Pack the Sdk/ folder contents into the correct locations in the NuGet package.

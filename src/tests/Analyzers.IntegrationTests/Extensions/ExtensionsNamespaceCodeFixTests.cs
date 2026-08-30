@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 using Purview.DotNetProjectSdk.Analyzers.ExtensionsNamespace;
+using Purview.DotNetProjectSdk.CodeFixers.ExtensionsNamespace;
 
 namespace Purview.DotNetProjectSdk.Analyzers.IntegrationTests.Extensions;
 
@@ -131,6 +132,16 @@ public sealed class ExtensionsNamespaceCodeFixTests
 		var attributes = Attribute.GetCustomAttributes(typeof(ExtensionsNamespaceCodeFixProvider), inherit: false);
 		await Assert.That(attributes.OfType<ExportCodeFixProviderAttribute>().Any()).IsTrue();
 		await Assert.That(attributes.OfType<SharedAttribute>().Any()).IsTrue();
+	}
+
+	[Test]
+	public async Task FixableDiagnosticIds_ContainsExtensionsNamespaceDiagnosticId(CancellationToken cancellationToken)
+	{
+		_ = cancellationToken;
+
+		var provider = new ExtensionsNamespaceCodeFixProvider();
+
+		await Assert.That(provider.FixableDiagnosticIds).Contains(ExtensionsNamespaceAnalyzer.DiagnosticId);
 	}
 
 	[Test]

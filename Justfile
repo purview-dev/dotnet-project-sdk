@@ -1,9 +1,11 @@
 set quiet
 
-solution := "src/DotNetProjectSdk.slnx"
+solution_file := "src/DotNetProjectSdk.slnx"
 build_configuration := "Release"
 artifacts_folder := "./artifacts"
-default_test_filter := "/*/*/*/*/"
+
+pipeline_solution := "build/Pipeline.slnx"
+pipeline_project := "build/PipelineCLI/PipelineCLI.csproj"
 
 current_version := `node -p "require('./package.json').version"`
 
@@ -11,43 +13,99 @@ current_version := `node -p "require('./package.json').version"`
 default:
     just --list
 
-# Build and test with the specified configuration, defaulting to "Release"
-build *args:
-    echo "Building {{ BLUE }}{{ solution }}{{ NORMAL }} with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }}"
-    dotnet build {{ solution }} -c {{ build_configuration }} {{ args }}
+# Run the PR pipeline (restore, build, lint, tests)
+[group('Pipeline')]
+pipeline-pr *args:
+    echo "Running PR pipeline..."
+    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} {{ args }}
 
-# Run tests with the specified configuration, defaulting to "Release"
-test filter=default_test_filter *args:
-    echo "Running tests for {{ BLUE }}{{ solution }}{{ NORMAL }} with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }} and filter {{ GREEN }}{{ filter }}{{ NORMAL }}"
-    dotnet test {{ solution }} -c {{ build_configuration }} --ignore-exit-code 8 --treenode-filter "{{ filter }}" -- {{ args }}
+# Run the build pipeline (restore, build, lint)
+[group('Pipeline')]
+pipeline-build *args:
+    echo "Running build pipeline..."
+    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} -- --Build:RunTests=false --Release:Mode=None {{ args }} 
+
+# Run the release pipeline (restore, build, lint, tests, pack, publish, GitHub release)
+[group('Pipeline')]
+pipeline-release *args:
+    echo "Running release pipeline..."
+    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} -- --Release:Mode=NuGet {{ args }}
+
+# Run the release pipeline (restore, build, lint, tests, pack, local nuget publish)
+# Note: `just` runs recipes through the shell, which strips backslashes from unquoted arguments.
+# Always use forward slashes for the feed path, e.g.
+# just pipeline-local-release --PublishLocalNuGet:LocalFeedPath=p:/_sync-projects/.local-nuget/
+[group('Pipeline')]
+pipeline-local-release *args:
+    echo "Running local release pipeline..."
+    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} -- --Release:Mode=LocalNuGet {{ args }}
+
+# Run the pipeline with tests enabled
+[group('Pipeline')]
+pipeline-tests *args:
+    echo "Running tests pipeline..."
+    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} -- --Build:RunTests=true --Release:Mode=None {{ args }}
+
+# Open the solution in Visual Studio/ Registered application
+[group('Utilities')]
+vs:
+    open {{ solution_file }}
+
+# Open the solution in Visual Studio/ Registered application
+[group('Utilities')]
+vs-pipeline:
+    open {{ pipeline_solution }}
+
+# Build the solution for the specified configuration (default: Release)
+[group('Build and Test')]
+build *args:
+    echo "==> Building {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }}"
+    dotnet build {{ solution_file }} --configuration {{ build_configuration }} {{ args }}
+
+# Cleans the solution for the specified configuration (default: Release)
+[group('Build and Test')]
+clean *args:
+    echo "==> Cleaning {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }}"
+    dotnet clean {{ solution_file }} --configuration {{ build_configuration }} {{ args }}
+
+# Restore local .NET tools
+[group('Utilities')]
+restore-tools:
+    dotnet tool restore
+
+# Restore NuGet packages for the solution
+[group('Build and Test')]
+restore *args:
+    dotnet restore {{ solution_file }} {{ args }}
+
+# Displays the current package version from package.json
+[group('Build and Test')]
+current_version:
+    echo "==> Current version: {{ GREEN }}{{ current_version }}{{ NORMAL }} (defined in package.json and automatically included in the build output through the Purview.DotNetProjectSdk package)"
+
+# Run tests for a specific project with a filter (e.g., "/*/*/*/*/", or "/*/*/*/*[Category=Unit]" to run just unit tests) and configuration (e.g., "Release")
+[group('Build and Test')]
+test filter="/*/*/*/*/" *args:
+    echo "==> Testing {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ build_configuration }}{{ NORMAL }}) with filter {{ YELLOW }}{{ filter }}{{ NORMAL }}"
+    dotnet test --project {{ solution_file }} --configuration {{ build_configuration }} --treenode-filter "{{ filter }}" --ignore-exit-code 8 {{ args }}
 
 # Run agent-pack integration tests in the same Linux SDK environment used by CI
+[group('Build and Test')]
 test-linux:
     pwsh -NoProfile -File ./scripts/test-linux-docker.ps1
 
-# Run tests with the specified configuration, defaulting to "Release"
-restore *args:
-    echo "Restoring dependencies for {{ BLUE }}{{ solution }}{{ NORMAL }}"
-    dotnet restore {{ solution }} {{ args }}
+# Pack all packable projects
+[group('Build and Test')]
+pack artifact_folder=artifacts_folder *args:
+    echo "==> Packing {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) to {{ YELLOW }}{{ artifact_folder }}{{ NORMAL }}"
+    dotnet pack "{{ solution_file }}" --configuration "{{ build_configuration }}" --output "{{ artifact_folder }}" {{ args }}
 
-# Create NuGet package for the project
-pack publish_folder=artifacts_folder *args:
-    echo "Packing {{ BLUE }}{{ solution }}{{ NORMAL }} with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }} to {{ GREEN }}{{ publish_folder }}{{ NORMAL }}"
-    echo "  Current version is {{ BLUE }}{{ current_version }}{{ NORMAL }}"
-    dotnet pack {{ solution }} -c {{ build_configuration }} -o {{ publish_folder }} {{ args }}
+# Format the code with CSharpier
+[group('Utilities')]
+lint-fix:
+    dotnet csharpier format .
 
-# Displays the current version from package.json
-current_version:
-    echo "Current version is {{ BLUE }}{{ current_version }}{{ NORMAL }}"
-
-# Check code formatting using CSharpier
-lint-check *args:
-    dotnet csharpier check . {{ args }}
-
-# Fix code formatting issues using CSharpier
-lint-fix *args:
-    dotnet csharpier format . {{ args }}
-
-# Open the solution in Visual Studio/ Registered application
-vs:
-    open {{ solution }}
+# Check formatting with CSharpier
+[group('Utilities')]
+lint-check:
+    dotnet csharpier check .

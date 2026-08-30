@@ -18,6 +18,12 @@ public sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 
 	public override void ReportSuppressions(SuppressionAnalysisContext context)
 	{
+		var editorBrowsableType = context.Compilation.GetTypeByMetadataName(typeof(EditorBrowsableAttribute).FullName!);
+		if (editorBrowsableType is null)
+		{
+			return;
+		}
+
 		foreach (var diagnostic in context.ReportedDiagnostics)
 		{
 			var location = diagnostic.Location;
@@ -31,18 +37,18 @@ public sealed class EditorBrowsableSuppressor : DiagnosticSuppressor
 			var node = rootNode.FindNode(location.SourceSpan, getInnermostNodeForTie: true);
 			var symbol = semanticModel.GetDeclaredSymbol(node, context.CancellationToken);
 
-			if (symbol is not null && HasEditorBrowsableNever(symbol))
+			if (symbol is not null && HasEditorBrowsableNever(symbol, editorBrowsableType))
 			{
 				context.ReportSuppression(Suppression.Create(SuppressMissingXmlDocs, diagnostic));
 			}
 		}
 	}
 
-	static bool HasEditorBrowsableNever(ISymbol symbol)
+	static bool HasEditorBrowsableNever(ISymbol symbol, INamedTypeSymbol editorBrowsableType)
 	{
 		foreach (var attribute in symbol.GetAttributes())
 		{
-			if (attribute.AttributeClass?.ToDisplayString() != typeof(EditorBrowsableAttribute).FullName)
+			if (!SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, editorBrowsableType))
 			{
 				continue;
 			}

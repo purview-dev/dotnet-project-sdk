@@ -10,6 +10,7 @@
 	</Folder>
 	<Folder Name="/src/">
 		<Project Path="src/Analyzers/Analyzers.csproj" />
+		<Project Path="src/CodeFixers/CodeFixers.csproj" />
 		<Project Path="src/DotNetProjectSdk/DotNetProjectSdk.csproj" />
 	</Folder>
 	<Folder Name="/tests/">

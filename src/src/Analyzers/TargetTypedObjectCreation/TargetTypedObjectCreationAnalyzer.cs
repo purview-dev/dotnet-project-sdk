@@ -17,7 +17,8 @@ public sealed class TargetTypedObjectCreationAnalyzer : DiagnosticAnalyzer
 		"Use explicit type instead of 'var' with target-typed object creation",
 		"Style",
 		DiagnosticSeverity.Warning,
-		isEnabledByDefault: true
+		isEnabledByDefault: true,
+		description: "Prefer an explicit type combined with a target-typed 'new()' expression over 'var'."
 	);
 
 	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];

@@ -658,3 +658,6 @@ sketch
 !scripts/*
 
 *.binlog
+
+!build/
+
