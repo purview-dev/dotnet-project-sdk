@@ -46,7 +46,7 @@
 			>false</EnableStaticNativeInstrumentation>
 		<EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
 		<EnableAssemblyNameGeneration Condition="'$(EnableAssemblyNameGeneration)' == ''"
-			>false</EnableAssemblyNameGeneration>
+			>true</EnableAssemblyNameGeneration>
 		<AgentPackDestinationFolder Condition="'$(AgentPackDestinationFolder)' == ''"
 			>.agents</AgentPackDestinationFolder>
 		<Exclude Condition="'$(Exclude)' == ''"></Exclude>
@@ -58,7 +58,7 @@
 			>false</GenerateAssemblyCompanyAttribute>
 		<GenerateAssemblyCopyrightAttribute Condition="'$(GenerateAssemblyCopyrightAttribute)' == ''"
 			>false</GenerateAssemblyCopyrightAttribute>
-		<GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''">false</GenerateDocumentationFile>
+		<GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''">true</GenerateDocumentationFile>
 		<ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>
 		<IncludeSource Condition="'$(IncludeSource)' == ''">false</IncludeSource>
 		<IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>

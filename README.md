@@ -12,7 +12,7 @@ A reusable MSBuild SDK NuGet package that delivers standardised .NET project def
 | **Project type detection** | `IsCSharpProject`, `IsTestProject`, `IsSharedTestingProject`, `IsContainerProject`, `IsWebSdkProject`, `IsAspireHostProject`, … |
 | **C# defaults** | `net10.0` TFM (overridable), `LangVersion=preview`, `Nullable=enable`, `ImplicitUsings=enable`, deterministic builds |
 | **Code style** | `.editorconfig` baked into the package, applied via `EditorConfigFilePath`, and auto-bootstrapped to repo root if missing; `EnforceCodeStyleInBuild=true`, `EnableNETAnalyzers=true`, `AnalysisLevel=latest`, `AnalysisMode=All` |
-| **NuGet packaging** | `PublishRepositoryUrl=true`, `IncludeSymbols=true`, `SymbolPackageFormat=snupkg`, `EmbedUntrackedSources=true` for packable projects |
+| **NuGet packaging** | `AssemblyName`/`PackageId` default to the fully evaluated `RootNamespace`; packable projects get `GenerateDocumentationFile=true`, `PublishRepositoryUrl=true`, `IncludeSymbols=true`, `SymbolPackageFormat=snupkg`, `EmbedUntrackedSources=true`, and portable PDBs delivered via `.snupkg` (not the `.nupkg`) |
 | **Repo bootstrap** | Missing repo-root `.editorconfig` and `global.json` are auto-copied/created by default (disable via `DisableAutoCopySdkFiles=true`) |
 | **CI detection** | `ContinuousIntegrationBuild` set automatically when `CI`, `GITHUB_ACTIONS`, or `TF_BUILD` env vars are present |
 | **SourceLink** | `Microsoft.SourceLink.GitHub` added to all packable projects (configurable via `SourceLinkPackageName`) |
@@ -78,28 +78,18 @@ The SDK applies several conventions automatically based on the `.csproj` filenam
 
 ### Defaults (no extra configuration)
 
-By default (`EnableAssemblyNameGeneration=false`), `AssemblyName` follows standard .NET behaviour — it's just the `.csproj` filename. `RootNamespace` is always derived from `$(NamespacePrefix).$(ProjectName)`:
+`RootNamespace` is always derived from `$(NamespacePrefix).$(ProjectName)` and is the canonical default public name. By default (`EnableAssemblyNameGeneration=true`), `AssemblyName` and `PackageId` both follow the fully evaluated `RootNamespace`. Test projects retain their detected suffix so test assemblies stay distinct from the source assembly. Set `EnableAssemblyNameGeneration=false` (before the SDK import) to opt out and use standard .NET behaviour (the `.csproj` filename):
 
-| `.csproj` filename | `AssemblyName` | `RootNamespace` | Detected as |
+| `.csproj` filename | `AssemblyName` / `PackageId` | `RootNamespace` | Detected as |
 | -- | -- | -- | -- |
-| `Api.csproj` | `Api` | `Acme.Api` | Source project |
-| `Api.UnitTests.csproj` | `Api.UnitTests` | `Acme.Api` | `IsTestProject=true`, `TestingType=Unit` |
-| `Api.IntegrationTests.csproj` | `Api.IntegrationTests` | `Acme.Api` | `IsTestProject=true`, `TestingType=Integration` |
-| `SharedTestingFramework.csproj` | `SharedTestingFramework` | `Acme.SharedTestingFramework` | `IsSharedTestingProject=true` |
+| `Api.csproj` | `Acme.Api` | `Acme.Api` | Source project |
+| `Api.UnitTests.csproj` | `Acme.Api.UnitTests` | `Acme.Api` | `IsTestProject=true`, `TestingType=Unit` |
+| `Api.IntegrationTests.csproj` | `Acme.Api.IntegrationTests` | `Acme.Api` | `IsTestProject=true`, `TestingType=Integration` |
+| `SharedTestingFramework.csproj` | `Acme.SharedTestingFramework` | `Acme` | `IsSharedTestingProject=true` |
 
-> **Note:** `InternalsVisibleTo` follows `$(AssemblyName)` — so for `Api.csproj` the SDK generates `Api.UnitTests`, `Api.IntegrationTests`, etc.
+> **Note:** `InternalsVisibleTo` follows `$(AssemblyName)` — so for `Api.csproj` the SDK generates `Acme.Api.UnitTests`, `Acme.Api.IntegrationTests`, etc.
 
-### With `EnableAssemblyNameGeneration=true`
-
-When enabled, the SDK derives `AssemblyName` and `PackageId` from `$(PurviewLogicalProjectName)` — the full `$(NamespacePrefix).$(ProjectName)` with deduplication:
-
-| `.csproj` filename | `AssemblyName` | `RootNamespace` |
-| -- | -- | -- |
-| `Api.csproj` | `Acme.Api` | `Acme.Api` |
-| `Api.UnitTests.csproj` | `Acme.Api.UnitTests` | `Acme.Api` |
-| `Core.Infrastructure.csproj` | `Acme.Core.Infrastructure` | `Acme.Core.Infrastructure` |
-
-Use short `.csproj` names in both modes — the SDK handles the prefixing:
+Use short `.csproj` names — the SDK handles the prefixing:
 
 ```text
 ✅  Api.csproj                        → short name, SDK resolves the rest
@@ -241,10 +231,32 @@ Version detection logging is disabled by default. Set `VersionDetectionLogEnable
 | `PackProjectReferencedSourceGenerators` | `true` | Automatically packs analyzer `ProjectReference` outputs and their runtime dependencies under `analyzers/dotnet/cs/`. Set to `false` to opt out; set `Pack="false"` on an individual reference to exclude only that generator. |
 | `SourceLinkPackageName` | `Microsoft.SourceLink.GitHub` | SourceLink provider. Set to `Microsoft.SourceLink.AzureDevOps.Git` for ADO repos. |
 | `DisableSourceLink` | `false` | Set to `true` to stop the SDK from adding the configured SourceLink package automatically. |
-| `EnableAssemblyNameGeneration` | `false` | When `true`, the SDK derives `AssemblyName` (and `PackageId`) from `$(PurviewLogicalProjectName)` — i.e. `$(NamespacePrefix).$(ProjectName)` with deduplication logic. When `false` (default), standard .NET behaviour applies (`$(MSBuildProjectName)`). Explicit `<AssemblyName>` in a `.csproj` always takes precedence. |
+| `EnableAssemblyNameGeneration` | `true` | When `true` (default), `AssemblyName` and `PackageId` derive from the fully evaluated `RootNamespace`. When explicitly `false`, standard .NET behaviour applies (`$(MSBuildProjectName)`). Explicit `<AssemblyName>`/`<PackageId>` in a `.csproj` always take precedence. |
 | `DisableProjectFileNamingConventionCheck` | `false` | Set to `true` to disable the validation that requires `MyProject\MyProject.csproj` naming alignment. |
 | `DisableGenerateAssemblyInfoClass` | `false` | Set to `true` to disable the generated `AssemblyInfo` helper source. |
 | `AutoIncludeUsings` | `true` | Controls SDK-added global usings for `NamespacePrefix` and `RootNamespace`. |
+
+### Packable project defaults
+
+For projects where `IsPackable=true`, the SDK provides these defaults **only when the consuming project has not supplied a value** — explicit values are always preserved:
+
+| Property | Default | Description |
+| -- | -- | -- |
+| `GenerateDocumentationFile` | `true` | Emits XML documentation. |
+| `IncludeSymbols` | `true` | Produces a symbol package. |
+| `SymbolPackageFormat` | `snupkg` | Symbol package format (`symbols.nupkg` for Roslyn components). |
+| `PublishRepositoryUrl` | `true` | Publishes the repository URL. |
+| `EmbedUntrackedSources` | `true` | Embeds untracked sources for SourceLink. |
+| `DebugType` | `portable` | Ensures portable PDBs for symbol-package delivery. |
+| `IncludeSource` | `true` | Includes source files in the package. |
+
+Portable PDBs are delivered through the `.snupkg`; the normal `.nupkg` does **not** receive PDB files unless the project explicitly opts in (for example by adding `.pdb` to `AllowedOutputExtensionsInPackageBuildOutputFolder`).
+
+**Repository README auto-inclusion:** when the repo root is discoverable (`.git` marker or CI workspace variable), the repository-root `README.md` is packed automatically for packable projects and registered via `PackageReadmeFile` — but only when the file exists and `PackageReadmeFile` has not been configured explicitly. The SDK skips the auto-inclusion if a README-named file is already being packed, so no duplicate readme items are produced. No README is required; if the file is absent the pack succeeds without readme metadata.
+
+The SDK never forces organization/package-specific metadata — `Authors`, `Company`, `PackageLicenseExpression`, `PackageLicenseFile`, `Description`, `PackageTags`, `PackageProjectUrl`, and repository URLs are left to the repository or individual package. `IsPackable` is not set blindly: it defaults to `false` and only becomes `true` when a project explicitly opts in.
+
+Non-packable projects (including web applications) default `WarnOnPackingNonPackableProject=false`, so solution-wide pack operations skip them silently. Set `<WarnOnPackingNonPackableProject>true</WarnOnPackingNonPackableProject>` explicitly to re-enable the "cannot be packed" warning.
 
 ### Repo bootstrap
 
@@ -323,7 +335,7 @@ The SDK now exports its properties via `CompilerVisibleProperty`, so analyzers a
 | `ExcludePurviewTelemetry` | Opt-out for `Purview.Telemetry.SourceGenerator`. |
 | `ExcludeMSTelemetryExtension` | Opt-out for `Microsoft.Extensions.Telemetry.Abstractions`. |
 | `DisableGenerateAssemblyInfoClass` | Disables generated `AssemblyInfo` helper source. |
-| `EnableAssemblyNameGeneration` | When `true`, the SDK derives `AssemblyName` from the logical project name. |
+| `EnableAssemblyNameGeneration` | When `true` (default), `AssemblyName` derives from `RootNamespace`. |
 | `DisableAutoInternalsVisibleTo` | Disables automatic `InternalsVisibleTo` generation. |
 | `AutoIncludeUsings` | Controls SDK-added global usings. |
 | `IsCSharpProject` | True when the project is a `.csproj`. |
@@ -389,13 +401,13 @@ Projects named `SharedTestingFramework`, `SharedTestingInfrastructure`, `SharedT
 The SDK automatically generates `[assembly: InternalsVisibleTo("…")]` attributes for every non-test C# project. The friend assembly name is derived from the source project's resolved `$(AssemblyName)`, so all naming modes are handled correctly:
 
 - **Explicit `<AssemblyName>`** — if a project sets `<AssemblyName>Custom.Assembly</AssemblyName>`, the generated attributes use `Custom.Assembly.UnitTests`, `Custom.Assembly.IntegrationTests`, etc.
-- **`EnableAssemblyNameGeneration=true`** — the SDK-derived fully-qualified name is used (e.g. `Acme.MyProject.UnitTests`).
-- **Default** — standard .NET behaviour: `$(MSBuildProjectName)` (e.g. `MyProject.UnitTests`).
+- **Default** — `AssemblyName` is `RootNamespace`-derived, so fully-qualified names are used (e.g. `Acme.MyProject.UnitTests`).
+- **`EnableAssemblyNameGeneration=false`** — standard .NET behaviour: `$(MSBuildProjectName)` (e.g. `MyProject.UnitTests`).
 
 Two categories of friend assemblies are generated:
 
 1. **TestType variants** — one `InternalsVisibleTo` per defined `TestType` (`Unit`, `Integration`, `Architecture`, `Contract`, `Functional`, …), formatted as `$(AssemblyName).{TestType}Tests`.
-2. **SharedTesting projects** — one per known shared testing project name (`SharedTestingFramework`, `SharedTestingInfrastructure`, etc.). When `EnableAssemblyNameGeneration=true` and a `NamespacePrefix` is set, these are prefixed (e.g. `Acme.SharedTestingFramework`); otherwise the raw name is used.
+2. **SharedTesting projects** — one per known shared testing project name (`SharedTestingFramework`, `SharedTestingInfrastructure`, etc.). By default (`EnableAssemblyNameGeneration=true`) with a `NamespacePrefix` set, these are prefixed (e.g. `Acme.SharedTestingFramework`); with `EnableAssemblyNameGeneration=false` the raw name is used.
 
 ### Disabling automatic InternalsVisibleTo
 
@@ -462,27 +474,22 @@ Outside this scope, normal `IDE0130` behaviour remains unchanged.
 
 ## Assembly name generation
 
-By default (`EnableAssemblyNameGeneration=false`), the SDK follows standard .NET behaviour: `AssemblyName` is `$(MSBuildProjectName)`. Set `EnableAssemblyNameGeneration=true` (in `Directory.Build.props` or individual `.csproj`) to have the SDK derive `AssemblyName` from `$(PurviewLogicalProjectName)`:
+By default (`EnableAssemblyNameGeneration=true`), the SDK treats `RootNamespace` as the canonical public name: `AssemblyName` and `PackageId` both default to the fully evaluated `RootNamespace`. The defaults are applied during `Sdk.props` evaluation — before the Microsoft SDK computes `TargetName` and before the project body — so compilation, output paths, project references, restore, and packing all agree on the same identities. Set `EnableAssemblyNameGeneration=false` **before the SDK import** to opt out and fall back to standard .NET behaviour (`$(MSBuildProjectName)`).
 
-```xml
-<PropertyGroup>
-  <NamespacePrefix>Acme</NamespacePrefix>
-  <EnableAssemblyNameGeneration>true</EnableAssemblyNameGeneration>
-</PropertyGroup>
-```
+With the default enabled:
 
-With this enabled:
+| Project name | `NamespacePrefix` | `RootNamespace` | Resolved `AssemblyName` / `PackageId` |
+| -- | -- | -- | -- |
+| `Api` | `Acme` | `Acme.Api` | `Acme.Api` |
+| `Acme.Api` | `Acme` | `Acme.Api` | `Acme.Api` (no double-prefix) |
+| `Core.Infrastructure` | `Acme` | `Acme.Infrastructure` | `Acme.Infrastructure` (`.Core` suffix stripped) |
+| `Acme` | `Acme` | `Acme` | `Acme` |
 
-| Project name | `NamespacePrefix` | Resolved `AssemblyName` |
-| -- | -- | -- |
-| `Api` | `Acme` | `Acme.Api` |
-| `Acme.Api` | `Acme` | `Acme.Api` (no double-prefix) |
-| `Core.Infrastructure` | `Acme` | `Acme.Core.Infrastructure` |
-| `Acme` | `Acme` | `Acme` |
+Test projects keep their detected suffix: `Api.UnitTests` → `AssemblyName`/`PackageId` = `Acme.Api.UnitTests`, while `RootNamespace` remains `Acme.Api`.
 
-`PackageId` follows `AssemblyName` (with namespace-remove patterns applied). An explicit `<AssemblyName>` in a `.csproj` always takes precedence over generation.
+Explicit `<AssemblyName>` or `<PackageId>` in a `.csproj` (or `Directory.Build.props`) always takes precedence. Because the defaults run before the project body, project-authored values set in the body are evaluated later and win.
 
-> **Note:** `RootNamespace` is derived from `$(PurviewLogicalProjectName)` regardless of this setting — it always reflects `$(NamespacePrefix).$(ProjectName)` with suffix stripping applied. `EnableAssemblyNameGeneration` only controls whether `AssemblyName`/`PackageId` follow suit.
+> **Note:** set `EnableAssemblyNameGeneration=false` **before** the SDK import (for example in `Directory.Build.props`) — it is consumed during `Sdk.props` evaluation.
 
 ---
 

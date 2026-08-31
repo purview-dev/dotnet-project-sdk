@@ -275,24 +275,6 @@
 	</UsingTask>
 
 	<!-- =====================================================================
-	     ASSEMBLY NAME AND PACKAGE ID GENERATION
-	     Evaluated after the project body so EnableAssemblyNameGeneration (set
-	     in .csproj or Directory.Build.props) is visible. When disabled (default),
-	     AssemblyName uses standard .NET behaviour (MSBuildProjectName).
-	     ===================================================================== -->
-	<PropertyGroup Condition="'$(IsCSharpProject)' == 'true'" Label="Assembly Name and Package ID Generation">
-		<AssemblyName
-			Condition="'$(EnableAssemblyNameGeneration)' == 'true' AND ('$(AssemblyName)' == '' OR '$(AssemblyName)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != ''"
-			>$(PurviewLogicalProjectName)</AssemblyName>
-		<_PurviewDefaultPackageId>$(AssemblyName)</_PurviewDefaultPackageId>
-		<_PurviewDefaultPackageId Condition="'$(_PurviewNamespaceRemovePattern)' != ''"
-			>$([System.Text.RegularExpressions.Regex]::Replace('$(_PurviewDefaultPackageId)', '\.(?:$(_PurviewNamespaceRemovePattern))(?=\.|$)', ''))</_PurviewDefaultPackageId>
-		<PackageId
-			Condition="('$(PackageId)' == '' OR '$(PackageId)' == '$(MSBuildProjectName)') AND '$(_PurviewDefaultPackageId)' != ''"
-			>$(_PurviewDefaultPackageId)</PackageId>
-	</PropertyGroup>
-
-	<!-- =====================================================================
 	     FIX ROOT NAMESPACE
 	     Strips known suffixes from RootNamespace. @(NamespaceRemoveSuffix) only
 	     expands inside a Target (after static item evaluation), so the regex
@@ -519,6 +501,35 @@
 		<ItemGroup Condition="Exists('$(_PurviewSdkDotAgentsRoot)')">
 			<TfmSpecificPackageFile Include="@(_PurviewSdkDotAgentsGitIgnoreFiles)">
 				<PackagePath>%(PackagePath)</PackagePath>
+			</TfmSpecificPackageFile>
+		</ItemGroup>
+	</Target>
+
+	<!-- =====================================================================
+	     REPOSITORY README PACKAGING
+	     Packs the repository-root README for packable projects when the file
+	     exists and PackageReadmeFile has not been explicitly configured.
+	     Skips when a README-named file is already being packed so no duplicate
+	     packed README items are produced.
+	     ===================================================================== -->
+	<Target
+		Name="IncludeRepoReadmeInPackage"
+		Condition="'$(IsPackable)' == 'true' AND '$(PackageReadmeFile)' == 'README.md' AND '$(RepoRoot)' != '' AND Exists('$(RepoRoot)/README.md') AND ('$(DefaultTargetFramework)' == '' OR '$(TargetFramework)' == '$(DefaultTargetFramework)')"
+		Label="Packs the repository-root README when present and PackageReadmeFile is unset."
+	>
+		<ItemGroup>
+			<_PurviewPackedReadme
+				Include="@(None)"
+				Condition="'%(None.Pack)' == 'true' AND $([System.String]::Copy('%(None.Filename)').ToLowerInvariant()) == 'readme'"
+			/>
+			<_PurviewPackedReadme
+				Include="@(TfmSpecificPackageFile)"
+				Condition="$([System.String]::Copy('%(TfmSpecificPackageFile.Filename)').ToLowerInvariant()) == 'readme'"
+			/>
+		</ItemGroup>
+		<ItemGroup Condition="'@(_PurviewPackedReadme)' == ''">
+			<TfmSpecificPackageFile Include="$(RepoRoot)/README.md">
+				<PackagePath>/</PackagePath>
 			</TfmSpecificPackageFile>
 		</ItemGroup>
 	</Target>
