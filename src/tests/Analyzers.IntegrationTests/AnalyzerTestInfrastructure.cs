@@ -19,7 +19,7 @@ static class AnalyzerTestInfrastructure
 
 	public static CSharpCompilation CreateCompilation(string source, string filePath)
 	{
-		var syntaxTree = CSharpSyntaxTree.ParseText(source, path: filePath);
+		var syntaxTree = CSharpSyntaxTree.ParseText(source, path: NormalizeFakePath(filePath));
 		return CSharpCompilation.Create(
 			"TestAssembly",
 			[syntaxTree],
@@ -35,13 +35,29 @@ static class AnalyzerTestInfrastructure
 	{
 		var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 		{
-			["build_property.ProjectDir"] = projectDir,
+			["build_property.ProjectDir"] = NormalizeFakePath(projectDir),
 			["build_property.RootNamespace"] = rootNamespace,
 		};
 
 		InMemoryAnalyzerConfigOptions options = new(values);
 		InMemoryAnalyzerConfigOptionsProvider provider = new(options);
 		return new AnalyzerOptions([], provider);
+	}
+
+	/// <summary>
+	/// Converts a Windows-style fake path literal (e.g. <c>C:\FakeProject\Extensions\System\Foo.cs</c>)
+	/// into an absolute path using the current platform's directory separators. The
+	/// <c>ExtensionsNamespaceHelper</c> performs relative-path math with platform path APIs,
+	/// so tests must feed it native-format paths on every OS.
+	/// </summary>
+	public static string NormalizeFakePath(string windowsPath)
+	{
+		var slashed = windowsPath.Replace('\\', '/');
+
+		if (slashed.Length >= 2 && slashed[1] == ':')
+			slashed = slashed[2..];
+
+		return Path.Combine(Path.GetTempPath(), slashed.TrimStart('/'));
 	}
 
 	sealed class InMemoryAnalyzerConfigOptions(Dictionary<string, string> values) : AnalyzerConfigOptions

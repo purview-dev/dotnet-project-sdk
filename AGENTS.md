@@ -92,6 +92,28 @@ This repo uses **Microsoft.Testing.Platform** (`global.json`) and **TUnit** conv
 - If filtering tests, use `--treenode-filter` (not `--filter`).
 - When passing test-runner options, keep the `--` separator with `dotnet test`.
 
+### Cross-platform requirement (non-negotiable)
+
+**All tests and features must work identically on Windows, Linux, and macOS.** CI runs the full
+suite on `ubuntu-latest`, so a test that only passes on Windows is a failing PR. This is a hard
+requirement, not a preference:
+
+- **Never hardcode platform-specific paths** in tests, analyzer configs, or fixtures — no
+  Windows drive paths (`C:\...`), no backslash-only separators, no case-insensitive path assumptions.
+- **Build paths with platform APIs**: `Path.Combine`, `Path.GetTempPath()`, `Path.DirectorySeparatorChar`,
+  `Path.GetFullPath()`. When a test needs a fixed fake path, normalize Windows-style literals to the
+  current platform (see `AnalyzerTestInfrastructure.NormalizeFakePath` and the local
+  `NamespaceCalculatorTests.NormalizeFakePath` helpers) instead of passing them raw.
+- **Feed production path-math code only native-format paths.** Code like
+  `ExtensionsNamespaceHelper` uses `Path`/`Uri` relative-path logic; any non-native separator or
+  drive-letter literal on Linux makes it return wrong results.
+- **Do not rely on environment specifics** such as case-insensitive filesystems, a `C:` drive, or
+  trailing-separator behaviour — they differ per OS.
+- When writing analyzer/compiler tests, keep `SyntaxTree` file paths and `build_property.*` values
+  (e.g. `ProjectDir`) consistent and native on every platform.
+- The harness (`ProjectHarness`) already creates throwaway projects under `Path.GetTempPath()` —
+  keep it that way; never introduce fixed absolute or Windows-style paths.
+
 For filtering syntax and troubleshooting, see:
 
 - [`tunit-test-runner` skill](./.agents/skills/tunit-test-runner/SKILL.md)

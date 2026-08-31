@@ -49,7 +49,10 @@ public sealed class NamespaceCalculatorTests
 		string? expectedNamespace
 	)
 	{
-		var result = ExtensionsNamespaceHelper.ComputeExpectedNamespace(projectDir, filePath);
+		var result = ExtensionsNamespaceHelper.ComputeExpectedNamespace(
+			NormalizeFakePath(projectDir),
+			NormalizeFakePath(filePath)
+		);
 		await Assert.That(result).IsEqualTo(expectedNamespace);
 	}
 
@@ -81,7 +84,25 @@ public sealed class NamespaceCalculatorTests
 	)]
 	public async Task IsInExtensionsRootScope_ReturnsCorrectResult(string projectDir, string filePath, bool expected)
 	{
-		var result = ExtensionsNamespaceHelper.IsInExtensionsRootScope(projectDir, filePath);
+		var result = ExtensionsNamespaceHelper.IsInExtensionsRootScope(
+			NormalizeFakePath(projectDir),
+			NormalizeFakePath(filePath)
+		);
 		await Assert.That(result).IsEqualTo(expected);
+	}
+
+	/// <summary>
+	/// Converts a Windows-style fake path literal (e.g. <c>C:\repo\MyProject\</c>) into an
+	/// absolute path using the current platform's directory separators. The helper performs
+	/// relative-path math with platform path APIs, so tests must feed it native-format paths.
+	/// </summary>
+	static string NormalizeFakePath(string windowsPath)
+	{
+		var slashed = windowsPath.Replace('\\', '/');
+
+		if (slashed.Length >= 2 && slashed[1] == ':')
+			slashed = slashed[2..];
+
+		return Path.Combine(Path.GetTempPath(), slashed.TrimStart('/'));
 	}
 }

@@ -51,9 +51,15 @@ public sealed class ExtensionsNamespaceCodeFixTests
 			)
 			.WithMetadataReferences(AnalyzerTestInfrastructure.BuildBclReferences());
 
+		var nativeFilePath = AnalyzerTestInfrastructure.NormalizeFakePath(fileName);
 		var solution = workspace
 			.CurrentSolution.AddProject(projectInfo)
-			.AddDocument(documentId, Path.GetFileName(fileName), SourceText.From(source), filePath: fileName);
+			.AddDocument(
+				documentId,
+				Path.GetFileName(nativeFilePath),
+				SourceText.From(source),
+				filePath: nativeFilePath
+			);
 
 		var document = solution.GetDocument(documentId)!;
 		return (workspace, document);
@@ -61,10 +67,11 @@ public sealed class ExtensionsNamespaceCodeFixTests
 
 	static Document AddAnalyzerConfigToDocument(Document document)
 	{
-		var analyzerConfig = """
+		var nativeProjectDir = AnalyzerTestInfrastructure.NormalizeFakePath(@"C:\FakeProject\");
+		var analyzerConfig = $$"""
 			is_root = true
 			[*.cs]
-			build_property.ProjectDir = C:\FakeProject\
+			build_property.ProjectDir = {{nativeProjectDir}}
 			build_property.RootNamespace = An.Example.Project
 			""";
 
@@ -72,7 +79,7 @@ public sealed class ExtensionsNamespaceCodeFixTests
 			DocumentId.CreateNewId(document.Project.Id),
 			".editorconfig",
 			SourceText.From(analyzerConfig),
-			filePath: @"C:\FakeProject\.editorconfig"
+			filePath: AnalyzerTestInfrastructure.NormalizeFakePath(@"C:\FakeProject\.editorconfig")
 		);
 
 		return solution.GetDocument(document.Id)!;
