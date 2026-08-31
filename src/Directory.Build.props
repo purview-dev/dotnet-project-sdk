@@ -1,0 +1,18 @@
+<Project>
+	<!--
+		The DotNetProjectSdk repo bootstraps from its own source so that
+		the package project can be built and tested without a published NuGet version.
+		Consuming repos should use the global.json + templates/Directory.Build.props
+		pattern instead (see README.md).
+	-->
+	<PropertyGroup>
+		<NamespacePrefix>Purview.DotNetProjectSdk</NamespacePrefix>
+		<!-- Exclude telemetry packages from the packaging project itself -->
+		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
+		<!-- The SDK project is an MSBuild SDK; disable the auto Sdk/ packing intended for standard consuming projects. -->
+		<PurviewAutoSdkPack Condition="'$(MSBuildProjectName)' == 'DotNetProjectSdk'">false</PurviewAutoSdkPack>
+	</PropertyGroup>
+
+	<!-- Dog fooding the Sdk... -->
+	<Import Project="$(MSBuildThisFileDirectory)src/DotNetProjectSdk/Sdk/Sdk.props" />
+</Project>

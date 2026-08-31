@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<NoWarn>$(NoWarn);RS1038;RS1041;RS1036;RS2008</NoWarn>
+	</PropertyGroup>
+	<ItemGroup>
+		<!-- Need the Roslyn compilation API directly for analyzer unit tests. -->
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+	</ItemGroup>
+</Project>

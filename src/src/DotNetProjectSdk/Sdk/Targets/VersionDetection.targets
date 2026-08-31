@@ -1,0 +1,67 @@
+<Project>
+	<PropertyGroup>
+		<VersionDetectionLogEnabled Condition="'$(VersionDetectionLogEnabled)' == ''">false</VersionDetectionLogEnabled>
+	</PropertyGroup>
+
+	<Target
+		Name="WriteVersionDetectionCache"
+		BeforeTargets="CollectPackageReferences;PrepareForBuild;GenerateNuspec;Pack"
+		Condition="'$(EnableVersionDetectionCache)' == 'true' and '$(VersionDetectionCacheFile)' != '' and '$(_UsePackageJsonVersionEnabled)' == 'true' and '$(_RootPackageJsonWasSpecified)' != 'true'"
+	>
+		<ItemGroup Condition="'$(VersionDetectionCacheFile)' != '' and ('$(RepoRoot)' != '' or '$(RootPackageJson)' != '' or '$(_PackageJsonVersion)' != '')">
+			<_VersionDetectionCacheLine Include="RepoRoot=$(RepoRoot)" />
+			<_VersionDetectionCacheLine Include="RootPackageJson=$(RootPackageJson)" />
+			<_VersionDetectionCacheLine Include="PackageJsonVersion=$(_PackageJsonVersion)" />
+		</ItemGroup>
+		<MakeDir
+			Directories="$(_VersionDetectionCacheDirectory)"
+			Condition="'$(_VersionDetectionCacheDirectory)' != ''"
+		/>
+		<WriteLinesToFile
+			File="$(VersionDetectionCacheFile)"
+			Lines="@(_VersionDetectionCacheLine)"
+			Overwrite="true"
+			WriteOnlyWhenDifferent="true"
+			Condition="'@(_VersionDetectionCacheLine)' != ''"
+		/>
+	</Target>
+
+	<Target
+		Name="ValidatePackageJsonVersion"
+		BeforeTargets="BeforeBuild;GenerateNuspec;Pack"
+		Condition="'$(_UsePackageJsonVersionEnabled)' == 'true'"
+	>
+		<Message
+			Condition="'$(VersionDetectionLogEnabled)' == 'true' and '$(RootPackageJson)' != '' and Exists('$(RootPackageJson)') and '$(_PackageJsonVersion)' != ''"
+			Importance="High"
+			Text="Detected package version '$(_PackageJsonVersion)' from '$(RootPackageJson)'."
+		/>
+
+		<Error
+			Condition="'$(_RootPackageJsonWasSpecified)' == 'true' and !Exists('$(RootPackageJson)')"
+			Text="RootPackageJson was explicitly set to '$(RootPackageJson)', but that file does not exist."
+		/>
+
+		<Error
+			Condition="'$(_RootPackageJsonWasSpecified)' != 'true'
+              and '$(RepoRoot)' != ''
+              and !Exists('$(RootPackageJson)')"
+			Text="Repository root was found at '$(RepoRoot)', but no package.json exists at '$(RootPackageJson)'."
+		/>
+
+		<Error
+			Condition="'$(RootPackageJson)' != ''
+              and Exists('$(RootPackageJson)')
+              and '$(_PackageJsonVersion)' == ''"
+			Text="package.json was found at '$(RootPackageJson)', but no version property could be read."
+		/>
+
+		<Error
+			Condition="'$(_UsePackageJsonVersionNormalized)' == 'strict'
+              and '$(_PackageJsonVersion)' == ''
+              and '$(_RootPackageJsonWasSpecified)' != 'true'
+              and '$(RepoRoot)' == ''"
+			Text="UsePackageJsonVersion=Strict requires resolving version from package.json, but no package.json source could be discovered. Set RootPackageJson explicitly or provide a discoverable repository root (for example via CI workspace variables, git metadata, or package.json above the project)."
+		/>
+	</Target>
+</Project>

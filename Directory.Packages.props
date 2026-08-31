@@ -5,15 +5,20 @@
 	<ItemGroup>
 		<!-- SourceLink is auto-added by the SDK to IsPackable projects -->
 		<PackageVersion Include="Microsoft.SourceLink.GitHub" Version="*" />
-		<PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="*" />
+		<PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.*" />
+		<PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.*" />
+		<PackageVersion Include="Microsoft.CodeAnalysis.Features" Version="4.*" />
+		<PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="*" />
 		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="*" />
+		<PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="*" />
+		<PackageVersion Include="TUnit" Version="*" />
+		<PackageVersion Include="TUnit.Assertions" Version="*" />
+		<PackageVersion Include="TUnit.Aspire" Version="*" />
 		<PackageVersion Include="xunit.v3" Version="*" />
 		<PackageVersion Include="xunit.runner.visualstudio" Version="*" />
-		<PackageVersion Include="TUnit" Version="*" />
-		<PackageVersion Include="TUnit.Aspire" Version="*" />
-		<PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="*" />
-		<PackageVersion Include="Bogus" Version="*" />
+		<PackageVersion Include="TUnit.Mocks" Version="*" />
 		<PackageVersion Include="NSubstitute" Version="*" />
 		<PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="*" />
+		<PackageVersion Include="Bogus" Version="*" />
 	</ItemGroup>
 </Project>

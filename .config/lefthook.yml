@@ -1,7 +1,7 @@
 pre-commit:
   jobs:
     - name: csharpier check
-      run: dotnet csharpier check .
+      run: just lint-check
 
 commit-msg:
   jobs:
