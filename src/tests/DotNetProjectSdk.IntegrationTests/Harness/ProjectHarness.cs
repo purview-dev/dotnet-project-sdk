@@ -516,6 +516,8 @@ partial class ProjectHarness : IDisposable
 				process.StartInfo.Environment[key] = value;
 		}
 
+		IsolateFromHostEnvironment(process.StartInfo.Environment, _extraEnv);
+
 		process.Start();
 
 		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
@@ -525,6 +527,42 @@ partial class ProjectHarness : IDisposable
 
 		return (process.ExitCode, await stdoutTask, await stderrTask);
 	}
+
+	/// <summary>
+	/// Throwaway consumer projects must not inherit the CI runner's environment. Env vars like
+	/// <c>GITHUB_WORKSPACE</c> (version detection), <c>GITHUB_ACTIONS</c>/<c>TF_BUILD</c> (CI
+	/// detection) and friends would change SDK behaviour and make tests environment-dependent.
+	/// They are removed unless the harness explicitly overrides them via <paramref name="overrides"/>.
+	/// </summary>
+	internal static void IsolateFromHostEnvironment(
+		IDictionary<string, string?> environment,
+		IReadOnlyDictionary<string, string> overrides
+	)
+	{
+		foreach (var name in CiEnvironmentVariables)
+		{
+			if (!overrides.ContainsKey(name))
+				environment.Remove(name);
+		}
+	}
+
+	static readonly string[] CiEnvironmentVariables =
+	[
+		"CI",
+		"GITHUB_ACTIONS",
+		"GITHUB_WORKSPACE",
+		"GITHUB_SHA",
+		"GITHUB_REF",
+		"GITHUB_HEAD_REF",
+		"GITHUB_BASE_REF",
+		"TF_BUILD",
+		"BUILD_SOURCESDIRECTORY",
+		"BUILD_REPOSITORY_LOCALPATH",
+		"CI_PROJECT_DIR",
+		"RUNNER_OS",
+		"RUNNER_ARCH",
+		"RUNNER_TEMP",
+	];
 
 	public async Task<XDocument> GetPreprocessProjectAsync(CancellationToken cancellationToken)
 	{

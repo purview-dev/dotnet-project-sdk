@@ -187,27 +187,8 @@ public sealed partial class VersionDetectionTests
 		var cacheFile = await h.GetPropertyAsync("VersionDetectionCacheFile", cancellationToken);
 		await Assert.That(cacheFile).IsNotEqualTo(string.Empty);
 
-		using var process = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -t:WriteVersionDetectionCache",
-				WorkingDirectory = h.ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
-
-		process.Start();
-		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-		await process.WaitForExitAsync(cancellationToken);
-		_ = (await stdoutTask) + (await stderrTask);
-
-		await Assert.That(process.ExitCode).IsEqualTo(0);
+		var (exitCode, _) = await RunMSBuildAsync(h, "-t:WriteVersionDetectionCache", cancellationToken);
+		await Assert.That(exitCode).IsEqualTo(0);
 		await Assert.That(File.Exists(cacheFile)).IsTrue();
 
 		File.Delete(Path.Combine(h.ProjectDirectory, ".git"));
@@ -309,28 +290,13 @@ public sealed partial class VersionDetectionTests
 			cancellationToken
 		);
 
-		using var process = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
-				WorkingDirectory = h.ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
+		var (exitCode, output) = await RunMSBuildAsync(
+			h,
+			"-v:minimal -t:ValidatePackageJsonVersion",
+			cancellationToken
+		);
 
-		process.Start();
-		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-		await process.WaitForExitAsync(cancellationToken);
-
-		var output = (await stdoutTask) + (await stderrTask);
-
-		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(exitCode).IsEqualTo(0);
 		await Assert.That(output).DoesNotContain("Detected package version '5.4.3' from");
 	}
 
@@ -351,28 +317,13 @@ public sealed partial class VersionDetectionTests
 			cancellationToken
 		);
 
-		using var process = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
-				WorkingDirectory = h.ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
+		var (exitCode, output) = await RunMSBuildAsync(
+			h,
+			"-v:minimal -t:ValidatePackageJsonVersion",
+			cancellationToken
+		);
 
-		process.Start();
-		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-		await process.WaitForExitAsync(cancellationToken);
-
-		var output = (await stdoutTask) + (await stderrTask);
-
-		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(exitCode).IsEqualTo(0);
 		await Assert.That(output).DoesNotContain("Detected package version '5.4.3' from");
 	}
 
@@ -393,28 +344,13 @@ public sealed partial class VersionDetectionTests
 			cancellationToken
 		);
 
-		using var process = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
-				WorkingDirectory = h.ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
+		var (exitCode, output) = await RunMSBuildAsync(
+			h,
+			"-v:minimal -t:ValidatePackageJsonVersion",
+			cancellationToken
+		);
 
-		process.Start();
-		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-		await process.WaitForExitAsync(cancellationToken);
-
-		var output = (await stdoutTask) + (await stderrTask);
-
-		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(exitCode).IsEqualTo(0);
 		await Assert.That(output).DoesNotContain("Detected package version '5.4.3' from");
 	}
 
@@ -434,28 +370,13 @@ public sealed partial class VersionDetectionTests
 			cancellationToken
 		);
 
-		using var process = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
-				WorkingDirectory = h.ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
+		var (exitCode, output) = await RunMSBuildAsync(
+			h,
+			"-v:minimal -t:ValidatePackageJsonVersion",
+			cancellationToken
+		);
 
-		process.Start();
-		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-		await process.WaitForExitAsync(cancellationToken);
-
-		var output = (await stdoutTask) + (await stderrTask);
-
-		await Assert.That(process.ExitCode).IsEqualTo(0);
+		await Assert.That(exitCode).IsEqualTo(0);
 		await Assert.That(output).Contains("Detected package version '5.4.3' from");
 	}
 
@@ -470,28 +391,13 @@ public sealed partial class VersionDetectionTests
 			cancellationToken: cancellationToken
 		);
 
-		using var process = new System.Diagnostics.Process
-		{
-			StartInfo = new System.Diagnostics.ProcessStartInfo
-			{
-				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
-				WorkingDirectory = h.ProjectDirectory,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-			},
-		};
+		var (exitCode, output) = await RunMSBuildAsync(
+			h,
+			"-v:minimal -t:ValidatePackageJsonVersion",
+			cancellationToken
+		);
 
-		process.Start();
-		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-		await process.WaitForExitAsync(cancellationToken);
-
-		var output = (await stdoutTask) + (await stderrTask);
-
-		await Assert.That(process.ExitCode).IsNotEqualTo(0);
+		await Assert.That(exitCode).IsNotEqualTo(0);
 		await Assert.That(output).Contains("UsePackageJsonVersion=Strict requires resolving version from package.json");
 	}
 
@@ -519,13 +425,29 @@ public sealed partial class VersionDetectionTests
 			cancellationToken
 		);
 
+		var (exitCode, _) = await RunMSBuildAsync(h, "-v:minimal -t:ValidatePackageJsonVersion", cancellationToken);
+
+		await Assert.That(exitCode).IsEqualTo(0);
+	}
+
+	/// <summary>
+	/// Runs <c>dotnet msbuild</c> against the throwaway project with the host CI environment
+	/// stripped out (GITHUB_WORKSPACE, GITHUB_ACTIONS, etc.), so version detection and CI
+	/// detection behave deterministically on every machine and CI runner.
+	/// </summary>
+	static async Task<(int ExitCode, string Output)> RunMSBuildAsync(
+		ProjectHarness harness,
+		string msbuildArguments,
+		CancellationToken cancellationToken
+	)
+	{
 		using var process = new System.Diagnostics.Process
 		{
 			StartInfo = new System.Diagnostics.ProcessStartInfo
 			{
 				FileName = "dotnet",
-				Arguments = $"msbuild \"{h.ProjectFilePath}\" -nologo -v:minimal -t:ValidatePackageJsonVersion",
-				WorkingDirectory = h.ProjectDirectory,
+				Arguments = $"msbuild \"{harness.ProjectFilePath}\" -nologo {msbuildArguments}",
+				WorkingDirectory = harness.ProjectDirectory,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
 				UseShellExecute = false,
@@ -533,11 +455,16 @@ public sealed partial class VersionDetectionTests
 			},
 		};
 
+		ProjectHarness.IsolateFromHostEnvironment(
+			process.StartInfo.Environment,
+			new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+		);
+
 		process.Start();
 		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
 		var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
 		await process.WaitForExitAsync(cancellationToken);
 
-		await Assert.That(process.ExitCode).IsEqualTo(0);
+		return (process.ExitCode, (await stdoutTask) + (await stderrTask));
 	}
 }

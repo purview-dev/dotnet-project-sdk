@@ -157,8 +157,8 @@ public sealed class RoslynComponentDefaultsTests
 		await Assert.That(properties["EmbedUntrackedSources"]).IsEqualTo("false");
 		await Assert.That(properties["GenerateDependencyFile"]).IsEqualTo("false");
 		await Assert
-			.That(properties["CompilerGeneratedFilesOutputPath"])
-			.IsEqualTo(Path.Combine("obj", "Debug", "netstandard2.0", "generated"));
+			.That(TestHelpers.NormalizePath(properties["CompilerGeneratedFilesOutputPath"]))
+			.IsEqualTo(TestHelpers.NormalizePath(Path.Combine("obj", "Debug", "netstandard2.0", "generated")));
 		await Assert.That(properties["SymbolPackageFormat"]).IsEqualTo("symbols.nupkg");
 		await Assert
 			.That(properties["TargetsForTfmSpecificDebugSymbolsInPackage"])

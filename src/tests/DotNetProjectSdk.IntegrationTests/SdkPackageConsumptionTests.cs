@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text.Json;
+using Purview.DotNetProjectSdk.Harness;
 using Purview.DotNetProjectSdk.Infra;
 
 namespace Purview.DotNetProjectSdk;
@@ -81,7 +82,7 @@ public sealed class SdkPackageConsumptionTests
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
-				"new classlib -n Proof.OtherPackage -o src\\Proof.OtherPackage -f net10.0",
+				$"new classlib -n Proof.OtherPackage -o \"{Path.Combine(consumerSrcDirectory, "Proof.OtherPackage")}\" -f net10.0",
 				consumerDirectory,
 				cancellationToken
 			);
@@ -89,7 +90,7 @@ public sealed class SdkPackageConsumptionTests
 
 			(code, stdOut, stdErr) = await RunProcessAsync(
 				"dotnet",
-				"new classlib -n Proof.LibTest -o src\\Proof.LibTest -f net10.0",
+				$"new classlib -n Proof.LibTest -o \"{Path.Combine(consumerSrcDirectory, "Proof.LibTest")}\" -f net10.0",
 				consumerDirectory,
 				cancellationToken
 			);
@@ -314,7 +315,7 @@ public sealed class SdkPackageConsumptionTests
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			"new classlib -n Proof.LibTest -o src\\Proof.LibTest -f net10.0",
+			$"new classlib -n Proof.LibTest -o \"{Path.Combine(consumerSrcDirectory, "Proof.LibTest")}\" -f net10.0",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -427,7 +428,7 @@ public sealed class SdkPackageConsumptionTests
 
 		var (code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -noconlog -p:RestoreConfigFile=\"{nugetConfigPath}\" -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles -p:CentralPackageFloatingVersionsEnabled=true",
+			$"msbuild \"{Path.Combine("src", "Proof.LibTest", "Proof.LibTest.csproj")}\" -nologo -noconlog -p:RestoreConfigFile=\"{nugetConfigPath}\" -getProperty:EditorConfigFilePath -getItem:EditorConfigFiles -p:CentralPackageFloatingVersionsEnabled=true",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -473,7 +474,7 @@ public sealed class SdkPackageConsumptionTests
 		var editorConfigContent = await File.ReadAllTextAsync(editorConfigPath!, cancellationToken);
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"build \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:CentralPackageFloatingVersionsEnabled=true -p:NoWarn=NU1010",
+			$"build \"{Path.Combine("src", "Proof.LibTest", "Proof.LibTest.csproj")}\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:CentralPackageFloatingVersionsEnabled=true -p:NoWarn=NU1010",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -515,7 +516,7 @@ public sealed class SdkPackageConsumptionTests
 
 		var (code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryEditorConfigTarget -getProperty:RepositoryEditorConfigFilePath",
+			$"msbuild \"{Path.Combine("src", "Proof.LibTest", "Proof.LibTest.csproj")}\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryEditorConfigTarget -getProperty:RepositoryEditorConfigFilePath",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -540,7 +541,7 @@ public sealed class SdkPackageConsumptionTests
 		File.Delete(repositoryEditorConfigPath);
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:BootstrapEditorConfigToRepoRoot=false -t:EnsureRepositoryEditorConfigTarget",
+			$"msbuild \"{Path.Combine("src", "Proof.LibTest", "Proof.LibTest.csproj")}\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:BootstrapEditorConfigToRepoRoot=false -t:EnsureRepositoryEditorConfigTarget",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -552,7 +553,7 @@ public sealed class SdkPackageConsumptionTests
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"msbuild \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryGlobalJsonTarget -getProperty:RepositoryGlobalJsonFilePath",
+			$"msbuild \"{Path.Combine("src", "Proof.LibTest", "Proof.LibTest.csproj")}\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -t:EnsureRepositoryGlobalJsonTarget -getProperty:RepositoryGlobalJsonFilePath",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -589,7 +590,7 @@ public sealed class SdkPackageConsumptionTests
 
 		(code, stdOut, stdErr) = await RunProcessAsync(
 			"dotnet",
-			$"build \"src\\Proof.LibTest\\Proof.LibTest.csproj\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:AgentPackDestinationFolder=.custom-agents",
+			$"build \"{Path.Combine("src", "Proof.LibTest", "Proof.LibTest.csproj")}\" -nologo -p:RestoreConfigFile=\"{nugetConfigPath}\" -p:AgentPackDestinationFolder=.custom-agents",
 			consumerDirectory,
 			cancellationToken
 		);
@@ -649,6 +650,14 @@ public sealed class SdkPackageConsumptionTests
 				CreateNoWindow = true,
 			},
 		};
+
+		// Isolate the throwaway consumer from the host CI environment so repo-root discovery
+		// (and therefore the .agents copy destination) resolves inside the consumer directory
+		// rather than GITHUB_WORKSPACE on CI runners.
+		ProjectHarness.IsolateFromHostEnvironment(
+			process.StartInfo.Environment,
+			new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+		);
 
 		process.Start();
 		var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
