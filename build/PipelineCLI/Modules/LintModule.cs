@@ -28,7 +28,7 @@ public sealed class LintModule(IOptions<BuildSettings> settings) : Module<Comman
 		var repositoryRoot = PathHelpers.FindRepositoryRoot();
 		var dotnet = context.DotNet();
 		var restoreResult = await dotnet.Tool.Restore(
-			new() { Interactive = false, Configfile = Path.Combine(repositoryRoot, ".config", "dotnet-tools.json") },
+			new() { Interactive = false, ToolManifest = Path.Combine(repositoryRoot, ".config", "dotnet-tools.json") },
 			new() { WorkingDirectory = repositoryRoot },
 			cancellationToken
 		);
