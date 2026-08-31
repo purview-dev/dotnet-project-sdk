@@ -1,6 +1,6 @@
 using Purview.DotNetProjectSdk.Harness;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies SDK properties are exported as CompilerVisibleProperty items so Roslyn

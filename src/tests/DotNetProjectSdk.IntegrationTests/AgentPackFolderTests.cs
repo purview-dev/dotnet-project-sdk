@@ -1,8 +1,9 @@
 using System.IO.Compression;
 using System.Text.Json;
 using Purview.DotNetProjectSdk.Harness;
+using Purview.DotNetProjectSdk.Infra;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies the Sdk/.agents folder packaging workflow and PurviewAutoSdkPack behaviour.

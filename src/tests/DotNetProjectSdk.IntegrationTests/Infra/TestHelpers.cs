@@ -1,6 +1,6 @@
-﻿using Purview.DotNetProjectSdk.Harness;
+using Purview.DotNetProjectSdk.Harness;
 
-namespace Purview.DotNetProjectSdk;
+namespace Purview.DotNetProjectSdk.Infra;
 
 static class TestHelpers
 {

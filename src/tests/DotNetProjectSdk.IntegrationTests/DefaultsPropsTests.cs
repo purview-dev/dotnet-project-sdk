@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 public sealed class DefaultsPropsTests
 {

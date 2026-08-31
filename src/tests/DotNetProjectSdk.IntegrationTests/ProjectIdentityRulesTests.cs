@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Purview.DotNetProjectSdk.Harness;
+using Purview.DotNetProjectSdk.Infra;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 public sealed class ProjectIdentityRulesTests
 {

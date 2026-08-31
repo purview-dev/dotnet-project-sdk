@@ -1,6 +1,6 @@
 using Purview.DotNetProjectSdk.Harness;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies SDK version detection from package.json: property defaults, explicit and

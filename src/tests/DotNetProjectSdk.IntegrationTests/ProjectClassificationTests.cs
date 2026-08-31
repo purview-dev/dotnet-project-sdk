@@ -1,6 +1,6 @@
 using Purview.DotNetProjectSdk.Harness;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies that Sdk.props correctly classifies project types from file names, Sdk attributes,

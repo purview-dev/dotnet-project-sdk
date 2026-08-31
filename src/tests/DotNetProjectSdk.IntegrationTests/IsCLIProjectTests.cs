@@ -1,6 +1,7 @@
 using Purview.DotNetProjectSdk.Harness;
+using Purview.DotNetProjectSdk.Infra;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies that IsCLIProject property is correctly detected based on project naming conventions.

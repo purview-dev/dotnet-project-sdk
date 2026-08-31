@@ -1,7 +1,8 @@
 using System.IO.Compression;
 using Purview.DotNetProjectSdk.Harness;
+using Purview.DotNetProjectSdk.Infra;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies the source-generator defaults applied to Roslyn component projects.

@@ -1,6 +1,6 @@
 using Purview.DotNetProjectSdk.Harness;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies SDK-controlled package and packaging behaviour — IsPackable defaults,

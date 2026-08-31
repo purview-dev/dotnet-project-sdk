@@ -1,6 +1,6 @@
 using Purview.DotNetProjectSdk.Harness;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies that the SDK wires the correct test framework packages and output type
@@ -9,32 +9,20 @@ namespace Purview.DotNetProjectSdk.Tests;
 public sealed class TestWiringTests
 {
 	[Test]
-	public async Task TestProject_OutputType_IsExe(CancellationToken cancellationToken)
+	public async Task TestProject_DefaultFrameworks_AreTUnitTUnitMocksAndBogus(CancellationToken cancellationToken)
 	{
+		using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
+
+		var eval = await h.EvaluateAsync(
+			["OutputType", "TestingFramework", "SubstituteFramework", "TestDataFramework"],
+			cancellationToken: cancellationToken
+		);
+
 		// Test projects using Microsoft.Testing.Platform must be executables.
-		using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("OutputType", cancellationToken)).IsEqualTo("Exe");
-	}
-
-	[Test]
-	public async Task TestProject_DefaultTestingFramework_IsTUnit(CancellationToken cancellationToken)
-	{
-		using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("TestingFramework", cancellationToken)).IsEqualTo("TUnit");
-	}
-
-	[Test]
-	public async Task TestProject_DefaultSubstituteFramework_IsTUnitMocks(CancellationToken cancellationToken)
-	{
-		using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("SubstituteFramework", cancellationToken)).IsEqualTo("TUnitMocks");
-	}
-
-	[Test]
-	public async Task TestProject_DefaultTestDataFramework_IsBogus(CancellationToken cancellationToken)
-	{
-		using var h = await ProjectHarness.CreateAsync("MyApp.UnitTests", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("TestDataFramework", cancellationToken)).IsEqualTo("Bogus");
+		await Assert.That(eval.Properties["OutputType"]).IsEqualTo("Exe");
+		await Assert.That(eval.Properties["TestingFramework"]).IsEqualTo("TUnit");
+		await Assert.That(eval.Properties["SubstituteFramework"]).IsEqualTo("TUnitMocks");
+		await Assert.That(eval.Properties["TestDataFramework"]).IsEqualTo("Bogus");
 	}
 
 	[Test]

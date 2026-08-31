@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text.Json;
+using Purview.DotNetProjectSdk.Infra;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Proves the packed SDK can be consumed from a local NuGet feed and that its .editorconfig

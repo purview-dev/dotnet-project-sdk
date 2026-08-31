@@ -264,6 +264,95 @@ partial class ProjectHarness : IDisposable
 	}
 
 	/// <summary>
+	/// Evaluates one or more MSBuild properties and item types in a single
+	/// <c>dotnet msbuild -getProperty -getItem</c> invocation, returning both
+	/// results from one JSON payload. This avoids one process spawn per query.
+	/// </summary>
+	public async Task<ProjectEvaluation> EvaluateAsync(
+		IReadOnlyCollection<string>? propertyNames = null,
+		IReadOnlyCollection<string>? itemTypes = null,
+		CancellationToken cancellationToken = default
+	)
+	{
+		propertyNames ??= [];
+		itemTypes ??= [];
+
+		if (propertyNames.Count == 0 && itemTypes.Count == 0)
+			return new(
+				ImmutableDictionary<string, string>.Empty,
+				ImmutableDictionary<string, IReadOnlyList<string>>.Empty
+			);
+
+		var parts = new List<string>(2);
+		if (propertyNames.Count > 0)
+			parts.Add($"-getProperty:{string.Join(",", propertyNames)}");
+		if (itemTypes.Count > 0)
+			parts.Add($"-getItem:{string.Join(",", itemTypes)}");
+
+		var args = $"msbuild \"{ProjectFilePath}\" -nologo -noconlog {string.Join(" ", parts)}";
+		var (exitCode, stdOut, stdErr) = await RunAsync("dotnet", args, cancellationToken);
+
+		await Assert.That(exitCode).IsZero().Because(stdErr ?? "No error returned");
+
+		var jsonStart = stdOut.Trim().IndexOf('{', StringComparison.Ordinal);
+		if (jsonStart < 0)
+		{
+			// -getProperty emits plain text (not JSON) for a single property.
+			if (propertyNames.Count == 1)
+			{
+				var singleProperty = propertyNames.First();
+				return new(
+					new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+					{
+						[singleProperty] = stdOut.Trim(),
+					},
+					ImmutableDictionary<string, IReadOnlyList<string>>.Empty
+				);
+			}
+
+			return new(
+				ImmutableDictionary<string, string>.Empty,
+				ImmutableDictionary<string, IReadOnlyList<string>>.Empty
+			);
+		}
+
+		using var doc = JsonDocument.Parse(stdOut[jsonStart..]);
+		var root = doc.RootElement;
+
+		var properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		if (root.TryGetProperty("Properties", out var propsEl))
+		{
+			foreach (var prop in propsEl.EnumerateObject())
+				properties[prop.Name] = prop.Value.GetString() ?? string.Empty;
+		}
+
+		var items = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+		if (root.TryGetProperty("Items", out var itemsEl))
+		{
+			foreach (var itemType in itemTypes)
+			{
+				if (itemsEl.TryGetProperty(itemType, out var typeEl))
+				{
+					var values = new List<string>();
+					foreach (var item in typeEl.EnumerateArray())
+					{
+						if (item.TryGetProperty("Identity", out var identityValue))
+							values.Add(identityValue.GetString() ?? string.Empty);
+					}
+
+					items[itemType] = values;
+				}
+				else
+				{
+					items[itemType] = [];
+				}
+			}
+		}
+
+		return new(properties, items);
+	}
+
+	/// <summary>
 	/// Evaluates one or more MSBuild items via <c>dotnet msbuild -getItem</c>
 	/// without triggering a build or package restore.
 	/// </summary>
@@ -475,3 +564,11 @@ partial class ProjectHarness : IDisposable
 		GC.SuppressFinalize(this);
 	}
 }
+
+/// <summary>
+/// The combined result of a single <c>dotnet msbuild -getProperty -getItem</c> evaluation.
+/// </summary>
+sealed record ProjectEvaluation(
+	IReadOnlyDictionary<string, string> Properties,
+	IReadOnlyDictionary<string, IReadOnlyList<string>> Items
+);

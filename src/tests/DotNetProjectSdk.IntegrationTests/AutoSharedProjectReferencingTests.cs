@@ -1,6 +1,7 @@
 using Purview.DotNetProjectSdk.Harness;
+using Purview.DotNetProjectSdk.Infra;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 /// <summary>
 /// Verifies that Shared*.csproj projects are automatically referenced by all non-test

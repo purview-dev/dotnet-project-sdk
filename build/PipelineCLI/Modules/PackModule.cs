@@ -18,6 +18,11 @@ public sealed class PackModule(IOptions<BuildSettings> settings, IOptions<Releas
 		ModuleConfiguration
 			.Create()
 			.WithSkipWhen(_ =>
+				settings.Value.RunPack
+					? SkipDecision.DoNotSkip
+					: SkipDecision.Skip("Packing is disabled. Set Build__RunPack=true to enable it.")
+			)
+			.WithSkipWhen(_ =>
 				releaseSettings.Value.Mode != ReleaseMode.None
 					? SkipDecision.DoNotSkip
 					: SkipDecision.Skip(

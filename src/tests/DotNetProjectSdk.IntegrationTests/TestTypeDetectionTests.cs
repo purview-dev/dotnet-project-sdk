@@ -1,27 +1,26 @@
 using Purview.DotNetProjectSdk.Harness;
 
-namespace Purview.DotNetProjectSdk.Tests;
+namespace Purview.DotNetProjectSdk;
 
 public class TestTypeDetectionTests
 {
 	[Test]
 	[MethodDataSource(nameof(TestTypes))]
-	public async Task TestProject_TestingTypeInName_IsTestType(string testType, CancellationToken cancellationToken)
-	{
-		using var h = await ProjectHarness.CreateAsync($"MyApp.{testType}Tests", cancellationToken: cancellationToken);
-		await Assert.That(await h.GetPropertyAsync("TestingType", cancellationToken)).IsEqualTo(testType);
-	}
-
-	[Test]
-	[MethodDataSource(nameof(TestTypes))]
-	public async Task TestProject_TestingTypeInName_RootNamespace(string testType, CancellationToken cancellationToken)
+	public async Task TestProject_TestingTypeInName_IsTestTypeAndRootNamespace(
+		string testType,
+		CancellationToken cancellationToken
+	)
 	{
 		using var h = await ProjectHarness.CreateAsync(
 			$"MyApp.{testType}Tests",
 			namespacePrefix: "MyApp",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("RootNamespace", cancellationToken)).IsEqualTo("MyApp");
+
+		var eval = await h.EvaluateAsync(["TestingType", "RootNamespace"], cancellationToken: cancellationToken);
+
+		await Assert.That(eval.Properties["TestingType"]).IsEqualTo(testType);
+		await Assert.That(eval.Properties["RootNamespace"]).IsEqualTo("MyApp");
 	}
 
 	[Test]
@@ -36,9 +35,11 @@ public class TestTypeDetectionTests
 			namespacePrefix: "MyApp",
 			cancellationToken: cancellationToken
 		);
-		await Assert
-			.That(await h.GetPropertyAsync("RootNamespace", cancellationToken))
-			.IsEqualTo("MyApp.Nested.Namespaces");
+
+		var eval = await h.EvaluateAsync(["TestingType", "RootNamespace"], cancellationToken: cancellationToken);
+
+		await Assert.That(eval.Properties["TestingType"]).IsEqualTo(testType);
+		await Assert.That(eval.Properties["RootNamespace"]).IsEqualTo("MyApp.Nested.Namespaces");
 	}
 
 	public static IEnumerable<Func<string>> TestTypes()
