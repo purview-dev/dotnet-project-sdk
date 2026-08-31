@@ -15,7 +15,9 @@ public sealed class LintModule : Module<CommandResult>
 	)
 	{
 		var dotnet = context.DotNet();
-		await dotnet.Tool.Restore(new() { Interactive = false }, new(), cancellationToken);
+		var restoreResult = await dotnet.Tool.Restore(new() { Interactive = false }, new(), cancellationToken);
+		if (restoreResult.ExitCode != 0)
+			return restoreResult;
 
 		var pipelineDirectory = PipelineProjectDirectory.Find();
 		var repositoryRoot = PathHelpers.FindRepositoryRoot(pipelineDirectory);
