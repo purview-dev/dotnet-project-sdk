@@ -7,14 +7,14 @@
       "commands": [
         "dotnet-inspect"
       ],
-      "rollForward": true
+      "rollForward": false
     },
     "csharpier": {
       "version": "1.3.0",
       "commands": [
         "csharpier"
       ],
-      "rollForward": true
+      "rollForward": false
     }
   }
 }
