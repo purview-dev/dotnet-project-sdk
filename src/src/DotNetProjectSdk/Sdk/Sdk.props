@@ -75,7 +75,7 @@
 		<DisableGenerateAssemblyInfoClass Condition="'$(DisableGenerateAssemblyInfoClass)' == ''"
 			>false</DisableGenerateAssemblyInfoClass>
 		<EnableAssemblyNameGeneration Condition="'$(EnableAssemblyNameGeneration)' == ''"
-			>false</EnableAssemblyNameGeneration>
+			>true</EnableAssemblyNameGeneration>
 		<DisableAutoInternalsVisibleTo Condition="'$(DisableAutoInternalsVisibleTo)' == ''"
 			>false</DisableAutoInternalsVisibleTo>
 		<AutoIncludeUsings Condition="'$(AutoIncludeUsings)' == ''">true</AutoIncludeUsings>
@@ -228,7 +228,7 @@
 			<Description>Disables generation of the AssemblyInfo helper class in intermediate output.</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="EnableAssemblyNameGeneration">
-			<Description>When true, enables SDK generation of AssemblyName from the logical project name. When false (default), AssemblyName uses the standard .NET behaviour (project name).</Description>
+			<Description>When true (default), the SDK derives AssemblyName from RootNamespace and PackageId from RootNamespace. Set to false to fall back to the standard .NET behaviour (project name).</Description>
 		</CompilerVisibleProperty>
 		<CompilerVisibleProperty Include="DisableAutoInternalsVisibleTo">
 			<Description>Disables automatic InternalsVisibleTo generation for test and shared testing projects.</Description>
@@ -442,6 +442,40 @@
 			>$([System.Text.RegularExpressions.Regex]::Replace($(RootNamespace), `[.]$(TestingType)Tests?$$`, ``))</RootNamespace>
 	</PropertyGroup>
 
+	<!-- =====================================================================
+	     ASSEMBLY NAME AND PACKAGE ID GENERATION
+	     RootNamespace is the canonical default public name. These defaults run
+	     during Sdk.props — before the Microsoft SDK computes TargetName and before
+	     the project body — so compilation, output paths, project references,
+	     restore, and packing all agree on the same identities. The Microsoft SDK
+	     initializes AssemblyName from MSBuildProjectName, so both the empty and
+	     synthesized-value cases must be handled here. Project-authored
+	     AssemblyName/PackageId values set before the import (Directory.Build.props)
+	     are preserved, and values set in the project body are evaluated later and
+	     win. Set EnableAssemblyNameGeneration=false before the import to opt out
+	     and restore the standard .NET project-name behaviour.
+	     ===================================================================== -->
+	<PropertyGroup
+		Label="Assembly Name and Package ID Generation"
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(EnableAssemblyNameGeneration)' != 'false'"
+	>
+		<!-- Non-test projects: AssemblyName defaults to the fully-evaluated RootNamespace. -->
+		<AssemblyName
+			Condition="('$(AssemblyName)' == '' OR '$(AssemblyName)' == '$(MSBuildProjectName)') AND '$(RootNamespace)' != '' AND '$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'"
+			>$(RootNamespace)</AssemblyName>
+		<!-- Test/shared-testing projects: RootNamespace strips the test suffix, so derive from the
+		     logical project name to keep test assemblies distinct from the source assembly. -->
+		<AssemblyName
+			Condition="('$(AssemblyName)' == '' OR '$(AssemblyName)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != '' AND ('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true')"
+			>$(PurviewLogicalProjectName)</AssemblyName>
+		<PackageId
+			Condition="('$(PackageId)' == '' OR '$(PackageId)' == '$(MSBuildProjectName)') AND '$(RootNamespace)' != '' AND '$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'"
+			>$(RootNamespace)</PackageId>
+		<PackageId
+			Condition="('$(PackageId)' == '' OR '$(PackageId)' == '$(MSBuildProjectName)') AND '$(PurviewLogicalProjectName)' != '' AND ('$(IsTestProject)' == 'true' OR '$(IsSharedTestingProject)' == 'true')"
+			>$(PurviewLogicalProjectName)</PackageId>
+	</PropertyGroup>
+
 	<!-- Test project target resolution -->
 	<PropertyGroup Label="C# Test Properties" Condition="'$(IsTestProject)' == 'true'">
 		<TargetProjectName>$([System.Text.RegularExpressions.Regex]::Replace($(MSBuildProjectName), `[.]$(TestingType)Tests?$$`, ``))</TargetProjectName>
@@ -492,7 +526,7 @@
 	     ===================================================================== -->
 	<PropertyGroup Label="Automatic Sdk Folder Packaging">
 		<PurviewAutoSdkPack Condition="'$(PurviewAutoSdkPack)' == ''">true</PurviewAutoSdkPack>
-		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeLinkedSdkFiles;IncludeSdkDotAgentsGitIgnoreFiles</TargetsForTfmSpecificContentInPackage>
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeLinkedSdkFiles;IncludeSdkDotAgentsGitIgnoreFiles;IncludeRepoReadmeInPackage</TargetsForTfmSpecificContentInPackage>
 	</PropertyGroup>
 
 	<!-- Analyzer project references are build-time assets and are not packed by NuGet's
@@ -561,11 +595,6 @@
 	<!-- =====================================================================
 	     LIBRARY PROJECTS
 	     ===================================================================== -->
-	<PropertyGroup Label="Library Project Properties" Condition="'$(IsCSharpProject)' == 'true'">
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.xml</AllowedOutputExtensionsInPackageBuildOutputFolder>
-	</PropertyGroup>
-
 	<PropertyGroup
 		Label="Library Project Properties"
 		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'"
@@ -575,14 +604,34 @@
 
 	<!-- =====================================================================
 	     NUGET PACKAGE PROJECTS
+	     Only applied when the consuming project has not supplied a value.
+	     Portable PDBs are delivered through the symbol package (.snupkg); the
+	     normal package keeps the default build-output extensions unless the
+	     project explicitly opts into adding more (for example .pdb).
 	     ===================================================================== -->
 	<PropertyGroup Label="NuGet Package Project Properties" Condition="'$(IsPackable)' == 'true'">
-		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-		<PackageTags>$(PackageTags);</PackageTags>
-		<IncludeSource>true</IncludeSource>
-		<IncludeSymbols>true</IncludeSymbols>
-		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<SymbolPackageFormat Condition="'$(IsRoslynComponent)' != 'true'">snupkg</SymbolPackageFormat>
+		<GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''">true</GenerateDocumentationFile>
+		<IncludeSource Condition="'$(IncludeSource)' == ''">true</IncludeSource>
+		<IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
+		<PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''">true</PublishRepositoryUrl>
+		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''">true</EmbedUntrackedSources>
+		<SymbolPackageFormat Condition="'$(IsRoslynComponent)' != 'true' AND '$(SymbolPackageFormat)' == ''"
+			>snupkg</SymbolPackageFormat>
+		<DebugType Condition="'$(DebugType)' == ''">portable</DebugType>
+	</PropertyGroup>
+
+	<!-- =====================================================================
+	     REPOSITORY README
+	     When the repo-root README exists and PackageReadmeFile has not been
+	     explicitly configured, register it as the package readme. The file itself
+	     is added to the package by the IncludeRepoReadmeInPackage target during
+	     pack (which guards against duplicates).
+	     ===================================================================== -->
+	<PropertyGroup
+		Label="Repository Readme Defaults"
+		Condition="'$(IsPackable)' == 'true' AND '$(PackageReadmeFile)' == '' AND '$(RepoRoot)' != '' AND Exists('$(RepoRoot)/README.md')"
+	>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<!-- =====================================================================

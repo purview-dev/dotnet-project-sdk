@@ -87,11 +87,11 @@ public sealed class RoslynComponentDefaultsTests
 		);
 
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
-		var packagePath = Directory.GetFiles(packageDirectory, "Consumer.*.nupkg").Single();
+		var packagePath = Directory.GetFiles(packageDirectory, "Test.Consumer.*.nupkg").Single();
 		using var package = await ZipFile.OpenReadAsync(packagePath, cancellationToken);
 		await Assert
 			.That(package.Entries.Select(entry => entry.FullName))
-			.Contains("analyzers/dotnet/cs/SourceGeneration.dll");
+			.Contains("analyzers/dotnet/cs/Test.SourceGeneration.dll");
 		await Assert
 			.That(package.Entries.Select(entry => entry.FullName))
 			.Contains("analyzers/dotnet/cs/RuntimeDependency.dll");

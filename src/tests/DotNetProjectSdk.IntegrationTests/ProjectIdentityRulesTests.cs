@@ -121,7 +121,7 @@ public sealed class ProjectIdentityRulesTests
 
 		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "RootNamespace", "PackageId");
 
-		await Assert.That(props["AssemblyName"]).IsEqualTo("Purview.Aspire.ResourceIsolation.ServiceDefaults");
+		await Assert.That(props["AssemblyName"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
 		await Assert.That(props["RootNamespace"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
 		await Assert.That(props["PackageId"]).IsEqualTo("Purview.Aspire.ResourceIsolation");
 	}
@@ -276,7 +276,9 @@ public sealed class ProjectIdentityRulesTests
 	}
 
 	[Test]
-	public async Task InternalsVisibleTo_UsesShortTestAssemblyNames_ByDefault(CancellationToken cancellationToken)
+	public async Task InternalsVisibleTo_UsesFullyQualifiedTestAssemblyNames_ByDefault(
+		CancellationToken cancellationToken
+	)
 	{
 		using var h = await ProjectHarness.CreateAsync(
 			"SourceGenerator",
@@ -291,13 +293,13 @@ public sealed class ProjectIdentityRulesTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 		var friendAssemblies = ExtractItemMetadataValues(stdOut, "AssemblyAttribute", "_Parameter1");
 
-		await Assert.That(friendAssemblies).Contains("SourceGenerator.UnitTests");
-		await Assert.That(friendAssemblies).Contains("SourceGenerator.IntegrationTests");
-		await Assert.That(friendAssemblies).Contains("SourceGenerator.ArchitectureTests");
-		await Assert.That(friendAssemblies).Contains("SourceGenerator.ContractTests");
-		await Assert.That(friendAssemblies).Contains("SourceGenerator.FunctionalTests");
-		// SharedTesting projects should use short names when EnableAssemblyNameGeneration is not set
-		await Assert.That(friendAssemblies).Contains("SharedTestingFramework");
+		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.UnitTests");
+		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.IntegrationTests");
+		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.ArchitectureTests");
+		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.ContractTests");
+		await Assert.That(friendAssemblies).Contains("ExampleProject.SourceGenerator.FunctionalTests");
+		// SharedTesting projects are prefixed by default (EnableAssemblyNameGeneration defaults to true)
+		await Assert.That(friendAssemblies).Contains("ExampleProject.SharedTestingFramework");
 	}
 
 	[Test]
@@ -322,34 +324,36 @@ public sealed class ProjectIdentityRulesTests
 		await Assert.That(friendAssemblies).Contains("Custom.Assembly.ArchitectureTests");
 		await Assert.That(friendAssemblies).Contains("Custom.Assembly.ContractTests");
 		await Assert.That(friendAssemblies).Contains("Custom.Assembly.FunctionalTests");
-		// SharedTesting projects use raw names (no AssemblyName prefix) since they're standalone projects
-		await Assert.That(friendAssemblies).Contains("SharedTestingFramework");
+		// SharedTesting projects use the prefixed name by default (EnableAssemblyNameGeneration defaults to true)
+		await Assert.That(friendAssemblies).Contains("ExampleProject.SharedTestingFramework");
 	}
 
 	[Test]
-	public async Task AssemblyName_DefaultsToProjectName_WhenGenerationDisabled(CancellationToken cancellationToken)
+	public async Task AssemblyName_DefaultsToRootNamespace(CancellationToken cancellationToken)
 	{
 		using var h = await ProjectHarness.CreateAsync(
 			"Api",
 			namespacePrefix: "ExampleProject",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("Api");
+		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("ExampleProject.Api");
 	}
 
 	[Test]
-	public async Task AssemblyName_DefaultsToProjectName_ForShortChildProject(CancellationToken cancellationToken)
+	public async Task AssemblyName_DefaultsToRootNamespace_ForShortChildProject(CancellationToken cancellationToken)
 	{
 		using var h = await ProjectHarness.CreateAsync(
 			"SourceGenerator",
 			namespacePrefix: "ExampleProject",
 			cancellationToken: cancellationToken
 		);
-		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("SourceGenerator");
+		await Assert
+			.That(await h.GetPropertyAsync("AssemblyName", cancellationToken))
+			.IsEqualTo("ExampleProject.SourceGenerator");
 	}
 
 	[Test]
-	public async Task PackageId_DefaultsToProjectName_WhenGenerationDisabled(CancellationToken cancellationToken)
+	public async Task PackageId_DefaultsToRootNamespace(CancellationToken cancellationToken)
 	{
 		using var h = await ProjectHarness.CreateAsync(
 			"Api",
@@ -359,17 +363,33 @@ public sealed class ProjectIdentityRulesTests
 
 		var props = await h.GetPropertiesAsync(cancellationToken, "AssemblyName", "PackageId");
 
-		await Assert.That(props["AssemblyName"]).IsEqualTo("Api");
-		await Assert.That(props["PackageId"]).IsEqualTo("Api");
+		await Assert.That(props["AssemblyName"]).IsEqualTo("ExampleProject.Api");
+		await Assert.That(props["PackageId"]).IsEqualTo("ExampleProject.Api");
 	}
 
 	[Test]
-	public async Task EnableAssemblyNameGeneration_DefaultsToFalse(CancellationToken cancellationToken)
+	public async Task EnableAssemblyNameGeneration_DefaultsToTrue(CancellationToken cancellationToken)
 	{
 		using var h = await ProjectHarness.CreateAsync("MyLibrary", cancellationToken: cancellationToken);
 		await Assert
 			.That(await h.GetPropertyAsync("EnableAssemblyNameGeneration", cancellationToken))
+			.IsEqualTo("true");
+	}
+
+	[Test]
+	public async Task EnableAssemblyNameGeneration_CanBeSetToFalse_ToOptOut(CancellationToken cancellationToken)
+	{
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			namespacePrefix: "ExampleProject",
+			preImportProps: "<EnableAssemblyNameGeneration>false</EnableAssemblyNameGeneration>",
+			cancellationToken: cancellationToken
+		);
+		await Assert
+			.That(await h.GetPropertyAsync("EnableAssemblyNameGeneration", cancellationToken))
 			.IsEqualTo("false");
+		// Opting out restores the standard .NET behaviour (project name).
+		await Assert.That(await h.GetPropertyAsync("AssemblyName", cancellationToken)).IsEqualTo("MyLibrary");
 	}
 
 	[Test]

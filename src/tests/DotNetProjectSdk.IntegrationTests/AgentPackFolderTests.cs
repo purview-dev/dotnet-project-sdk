@@ -56,7 +56,7 @@ public sealed class AgentPackFolderTests
 
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 		await Assert.That(stdOut + stdErr).DoesNotContain("NU5118");
-		var packagePath = Directory.GetFiles(feedDirectory, "PackableProject.*.nupkg").Single();
+		var packagePath = Directory.GetFiles(feedDirectory, "Test.PackableProject.*.nupkg").Single();
 		using var package = await ZipFile.OpenReadAsync(packagePath, cancellationToken);
 		var entries = package.Entries.Select(entry => entry.FullName).ToList();
 		await Assert.That(entries).Contains("README.md");
@@ -162,7 +162,7 @@ public sealed class AgentPackFolderTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		var packagePath = Directory
-			.GetFiles(feedDirectory, $"PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
+			.GetFiles(feedDirectory, $"Test.PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
 			.SingleOrDefault();
 
 		await Assert.That(packagePath).IsNotNull().Because("The packed project package was not created.");
@@ -246,7 +246,7 @@ public sealed class AgentPackFolderTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		var packagePath = Directory
-			.GetFiles(feedDirectory, $"PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
+			.GetFiles(feedDirectory, $"Test.PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
 			.SingleOrDefault();
 
 		await Assert.That(packagePath).IsNotNull().Because("The packed project package was not created.");
@@ -374,7 +374,7 @@ public sealed class AgentPackFolderTests
 		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
 
 		var packagePath = Directory
-			.GetFiles(feedDirectory, $"PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
+			.GetFiles(feedDirectory, $"Test.PackableProject.{packageVersion}.nupkg", SearchOption.TopDirectoryOnly)
 			.SingleOrDefault();
 
 		await Assert.That(packagePath).IsNotNull().Because("The packed project package was not created.");
