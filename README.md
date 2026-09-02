@@ -227,7 +227,7 @@ Version detection logging is disabled by default. Set `VersionDetectionLogEnable
 | `NamespacePrefix` | *(required)* | Root namespace prefix, e.g. `Acme`. Results in `Acme.MyProject`. |
 | `DisableNamespacePrefixCheck` | `false` | Set to `true` to suppress the build error for missing `NamespacePrefix`. |
 | `TargetFramework` | `net10.0` | Override the default TFM per-project or globally. Defaults to `netstandard2.0` for projects declaring `IsRoslynComponent=true`. |
-| `IsRoslynComponent` | `false` | When explicitly `true`, applies source-generator defaults for a single `netstandard2.0` target, analyzer rules, SourceLink, generated-file output, dependency output, symbol packaging, telemetry exclusion, and package build output. |
+| `IsRoslynComponent` | `false` | When explicitly `true`, applies source-generator defaults: a single `netstandard2.0` target, `LangVersion=latest`, `Nullable=enable`, `TreatWarningsAsErrors=true`, extended analyzer rules, SourceLink, generated-file output, dependency output, symbol packaging (`IncludeSymbols=false` by default), telemetry exclusion, and package build output. Packable Roslyn components automatically pack the built analyzer assembly (and its PDB) into `analyzers/dotnet/cs/`. Roslyn development dependencies (`Microsoft.CodeAnalysis.*`, `Microsoft.CodeAnalysis.Analyzers`) default to `PrivateAssets="all"`. |
 | `PackProjectReferencedSourceGenerators` | `true` | Automatically packs analyzer `ProjectReference` outputs and their runtime dependencies under `analyzers/dotnet/cs/`. Set to `false` to opt out; set `Pack="false"` on an individual reference to exclude only that generator. |
 | `SourceLinkPackageName` | `Microsoft.SourceLink.GitHub` | SourceLink provider. Set to `Microsoft.SourceLink.AzureDevOps.Git` for ADO repos. |
 | `DisableSourceLink` | `false` | Set to `true` to stop the SDK from adding the configured SourceLink package automatically. |
@@ -243,8 +243,8 @@ For projects where `IsPackable=true`, the SDK provides these defaults **only whe
 | Property | Default | Description |
 | -- | -- | -- |
 | `GenerateDocumentationFile` | `true` | Emits XML documentation. |
-| `IncludeSymbols` | `true` | Produces a symbol package. |
-| `SymbolPackageFormat` | `snupkg` | Symbol package format (`symbols.nupkg` for Roslyn components). |
+| `IncludeSymbols` | `true` | Produces a symbol package (`false` for Roslyn components — their PDB ships in `analyzers/dotnet/cs/` instead). |
+| `SymbolPackageFormat` | `snupkg` | Symbol package format. Always the modern `.snupkg`; the legacy `.symbols.nupkg` is never produced by default. |
 | `PublishRepositoryUrl` | `true` | Publishes the repository URL. |
 | `EmbedUntrackedSources` | `true` | Embeds untracked sources for SourceLink. |
 | `DebugType` | `portable` | Ensures portable PDBs for symbol-package delivery. |
