@@ -15,6 +15,55 @@
 			>$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
 	</PropertyGroup>
 
+	<!-- =====================================================================
+	     PACKABLE ROSLYN COMPONENT ANALYZER ASSET
+	     Packs the built analyzer/generator assembly (and its PDB) into
+	     analyzers/dotnet/cs so consumers receive it as a Roslyn analyzer rather
+	     than a lib/ asset. IncludeBuildOutput=false keeps lib/ empty. Gated on
+	     single-targeting because TargetPath is a single-TFM path; the SDK clears
+	     TargetFrameworks for Roslyn components by default, and a project that
+	     explicitly multi-targets opts out of this convenience.
+	     ===================================================================== -->
+	<ItemGroup
+		Label="Packable Roslyn Component Analyzer Asset"
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true' AND '$(IsPackable)' == 'true' AND '$(TargetFrameworks)' == ''"
+	>
+		<None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None
+			Include="$(TargetDir)$(TargetName).pdb"
+			Pack="true"
+			PackagePath="analyzers/dotnet/cs"
+			Visible="false"
+			Condition="'$(DebugType)' != 'embedded' AND '$(DebugType)' != 'none'"
+		/>
+	</ItemGroup>
+
+	<!-- =====================================================================
+	     ROSLYN DEV DEPENDENCY DEFAULTS
+	     Roslyn packages (Microsoft.CodeAnalysis.*, Microsoft.CodeAnalysis.Analyzers)
+	     are development-only dependencies of analyzer/generator projects. When a
+	     Roslyn component references them, default PrivateAssets=all (and the
+	     analyzer IncludeAssets for Microsoft.CodeAnalysis.Analyzers) so they never
+	     leak into the packed nuspec as package dependencies. Update-only: existing
+	     references are amended; nothing is added, and explicit metadata is preserved.
+	     ===================================================================== -->
+	<ItemGroup
+		Label="Roslyn Dev Dependency Defaults"
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true'"
+	>
+		<PackageReference Update="Microsoft.CodeAnalysis.CSharp">
+			<PrivateAssets Condition="'%(PackageReference.PrivateAssets)' == ''">all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Update="Microsoft.CodeAnalysis.CSharp.Workspaces">
+			<PrivateAssets Condition="'%(PackageReference.PrivateAssets)' == ''">all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Update="Microsoft.CodeAnalysis.Analyzers">
+			<PrivateAssets Condition="'%(PackageReference.PrivateAssets)' == ''">all</PrivateAssets>
+			<IncludeAssets Condition="'%(PackageReference.IncludeAssets)' == ''"
+				>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
 	<Target
 		Name="CreateRoslynComponentGeneratedFilesDirectory"
 		BeforeTargets="CoreCompile"

@@ -320,13 +320,19 @@
 		<TargetFramework Condition="'$(_PurviewProjectDeclaresTargetFramework)' != 'true'"
 			>netstandard2.0</TargetFramework>
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<!-- Roslyn best-practice compiler defaults. Project body values are evaluated later and win. -->
+		<LangVersion Condition="'$(LangVersion)' == '' OR '$(LangVersion)' == 'preview'">latest</LangVersion>
+		<Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
+		<TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
+		<!-- Analyzer-only packages have no lib/ folder; suppress NU5128 so TreatWarningsAsErrors
+		     does not fail the pack. No symbol package is produced by default (the PDB ships in
+		     analyzers/dotnet/cs beside the analyzer assembly), and any explicit opt-in uses the
+		     modern snupkg format rather than the legacy symbols.nupkg. -->
+		<IncludeSymbols Condition="'$(IncludeSymbols)' == '' OR '$(IncludeSymbols)' == 'true'">false</IncludeSymbols>
+		<NoWarn>$(NoWarn);NU5128;</NoWarn>
 		<DisableSourceLink>true</DisableSourceLink>
 		<EmbedUntrackedSources>false</EmbedUntrackedSources>
 		<GenerateDependencyFile>false</GenerateDependencyFile>
-		<SymbolPackageFormat>symbols.nupkg</SymbolPackageFormat>
-		<TargetsForTfmSpecificDebugSymbolsInPackage
-			Condition="!$([System.String]::Copy(';$(TargetsForTfmSpecificDebugSymbolsInPackage);').Contains(';PackSourceGeneratorSymbols;'))"
-			>$(TargetsForTfmSpecificDebugSymbolsInPackage);PackSourceGeneratorSymbols</TargetsForTfmSpecificDebugSymbolsInPackage>
 		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
 	</PropertyGroup>
@@ -615,8 +621,7 @@
 		<IncludeSymbols Condition="'$(IncludeSymbols)' == ''">true</IncludeSymbols>
 		<PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''">true</PublishRepositoryUrl>
 		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''">true</EmbedUntrackedSources>
-		<SymbolPackageFormat Condition="'$(IsRoslynComponent)' != 'true' AND '$(SymbolPackageFormat)' == ''"
-			>snupkg</SymbolPackageFormat>
+		<SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == ''">snupkg</SymbolPackageFormat>
 		<DebugType Condition="'$(DebugType)' == ''">portable</DebugType>
 	</PropertyGroup>
 
