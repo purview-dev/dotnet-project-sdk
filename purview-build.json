@@ -5,6 +5,9 @@
 		"TestPatterns": "*Tests.csproj",
 		"TestFilter": "/*/*/*/*/"
 	},
+	"PackValidation": {
+		"RequireSymbolPackage": false
+	},
 	"Release": {
 		"Mode": "None"
 	}
