@@ -154,6 +154,9 @@ partial class ProjectHarness : IDisposable
 					<PropertyGroup>
 						<CentralPackageFloatingVersionsEnabled>true</CentralPackageFloatingVersionsEnabled>
 					</PropertyGroup>
+					<ItemGroup>
+						<PackageVersion Include="Microsoft.SourceLink.GitHub" Version="*" />
+					</ItemGroup>
 				</Project>
 				""",
 				cancellationToken

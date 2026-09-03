@@ -29,12 +29,16 @@
 		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true' AND '$(IsPackable)' == 'true' AND '$(TargetFrameworks)' == ''"
 	>
 		<None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<!-- The PDB ships inside the .nupkg beside the analyzer by default (PurviewPackAnalyzerPdb=true)
+		     so symbols are always delivered. NuGet's .snupkg cannot host analyzers/dotnet/cs symbols
+		     (symbols flow is gated on IncludeBuildOutput inside the PackTask), so opt out only when
+		     symbols are delivered another way. -->
 		<None
 			Include="$(TargetDir)$(TargetName).pdb"
 			Pack="true"
 			PackagePath="analyzers/dotnet/cs"
 			Visible="false"
-			Condition="'$(DebugType)' != 'embedded' AND '$(DebugType)' != 'none'"
+			Condition="'$(DebugType)' != 'embedded' AND '$(DebugType)' != 'none' AND '$(PurviewPackAnalyzerPdb)' != 'false'"
 		/>
 	</ItemGroup>
 
@@ -63,6 +67,41 @@
 				>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
+
+	<!-- =====================================================================
+	     VALIDATE ROSLYN COMPONENT COMPILER SETTINGS
+	     Ensures packable Roslyn components are always shipped with the standard
+	     compiler defaults so every analyzer package is built with latest C#,
+	     nullable enable, warnings-as-errors, and extended analyzer rules.
+	     Opt out with DisableRoslynCompilerDefaultsValidation=true.
+	     ===================================================================== -->
+	<Target
+		Name="ValidateRoslynComponentCompilerSettings"
+		BeforeTargets="Pack"
+		Condition="'$(IsCSharpProject)' == 'true' AND '$(IsRoslynComponent)' == 'true' AND '$(IsPackable)' == 'true' AND '$(DisableRoslynCompilerDefaultsValidation)' != 'true'"
+		Label="Validates Roslyn components are shipped with the standard compiler defaults."
+	>
+		<Error
+			Code="PRSGD0001"
+			Text="The Roslyn component '$(MSBuildProjectName)' does not set LangVersion. Source-generator packages must ship with a defined C# language version (default latest)."
+			Condition="'$(LangVersion)' == ''"
+		/>
+		<Error
+			Code="PRSGD0002"
+			Text="The Roslyn component '$(MSBuildProjectName)' does not set Nullable. Source-generator packages must ship with a defined nullable context (default enable)."
+			Condition="'$(Nullable)' == ''"
+		/>
+		<Error
+			Code="PRSGD0003"
+			Text="The Roslyn component '$(MSBuildProjectName)' disables TreatWarningsAsErrors. Source-generator packages must ship with warnings-as-errors enabled (default true)."
+			Condition="'$(TreatWarningsAsErrors)' != 'true'"
+		/>
+		<Error
+			Code="PRSGD0004"
+			Text="The Roslyn component '$(MSBuildProjectName)' disables EnforceExtendedAnalyzerRules. Source-generator packages must ship with extended analyzer rules enabled (default true)."
+			Condition="'$(EnforceExtendedAnalyzerRules)' != 'true'"
+		/>
+	</Target>
 
 	<Target
 		Name="CreateRoslynComponentGeneratedFilesDirectory"
@@ -164,6 +203,44 @@
 		/>
 	</Target>
 
+	<UsingTask
+		TaskName="DeduplicateSourceGeneratorPackageFiles"
+		TaskFactory="RoslynCodeTaskFactory"
+		AssemblyFile="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Tasks.Core.dll'))"
+	>
+		<ParameterGroup>
+			<Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+			<DeduplicatedFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System.IO" />
+			<Using Namespace="System.Collections.Generic" />
+			<Using Namespace="Microsoft.Build.Framework" />
+			<Using Namespace="Microsoft.Build.Utilities" />
+			<Reference Include="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Framework.dll'))" />
+			<Reference Include="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Utilities.Core.dll'))" />
+			<Code Type="Fragment" Language="cs">
+				<![CDATA[
+					var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+					var results = new List<ITaskItem>();
+					foreach (var file in Files ?? Array.Empty<ITaskItem>())
+					{
+						// Two analyzer projects can share a runtime dependency (for example a shared
+						// support assembly). NuGet fails the pack on duplicate target paths, so keep
+						// only the first file for each resolved analyzers/dotnet/cs package path.
+						// The calling target re-applies PackagePath metadata afterwards.
+						var packagePath = "analyzers/dotnet/cs/" + Path.GetFileName(file.ItemSpec);
+						if (!seen.Add(packagePath))
+							continue;
+
+						results.Add(new TaskItem(file.ItemSpec));
+					}
+					DeduplicatedFiles = results.ToArray();
+				]]>
+			</Code>
+		</Task>
+	</UsingTask>
+
 	<Target
 		Name="IncludeProjectReferencedSourceGenerators"
 		Condition="'$(PackProjectReferencedSourceGenerators)' == 'true' AND ('$(DefaultTargetFramework)' == '' OR '$(TargetFramework)' == '$(DefaultTargetFramework)')"
@@ -187,8 +264,15 @@
 			<Output TaskParameter="TargetOutputs" ItemName="_PurviewSourceGeneratorPackageFile" />
 		</MSBuild>
 
+		<DeduplicateSourceGeneratorPackageFiles
+			Files="@(_PurviewSourceGeneratorPackageFile)"
+			Condition="'@(_PurviewSourceGeneratorPackageFile)' != ''"
+		>
+			<Output TaskParameter="DeduplicatedFiles" ItemName="_PurviewDeduplicatedSourceGeneratorPackageFile" />
+		</DeduplicateSourceGeneratorPackageFiles>
+
 		<ItemGroup>
-			<TfmSpecificPackageFile Include="@(_PurviewSourceGeneratorPackageFile)">
+			<TfmSpecificPackageFile Include="@(_PurviewDeduplicatedSourceGeneratorPackageFile)">
 				<PackagePath>analyzers/dotnet/cs/</PackagePath>
 			</TfmSpecificPackageFile>
 		</ItemGroup>
@@ -563,6 +647,7 @@
 	     ===================================================================== -->
 	<Target
 		Name="IncludeRepoReadmeInPackage"
+		DependsOnTargets="IncludeLinkedSdkFiles;IncludeSdkDotAgentsGitIgnoreFiles"
 		Condition="'$(IsPackable)' == 'true' AND '$(PackageReadmeFile)' == 'README.md' AND '$(RepoRoot)' != '' AND Exists('$(RepoRoot)/README.md') AND ('$(DefaultTargetFramework)' == '' OR '$(TargetFramework)' == '$(DefaultTargetFramework)')"
 		Label="Packs the repository-root README when present and PackageReadmeFile is unset."
 	>
@@ -570,6 +655,10 @@
 			<_PurviewPackedReadme
 				Include="@(None)"
 				Condition="'%(None.Pack)' == 'true' AND $([System.String]::Copy('%(None.Filename)').ToLowerInvariant()) == 'readme'"
+			/>
+			<_PurviewPackedReadme
+				Include="@(None)"
+				Condition="($([System.String]::Copy('%(None.Link)').ToLowerInvariant()) == 'sdk/readme.md' OR $([System.String]::Copy('%(None.Link)').ToLowerInvariant()) == 'sdk\readme.md')"
 			/>
 			<_PurviewPackedReadme
 				Include="@(TfmSpecificPackageFile)"
