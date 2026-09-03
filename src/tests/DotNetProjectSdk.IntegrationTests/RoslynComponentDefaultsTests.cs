@@ -143,6 +143,7 @@ public sealed class RoslynComponentDefaultsTests
 			"EnforceExtendedAnalyzerRules",
 			"DisableSourceLink",
 			"EmbedUntrackedSources",
+			"Deterministic",
 			"GenerateDependencyFile",
 			"CompilerGeneratedFilesOutputPath",
 			"SymbolPackageFormat",
@@ -152,8 +153,18 @@ public sealed class RoslynComponentDefaultsTests
 
 		await Assert.That(properties["TargetFramework"]).IsEqualTo("netstandard2.0");
 		await Assert.That(properties["EnforceExtendedAnalyzerRules"]).IsEqualTo("true");
-		await Assert.That(properties["DisableSourceLink"]).IsEqualTo("true");
-		await Assert.That(properties["EmbedUntrackedSources"]).IsEqualTo("false");
+		await Assert
+			.That(properties["DisableSourceLink"])
+			.IsNotEqualTo("true")
+			.Because("Roslyn components must ship source-linked PDBs like regular packages.");
+		await Assert
+			.That(properties["EmbedUntrackedSources"])
+			.IsEqualTo("true")
+			.Because("Roslyn components must embed untracked sources for full SourceLink parity.");
+		await Assert
+			.That(properties["Deterministic"])
+			.IsEqualTo("true")
+			.Because("All builds, including analyzer packages, must be deterministic.");
 		await Assert.That(properties["GenerateDependencyFile"]).IsEqualTo("false");
 		await Assert
 			.That(TestHelpers.NormalizePath(properties["CompilerGeneratedFilesOutputPath"]))
@@ -348,5 +359,377 @@ public sealed class RoslynComponentDefaultsTests
 			.That(analyzersIncludeAssets.Any(value => value.Contains("analyzers", StringComparison.OrdinalIgnoreCase)))
 			.IsTrue()
 			.Because("Microsoft.CodeAnalysis.Analyzers should flow as an analyzer-only development asset.");
+	}
+
+	[Test]
+	public async Task PackableRoslynComponent_IncludeSymbolsTrue_PdbStillInNupkg(CancellationToken cancellationToken)
+	{
+		using var harness = await ProjectHarness
+			.For("SourceGeneration")
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+						<IsPackable>true</IsPackable>
+						<IncludeBuildOutput>true</IncludeBuildOutput>
+						<IncludeSymbols>true</IncludeSymbols>
+						<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+					</PropertyGroup>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		var packageDirectory = Path.Combine(harness.SolutionDirectory, "packages");
+		var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
+		var (exitCode, stdOut, stdErr) = await harness.RunMSBuildAsync(
+			$"-restore -t:Pack -p:PackageOutputPath=\"{packageDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion}",
+			cancellationToken
+		);
+
+		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+
+		var nupkgFiles = Directory.GetFiles(packageDirectory, "Test.SourceGeneration.*.nupkg");
+		await Assert.That(nupkgFiles).HasSingleItem().Because("Only the main .nupkg is produced.");
+
+		using var package = await ZipFile.OpenReadAsync(nupkgFiles[0], cancellationToken);
+		var entries = package.Entries.Select(entry => entry.FullName).ToList();
+		await Assert.That(entries).Contains("analyzers/dotnet/cs/Test.SourceGeneration.dll");
+		await Assert
+			.That(entries)
+			.Contains("analyzers/dotnet/cs/Test.SourceGeneration.pdb")
+			.Because(
+				"The analyzer PDB must always ship in the .nupkg by default (PurviewPackAnalyzerPdb=true); the .snupkg cannot host analyzers/dotnet/cs symbols."
+			);
+		await Assert
+			.That(entries)
+			.Contains("lib/netstandard2.0/Test.SourceGeneration.dll")
+			.Because("IncludeBuildOutput=true keeps the library asset for the dual-role layout.");
+
+		var snupkgFiles = Directory.GetFiles(packageDirectory, "Test.SourceGeneration.*.snupkg");
+		await Assert.That(snupkgFiles).HasSingleItem().Because("The symbol package must be produced.");
+
+		using var symbolPackage = await ZipFile.OpenReadAsync(snupkgFiles[0], cancellationToken);
+		var symbolEntries = symbolPackage.Entries.Select(entry => entry.FullName).ToList();
+		await Assert
+			.That(symbolEntries)
+			.Contains("lib/netstandard2.0/Test.SourceGeneration.pdb")
+			.Because("The library PDB flows to the .snupkg.");
+	}
+
+	[Test]
+	public async Task PackableRoslynComponent_PurviewPackAnalyzerPdbFalse_OmitsPdbFromNupkg(
+		CancellationToken cancellationToken
+	)
+	{
+		using var harness = await ProjectHarness
+			.For("SourceGeneration")
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+						<IsPackable>true</IsPackable>
+						<IncludeBuildOutput>true</IncludeBuildOutput>
+						<IncludeSymbols>true</IncludeSymbols>
+						<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+						<PurviewPackAnalyzerPdb>false</PurviewPackAnalyzerPdb>
+					</PropertyGroup>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		var packageDirectory = Path.Combine(harness.SolutionDirectory, "packages");
+		var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
+		var (exitCode, stdOut, stdErr) = await harness.RunMSBuildAsync(
+			$"-restore -t:Pack -p:PackageOutputPath=\"{packageDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion}",
+			cancellationToken
+		);
+
+		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+
+		var nupkgFiles = Directory.GetFiles(packageDirectory, "Test.SourceGeneration.*.nupkg");
+		using var package = await ZipFile.OpenReadAsync(nupkgFiles[0], cancellationToken);
+		var entries = package.Entries.Select(entry => entry.FullName).ToList();
+		await Assert.That(entries).Contains("analyzers/dotnet/cs/Test.SourceGeneration.dll");
+		await Assert
+			.That(
+				entries.Any(entry =>
+					entry.StartsWith("analyzers/dotnet/cs/", StringComparison.OrdinalIgnoreCase)
+					&& entry.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase)
+				)
+			)
+			.IsFalse()
+			.Because("PurviewPackAnalyzerPdb=false opts the analyzer PDB out of the .nupkg.");
+		await Assert
+			.That(entries)
+			.Contains("lib/netstandard2.0/Test.SourceGeneration.dll")
+			.Because("IncludeBuildOutput=true keeps the library asset for the dual-role layout.");
+
+		var snupkgFiles = Directory.GetFiles(packageDirectory, "Test.SourceGeneration.*.snupkg");
+		await Assert.That(snupkgFiles).HasSingleItem().Because("The symbol package must be produced.");
+	}
+
+	[Test]
+	public async Task PackableRoslynComponent_MultipleAnalyzerRefs_SharedRuntimeDependencyPackedOnce(
+		CancellationToken cancellationToken
+	)
+	{
+		using var generatorOne = await ProjectHarness
+			.For("GeneratorOne")
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+					</PropertyGroup>
+					<ItemGroup>
+						<SourceGeneratorRuntimeDependency Include="$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'SharedRuntime.dll'))" />
+					</ItemGroup>
+					<Target Name="CreateSharedRuntime" BeforeTargets="CopySourceGeneratorRuntimeDependencies">
+						<WriteLinesToFile File="$(IntermediateOutputPath)SharedRuntime.dll" Lines="runtime" Overwrite="true" />
+					</Target>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		using var generatorTwo = await ProjectHarness
+			.For("GeneratorTwo")
+			.WithSolutionDirectory(generatorOne.SolutionDirectory)
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+					</PropertyGroup>
+					<ItemGroup>
+						<SourceGeneratorRuntimeDependency Include="$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'SharedRuntime.dll'))" />
+					</ItemGroup>
+					<Target Name="CreateSharedRuntime" BeforeTargets="CopySourceGeneratorRuntimeDependencies">
+						<WriteLinesToFile File="$(IntermediateOutputPath)SharedRuntime.dll" Lines="runtime" Overwrite="true" />
+					</Target>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		using var consumer = await ProjectHarness
+			.For("Consumer")
+			.WithSolutionDirectory(generatorOne.SolutionDirectory)
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<TargetFramework>net10.0</TargetFramework>
+						<IsPackable>true</IsPackable>
+						<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
+						<DisableSourceLink>true</DisableSourceLink>
+					</PropertyGroup>
+					<ItemGroup>
+						<ProjectReference
+							Include="..\GeneratorOne\GeneratorOne.csproj"
+							PrivateAssets="all"
+							ReferenceOutputAssembly="false"
+							OutputItemType="Analyzer"
+						/>
+						<ProjectReference
+							Include="..\GeneratorTwo\GeneratorTwo.csproj"
+							PrivateAssets="all"
+							ReferenceOutputAssembly="false"
+							OutputItemType="Analyzer"
+						/>
+					</ItemGroup>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		var packageDirectory = Path.Combine(generatorOne.SolutionDirectory, "packages");
+		var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
+		var (exitCode, stdOut, stdErr) = await consumer.RunMSBuildAsync(
+			$"-restore -t:Pack -p:PackageOutputPath=\"{packageDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion}",
+			cancellationToken
+		);
+
+		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+		var packagePath = Directory.GetFiles(packageDirectory, "Test.Consumer.*.nupkg").Single();
+		using var package = await ZipFile.OpenReadAsync(packagePath, cancellationToken);
+		var entries = package.Entries.Select(entry => entry.FullName).ToList();
+		await Assert.That(entries).Contains("analyzers/dotnet/cs/Test.GeneratorOne.dll");
+		await Assert.That(entries).Contains("analyzers/dotnet/cs/Test.GeneratorTwo.dll");
+		await Assert
+			.That(entries.Count(entry => entry == "analyzers/dotnet/cs/SharedRuntime.dll"))
+			.IsEqualTo(1)
+			.Because("A runtime dependency shared by two analyzer project references must be packed exactly once.");
+	}
+
+	[Test]
+	public async Task PackableRoslynComponent_MissingCompilerDefaults_FailsPack(CancellationToken cancellationToken)
+	{
+		using var harness = await ProjectHarness
+			.For("SourceGeneration")
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+						<IsPackable>true</IsPackable>
+						<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+					</PropertyGroup>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		var packageDirectory = Path.Combine(harness.SolutionDirectory, "packages");
+		var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
+		var (exitCode, stdOut, stdErr) = await harness.RunMSBuildAsync(
+			$"-restore -t:Pack -p:PackageOutputPath=\"{packageDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion}",
+			cancellationToken
+		);
+
+		await Assert
+			.That(exitCode)
+			.IsEqualTo(1)
+			.Because("A packable Roslyn component that disables TreatWarningsAsErrors must fail the pack.")
+			.Because(TestHelpers.GenerateError(stdOut, stdErr));
+		await Assert
+			.That(stdOut)
+			.Contains("PRSGD0003")
+			.Because("The missing compiler-default diagnostic must be emitted.");
+	}
+
+	[Test]
+	public async Task PackableRoslynComponent_MissingCompilerDefaults_CanBeDisabled(CancellationToken cancellationToken)
+	{
+		using var harness = await ProjectHarness
+			.For("SourceGeneration")
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+						<IsPackable>true</IsPackable>
+						<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+						<DisableRoslynCompilerDefaultsValidation>true</DisableRoslynCompilerDefaultsValidation>
+					</PropertyGroup>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		var packageDirectory = Path.Combine(harness.SolutionDirectory, "packages");
+		var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
+		var (exitCode, stdOut, stdErr) = await harness.RunMSBuildAsync(
+			$"-restore -t:Pack -p:PackageOutputPath=\"{packageDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion}",
+			cancellationToken
+		);
+
+		await Assert
+			.That(exitCode)
+			.IsEqualTo(0)
+			.Because("DisableRoslynCompilerDefaultsValidation=true must silence the pack-time validation.")
+			.Because(TestHelpers.GenerateError(stdOut, stdErr));
+	}
+
+	[Test]
+	public async Task RoslynComponent_ExposesCompilerSettingsToCompiler(CancellationToken cancellationToken)
+	{
+		using var harness = await ProjectHarness
+			.For("SourceGeneration")
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+					</PropertyGroup>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		var compilerVisible = await harness.GetItemIdentitiesAsync("CompilerVisibleProperty", cancellationToken);
+		await Assert.That(compilerVisible).Contains("LangVersion");
+		await Assert.That(compilerVisible).Contains("Nullable");
+		await Assert.That(compilerVisible).Contains("TreatWarningsAsErrors");
+		await Assert.That(compilerVisible).Contains("EnforceExtendedAnalyzerRules");
+		await Assert.That(compilerVisible).Contains("Deterministic");
+		await Assert.That(compilerVisible).Contains("ContinuousIntegrationBuild");
+		await Assert.That(compilerVisible).Contains("EmbedUntrackedSources");
+	}
+
+	[Test]
+	public async Task RoslynComponent_SourceLinkPackageReference_Added(CancellationToken cancellationToken)
+	{
+		using var harness = await ProjectHarness
+			.For("SourceGeneration")
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+					</PropertyGroup>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		var packageReferences = await harness.GetItemIdentitiesAsync("PackageReference", cancellationToken);
+		await Assert
+			.That(packageReferences)
+			.Contains("Microsoft.SourceLink.GitHub")
+			.Because("Roslyn components must receive the SourceLink package like regular packages.");
+	}
+
+	[Test]
+	public async Task PackableRoslynComponent_LinkedSdkReadme_DoesNotDuplicate(CancellationToken cancellationToken)
+	{
+		var repoRoot = Path.Combine(Path.GetTempPath(), "PurviewSdkTests", Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(repoRoot);
+		await File.WriteAllTextAsync(Path.Combine(repoRoot, "README.md"), "# Test Repo Readme", cancellationToken);
+		await File.WriteAllTextAsync(
+			Path.Combine(repoRoot, "package.json"),
+			/*lang=json,strict*/"""{"name": "test-repo", "version": "0.0.0-test"}""",
+			cancellationToken
+		);
+
+		using var harness = await ProjectHarness
+			.For("SourceGeneration")
+			.WithSolutionDirectory(Path.Combine(repoRoot, "src"))
+			.WithProjectFileContent(
+				"""
+				<Project Sdk="Microsoft.NET.Sdk">
+					<PropertyGroup>
+						<IsRoslynComponent>true</IsRoslynComponent>
+						<IsPackable>true</IsPackable>
+						<PackageReadmeFile>README.md</PackageReadmeFile>
+					</PropertyGroup>
+					<ItemGroup>
+						<None Include="..\..\README.md" Link="Sdk/README.md" />
+					</ItemGroup>
+				</Project>
+				"""
+			)
+			.BuildAsync(cancellationToken);
+
+		var packageDirectory = Path.Combine(harness.SolutionDirectory, "packages");
+		var packageVersion = $"0.0.0-integration-test-{Guid.NewGuid():N}";
+		var (exitCode, stdOut, stdErr) = await harness.RunMSBuildAsync(
+			$"-restore -t:Pack -p:PackageOutputPath=\"{packageDirectory}\" -p:PackageVersion={packageVersion} -p:Version={packageVersion} -p:RepoRoot=\"{repoRoot}\"",
+			cancellationToken
+		);
+
+		await Assert.That(exitCode).IsEqualTo(0).Because(TestHelpers.GenerateError(stdOut, stdErr));
+
+		var nupkgFiles = Directory.GetFiles(packageDirectory, "Test.SourceGeneration.*.nupkg");
+		using var package = await ZipFile.OpenReadAsync(nupkgFiles[0], cancellationToken);
+		var entries = package.Entries.Select(entry => entry.FullName).ToList();
+		await Assert
+			.That(entries.Count(entry => entry == "README.md"))
+			.IsEqualTo(1)
+			.Because("A linked Sdk/README.md must not be packed twice (no NU5118).");
 	}
 }

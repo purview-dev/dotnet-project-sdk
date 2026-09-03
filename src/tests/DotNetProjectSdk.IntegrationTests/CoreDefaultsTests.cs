@@ -153,6 +153,24 @@ public sealed class CoreDefaultsTests
 	}
 
 	[Test]
+	public async Task Ci_PropertyNotSet_WhenPackableButNotCi(CancellationToken cancellationToken)
+	{
+		// Packability alone must not force ContinuousIntegrationBuild: local packs must not enter
+		// SourceLink's CI-mode dirty-repository checks (which fail under TreatWarningsAsErrors).
+		using var h = await ProjectHarness.CreateAsync(
+			"MyLibrary",
+			extraEnv: new Dictionary<string, string> { ["CI"] = "" },
+			extraProps: "<IsPackable>true</IsPackable>",
+			cancellationToken: cancellationToken
+		);
+		var value = await h.GetPropertyAsync("ContinuousIntegrationBuild", cancellationToken);
+		await Assert
+			.That(value)
+			.IsNotEqualTo("true")
+			.Because("Only real CI environment variables may set ContinuousIntegrationBuild.");
+	}
+
+	[Test]
 	[Arguments("net9.0", "net9.0")]
 	[Arguments("net10.0", "net10.0")]
 	public async Task TargetFramework_Honoured_WhenExplicitlySet(

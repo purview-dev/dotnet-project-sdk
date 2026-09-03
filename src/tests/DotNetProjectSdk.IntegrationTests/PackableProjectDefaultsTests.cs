@@ -476,10 +476,8 @@ public sealed class PackableProjectDefaultsTests
 			stdOut,
 			$"Successfully created package '[^']*{System.Text.RegularExpressions.Regex.Escape(packageId)}\\.([^']+)\\.nupkg'"
 		);
-		if (!match.Success)
-			return string.Empty;
 
-		return match.Groups[1].Value;
+		return match.Success ? match.Groups[1].Value : string.Empty;
 	}
 
 	static async Task<(int Code, string StdOut, string StdErr)> RunProcessAsync(

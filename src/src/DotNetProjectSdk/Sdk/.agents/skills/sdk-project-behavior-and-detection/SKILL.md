@@ -147,10 +147,12 @@ This is why consistent naming and placement matter so much in repos that use the
 
 ### For Roslyn component (analyzer/source-generator) projects
 
-- Defaults a single `netstandard2.0` target, `LangVersion=latest`, `Nullable=enable`, `TreatWarningsAsErrors=true`, extended analyzer rules, disabled SourceLink, and excluded normal build output (`IncludeBuildOutput=false`)
-- Defaults `IncludeSymbols=false` — no `.symbols.nupkg` or `.snupkg` is produced by default; the analyzer PDB ships inside the main `.nupkg` under `analyzers/dotnet/cs/` beside the analyzer assembly
+- Defaults a single `netstandard2.0` target, `LangVersion=latest`, `Nullable=enable`, `TreatWarningsAsErrors=true`, `Deterministic=true`, extended analyzer rules, SourceLink with `EmbedUntrackedSources=true`, and excluded normal build output (`IncludeBuildOutput=false`)
+- Defaults `IncludeSymbols=false` — no `.symbols.nupkg` or `.snupkg` is produced by default; the analyzer PDB ships inside the main `.nupkg` under `analyzers/dotnet/cs/` beside the analyzer assembly (`PurviewPackAnalyzerPdb=true`; set `false` only when symbols are delivered another way, since NuGet's `.snupkg` cannot host `analyzers/dotnet/cs` symbols)
 - Packable Roslyn components automatically pack the built analyzer assembly (and PDB) into `analyzers/dotnet/cs/`; `SymbolPackageFormat` defaults to the modern `snupkg` if symbols are explicitly opted into
 - `Microsoft.CodeAnalysis.*` and `Microsoft.CodeAnalysis.Analyzers` references are defaulted to `PrivateAssets=all` (development-only dependencies) so they never leak into the packed nuspec
+- A pack-time validation (`ValidateRoslynComponentCompilerSettings`) fails the pack of a packable Roslyn component if `LangVersion`, `Nullable`, `TreatWarningsAsErrors`, or `EnforceExtendedAnalyzerRules` is missing; opt out with `DisableRoslynCompilerDefaultsValidation=true`
+- `ContinuousIntegrationBuild` is set only by real CI environment variables — packability alone never forces SourceLink's CI-mode dirty-repository checks
 
 ### For test and shared-testing projects
 
