@@ -1,3 +1,0 @@
-<Project>
-	<Import Project="$(MSBuildThisFileDirectory)../src/src/DotNetProjectSdk/Sdk/Sdk.targets" />
-</Project>
