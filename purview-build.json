@@ -1,0 +1,14 @@
+{
+	"Build": {
+		"Solution": "src/DotNetProjectSdk.slnx",
+		"TestRoot": "src/tests",
+		"TestPatterns": "*Tests.csproj",
+		"TestFilter": "/*/*/*/*/"
+	},
+	"PackValidation": {
+		"RequireSymbolPackage": false
+	},
+	"Release": {
+		"Mode": "None"
+	}
+}
